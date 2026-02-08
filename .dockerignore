@@ -1,0 +1,8 @@
+backend/data/configs
+backend/data/love-girl.db
+backend/data/uploads
+backend/bin/*
+backend/__debug_bin*
+backend/internal/handler/assets/dist
+*.db
+.DS_Store

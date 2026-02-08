@@ -1,0 +1,164 @@
+/* Win11风格的情侣网站主题样式 */
+@import 'tailwindcss';
+
+/* zhi-mang-xing-chinese-simplified-400-normal */
+@font-face {
+  font-family: 'Zhi Mang Xing';
+  font-style: normal;
+  font-display: auto;
+  font-weight: 400;
+  src: url(https://cdn.jsdelivr.net/fontsource/fonts/zhi-mang-xing@latest/chinese-simplified-400-normal.woff2)
+    format('woff2');
+}
+
+/* ma-shan-zheng-chinese-simplified-400-normal */
+@font-face {
+  font-family: 'Ma Shan Zheng';
+  font-style: normal;
+  font-display: auto;
+  font-weight: 400;
+  src: url(https://cdn.jsdelivr.net/fontsource/fonts/ma-shan-zheng@latest/chinese-simplified-400-normal.woff2)
+    format('woff2');
+}
+
+/* liu-jian-mao-cao-chinese-simplified-400-normal */
+@font-face {
+  font-family: 'Liu Jian Mao Cao';
+  font-style: normal;
+  font-display: auto;
+  font-weight: 400;
+  src: url(https://cdn.jsdelivr.net/fontsource/fonts/liu-jian-mao-cao@latest/chinese-simplified-400-normal.woff2)
+    format('woff2');
+}
+
+/* zcool-kuaile-chinese-simplified-400-normal */
+@font-face {
+  font-family: 'ZCOOL KuaiLe';
+  font-style: normal;
+  font-display: auto;
+  font-weight: 400;
+  src: url(https://cdn.jsdelivr.net/fontsource/fonts/zcool-kuaile@latest/chinese-simplified-400-normal.woff2)
+    format('woff2');
+}
+
+/* rubik-doodle-shadow-latin-400-normal */
+@font-face {
+  font-family: 'Rubik Doodle Shadow';
+  font-style: normal;
+  font-display: auto;
+  font-weight: 400;
+  src: url(https://cdn.jsdelivr.net/fontsource/fonts/rubik-doodle-shadow@latest/latin-400-normal.woff2)
+    format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  /* 标题类字体，稍有行书风格，活泼 */
+  --font-heading: 'Zhi Mang Xing', sans-serif;
+  /* 正文字体，手写楷书风格，适合小段落 */
+  --font-body: 'Ma Shan Zheng', sans-serif;
+  /* 签名/装饰字体，草书风格，用于小面积强调 */
+  --font-signature: 'Liu Jian Mao Cao', cursive;
+  /* 按钮/卡片类装饰字体，圆润可爱 */
+  --font-decor: 'ZCOOL KuaiLe', sans-serif;
+  /* 数学字体 */
+  --font-math: 'Rubik Doodle Shadow', serif;
+
+  /* 主要颜色 - 中国风情色调 */
+  --primary-color: #f0ada0; /* 主粉色，接近中国传统妃色 */
+  --primary-light: #f8c9c0; /* 浅粉色 */
+  --primary-dark: #d89388; /* 深粉色 */
+  --secondary-color: #574b9a; /* 辅助紫色，更接近中国传统紫檀色 */
+  --accent-color: #f7d488; /* 点缀黄色，接近中国传统蜜黄色 */
+
+  /* 中性色 */
+  --background: #ffffff;
+  --surface: #f5f5f5;
+  --surface-variant: #e0e0e0;
+  --surface-hover: #d0d0d0;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --border-color: #e0e0e0;
+
+  /* 文字颜色 */
+  --on-primary: #ffffff;
+  --on-secondary: #ffffff;
+  --on-background: #333333;
+  --on-surface: #666666;
+  --on-surface-variant: #999999;
+
+  /* Win11风格阴影 */
+  --shadow-small: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-large: 0 8px 24px rgba(0, 0, 0, 0.012);
+
+  /* Win11风格圆角 */
+  --radius-small: 4px;
+  --radius-medium: 8px;
+  --radius-large: 12px;
+  --radius-extra-large: 16px;
+  --radius-full: 9999px;
+
+  /* Win11风格动画 */
+  --transition-duration: 0.2s;
+  --transition-easing: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* 全局Win11风格样式 */
+body {
+  font-family: var(--clerical-script);
+  color: var(--on-background);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Win11风格按钮 */
+.win11-button {
+  background-color: var(--primary-color);
+  color: var(--on-primary);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 8px 20px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-duration) var(--transition-easing);
+  box-shadow: var(--shadow-small);
+}
+
+.win11-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-medium);
+}
+
+.win11-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-small);
+}
+
+.win11-button.secondary {
+  background-color: var(--secondary-color);
+}
+
+.win11-button.outline {
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* Win11风格输入框 */
+.win11-input {
+  @apply bg-[var(--surface)]/30 border border-[var(--border-color)] rounded-[var(--radius-medium)] px-3 py-2 text-sm transition-all duration-[var(--transition-duration)] ease-[var(--transition-easing)] outline-none;
+}
+
+.win11-input:focus {
+  @apply border-[var(--primary-color)] shadow-[0_0_0_2px_rgba(255,107,157,0.2)];
+}
+
+/* 合并后的卡片样式 */
+.generic-card {
+  @apply bg-white/30 rounded-xl shadow-sm border border-white/60 backdrop-blur-sm shadow-xl transition;
+}

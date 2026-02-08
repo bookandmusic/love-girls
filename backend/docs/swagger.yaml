@@ -1,0 +1,1889 @@
+basePath: /api/v1
+definitions:
+  handler.FileUploadResponse:
+    properties:
+      file:
+        $ref: '#/definitions/service.FileResponse'
+      id:
+        type: integer
+    type: object
+  handler.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  handler.UserLoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  model.AlbumStats:
+    properties:
+      total:
+        type: integer
+      totalPhotos:
+        type: integer
+    type: object
+  model.DashboardStats:
+    properties:
+      albumStats:
+        $ref: '#/definitions/model.AlbumStats'
+      momentStats:
+        $ref: '#/definitions/model.MomentStats'
+      placeStats:
+        $ref: '#/definitions/model.PlaceStats'
+      wishStats:
+        $ref: '#/definitions/model.WishStats'
+    type: object
+  model.MomentStats:
+    properties:
+      total:
+        type: integer
+    type: object
+  model.PlaceStats:
+    properties:
+      total:
+        type: integer
+    type: object
+  model.WishStats:
+    properties:
+      pending:
+        type: integer
+      total:
+        type: integer
+    type: object
+  service.Album:
+    properties:
+      coverImage:
+        $ref: '#/definitions/service.AlbumCoverImage'
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      photoCount:
+        type: integer
+    type: object
+  service.AlbumAddPhotosRequest:
+    properties:
+      photoIds:
+        items:
+          type: integer
+        type: array
+    required:
+    - photoIds
+    type: object
+  service.AlbumCoverImage:
+    properties:
+      albumId:
+        type: integer
+      file:
+        $ref: '#/definitions/service.FileResponse'
+      id:
+        type: integer
+    type: object
+  service.AlbumCreateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  service.AlbumListResponse:
+    properties:
+      albums:
+        items:
+          $ref: '#/definitions/service.Album'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  service.AlbumPhoto:
+    properties:
+      albumId:
+        type: integer
+      alt:
+        type: string
+      createdAt:
+        type: string
+      file:
+        $ref: '#/definitions/service.FileResponse'
+      id:
+        type: integer
+    type: object
+  service.AlbumPhotoListResponse:
+    properties:
+      page:
+        type: integer
+      photos:
+        items:
+          $ref: '#/definitions/service.AlbumPhoto'
+        type: array
+      size:
+        type: integer
+      total:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  service.AlbumSetCoverRequest:
+    properties:
+      photoId:
+        type: integer
+    required:
+    - photoId
+    type: object
+  service.AlbumUpdateRequest:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  service.AnniversaryCreateRequest:
+    properties:
+      calendar:
+        enum:
+        - solar
+        - lunar
+        type: string
+      date:
+        description: YYYY-MM-DD格式
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+    required:
+    - calendar
+    - date
+    - title
+    type: object
+  service.AnniversaryListResponse:
+    properties:
+      anniversaries:
+        items:
+          $ref: '#/definitions/service.FrontendAnniversary'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  service.AnniversaryUpdateRequest:
+    properties:
+      calendar:
+        enum:
+        - solar
+        - lunar
+        type: string
+      date:
+        description: YYYY-MM-DD格式
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+    type: object
+  service.FileResponse:
+    properties:
+      id:
+        type: integer
+      mime_type:
+        type: string
+      name:
+        type: string
+      size:
+        type: integer
+      thumbnail:
+        type: string
+      url:
+        type: string
+    type: object
+  service.FrontendAnniversary:
+    properties:
+      calendar:
+        description: solar/lunar
+        type: string
+      date:
+        description: MM-DD
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  service.FrontendAuthor:
+    properties:
+      avatar:
+        $ref: '#/definitions/service.FileResponse'
+      name:
+        type: string
+    type: object
+  service.FrontendMoment:
+    properties:
+      author:
+        $ref: '#/definitions/service.FrontendAuthor'
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/service.FrontendPhoto'
+        type: array
+      isPublic:
+        type: boolean
+      likes:
+        type: integer
+    type: object
+  service.FrontendPhoto:
+    properties:
+      file:
+        $ref: '#/definitions/service.FileResponse'
+      id:
+        type: integer
+      momentId:
+        type: integer
+    type: object
+  service.FrontendSystemInfo:
+    properties:
+      couple:
+        properties:
+          boy:
+            properties:
+              avatar:
+                $ref: '#/definitions/service.FileResponse'
+              name:
+                type: string
+            type: object
+          girl:
+            properties:
+              avatar:
+                $ref: '#/definitions/service.FileResponse'
+              name:
+                type: string
+            type: object
+        type: object
+      site:
+        properties:
+          description:
+            type: string
+          name:
+            type: string
+          startDate:
+            type: string
+        type: object
+    type: object
+  service.InitSystemRequest:
+    properties:
+      siteDescription:
+        type: string
+      siteName:
+        type: string
+      sitePassword:
+        minLength: 6
+        type: string
+      sitePasswordConfirm:
+        type: string
+      startDate:
+        type: string
+      userAEmail:
+        type: string
+      userAName:
+        type: string
+      userAPhone:
+        type: string
+      userARole:
+        enum:
+        - boy
+        - girl
+        type: string
+      userBEmail:
+        type: string
+      userBName:
+        type: string
+      userBPhone:
+        type: string
+      userBRole:
+        enum:
+        - boy
+        - girl
+        type: string
+    required:
+    - siteName
+    - sitePassword
+    - sitePasswordConfirm
+    - startDate
+    - userAName
+    - userARole
+    - userBName
+    - userBRole
+    type: object
+  service.MomentCreateRequest:
+    properties:
+      content:
+        type: string
+      imageIds:
+        items:
+          type: integer
+        type: array
+      isPublic:
+        type: boolean
+      userId:
+        type: integer
+    required:
+    - content
+    - userId
+    type: object
+  service.MomentLikeResponse:
+    properties:
+      likes:
+        type: integer
+    type: object
+  service.MomentListResponse:
+    properties:
+      moments:
+        items:
+          $ref: '#/definitions/service.FrontendMoment'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  service.MomentPublicRequest:
+    properties:
+      isPublic:
+        type: boolean
+    type: object
+  service.MomentUpdateRequest:
+    properties:
+      content:
+        type: string
+      imageIds:
+        items:
+          type: integer
+        type: array
+      isPublic:
+        type: boolean
+    type: object
+  service.PlaceCreateRequest:
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      image:
+        $ref: '#/definitions/service.PlaceImage'
+      latitude:
+        maximum: 90
+        minimum: -90
+        type: number
+      longitude:
+        maximum: 180
+        minimum: -180
+        type: number
+      name:
+        type: string
+    required:
+    - date
+    - latitude
+    - longitude
+    - name
+    type: object
+  service.PlaceImage:
+    properties:
+      file:
+        $ref: '#/definitions/service.FileResponse'
+      id:
+        type: integer
+      placeId:
+        type: integer
+    type: object
+  service.PlaceListResponse:
+    properties:
+      page:
+        type: integer
+      places:
+        items:
+          $ref: '#/definitions/service.PlaceResponse'
+        type: array
+      size:
+        type: integer
+      total:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  service.PlaceResponse:
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image:
+        $ref: '#/definitions/service.PlaceImage'
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+    type: object
+  service.PlaceUpdateRequest:
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      image:
+        $ref: '#/definitions/service.PlaceImage'
+      latitude:
+        maximum: 90
+        minimum: -90
+        type: number
+      longitude:
+        maximum: 180
+        minimum: -180
+        type: number
+      name:
+        type: string
+    type: object
+  service.Wish:
+    properties:
+      approved:
+        type: boolean
+      authorName:
+        type: string
+      content:
+        type: string
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+    type: object
+  service.WishCreateRequest:
+    properties:
+      authorName:
+        maxLength: 100
+        type: string
+      content:
+        maxLength: 500
+        type: string
+      email:
+        maxLength: 150
+        type: string
+    required:
+    - authorName
+    - content
+    type: object
+  service.WishListResponse:
+    properties:
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      totalCount:
+        type: integer
+      totalPages:
+        type: integer
+      wishes:
+        items:
+          $ref: '#/definitions/service.Wish'
+        type: array
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server celler server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /anniversaries:
+    get:
+      description: 分页获取纪念日列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        required: true
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.AnniversaryListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取纪念日列表
+      tags:
+      - anniversaries
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的纪念日
+      parameters:
+      - description: 纪念日信息
+        in: body
+        name: anniversary
+        required: true
+        schema:
+          $ref: '#/definitions/service.AnniversaryCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.FrontendAnniversary'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 创建纪念日
+      tags:
+      - anniversaries
+  /anniversaries/{id}:
+    delete:
+      description: 删除指定ID的纪念日
+      parameters:
+      - description: 纪念日ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 删除纪念日
+      tags:
+      - anniversaries
+    put:
+      consumes:
+      - application/json
+      description: 更新指定ID的纪念日信息
+      parameters:
+      - description: 纪念日ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 纪念日更新信息
+        in: body
+        name: anniversary
+        required: true
+        schema:
+          $ref: '#/definitions/service.AnniversaryUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.FrontendAnniversary'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 更新纪念日
+      tags:
+      - anniversaries
+  /api/v1/albums:
+    get:
+      consumes:
+      - application/json
+      description: 获取相册列表，保持分页数据结构
+      parameters:
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.AlbumListResponse'
+              type: object
+      summary: 获取相册列表
+      tags:
+      - albums
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的相册
+      parameters:
+      - description: 相册信息
+        in: body
+        name: album
+        required: true
+        schema:
+          $ref: '#/definitions/service.AlbumCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.Album'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 创建相册
+      tags:
+      - albums
+  /api/v1/albums/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的相册
+      parameters:
+      - description: 相册ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 删除相册
+      tags:
+      - albums
+    put:
+      consumes:
+      - application/json
+      description: 更新相册的信息
+      parameters:
+      - description: 相册ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 相册信息
+        in: body
+        name: album
+        required: true
+        schema:
+          $ref: '#/definitions/service.AlbumUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.Album'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 更新相册
+      tags:
+      - albums
+  /api/v1/albums/{id}/cover:
+    put:
+      consumes:
+      - application/json
+      description: 设置指定相册的封面照片
+      parameters:
+      - description: 相册ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 封面照片ID
+        in: body
+        name: cover
+        required: true
+        schema:
+          $ref: '#/definitions/service.AlbumSetCoverRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.Album'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 设置相册封面
+      tags:
+      - albums
+  /api/v1/albums/{id}/photos:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定相册的照片列表，保持分页数据结构
+      parameters:
+      - description: 相册ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.AlbumPhotoListResponse'
+              type: object
+      summary: 获取相册照片列表
+      tags:
+      - albums
+    post:
+      consumes:
+      - application/json
+      description: 更新相册的照片列表，只会保留指定的照片ID
+      parameters:
+      - description: 相册ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 照片ID列表
+        in: body
+        name: photos
+        required: true
+        schema:
+          $ref: '#/definitions/service.AlbumAddPhotosRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/service.AlbumPhoto'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 更新相册照片
+      tags:
+      - albums
+  /api/v1/albums/{id}/photos/{photoId}:
+    delete:
+      consumes:
+      - application/json
+      description: 从指定的相册删除照片
+      parameters:
+      - description: 相册ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 照片ID
+        in: path
+        name: photoId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 从相册删除照片
+      tags:
+      - albums
+  /api/v1/places:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有地点，保持分页数据结构
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.PlaceListResponse'
+              type: object
+      summary: 获取所有地点
+      tags:
+      - places
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的地点
+      parameters:
+      - description: 地点信息
+        in: body
+        name: place
+        required: true
+        schema:
+          $ref: '#/definitions/service.PlaceCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.PlaceResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 创建地点
+      tags:
+      - places
+  /api/v1/places/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的地点
+      parameters:
+      - description: 地点ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 删除地点
+      tags:
+      - places
+    put:
+      consumes:
+      - application/json
+      description: 更新地点的信息
+      parameters:
+      - description: 地点ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 地点信息
+        in: body
+        name: place
+        required: true
+        schema:
+          $ref: '#/definitions/service.PlaceUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.PlaceResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 更新地点
+      tags:
+      - places
+  /api/v1/wishes:
+    get:
+      consumes:
+      - application/json
+      description: 获取祝福列表，支持分页查询。未认证用户只能查看已审核的祝福，已认证用户可以查看所有祝福。
+      parameters:
+      - description: 页码，从 1 开始
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: size
+        type: integer
+      - description: 是否只获取已审核的祝福，仅对已认证用户有效
+        in: query
+        name: approved
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.WishListResponse'
+              type: object
+      summary: 获取祝福列表
+      tags:
+      - wishes
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的祝福
+      parameters:
+      - description: 祝福信息
+        in: body
+        name: blessing
+        required: true
+        schema:
+          $ref: '#/definitions/service.WishCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.Wish'
+              type: object
+      summary: 创建祝福
+      tags:
+      - wishes
+  /api/v1/wishes/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的祝福
+      parameters:
+      - description: 祝福 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 删除祝福
+      tags:
+      - wishes
+  /api/v1/wishes/{id}/approve:
+    put:
+      consumes:
+      - application/json
+      description: 批准指定的祝福，使其可以公开显示
+      parameters:
+      - description: 祝福 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 批准祝福
+      tags:
+      - wishes
+  /file/{id}:
+    get:
+      description: Returns the file content as a stream. The browser will either preview
+        or download based on Content-Disposition.
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File stream
+          schema:
+            type: file
+        "400":
+          description: Invalid file ID format
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Failed to read file from storage
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: Get a file by ID
+      tags:
+      - files
+  /file/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a file to the server. Supports optional fields like filename,
+        path, mimeType, hash, and thumbnail dimensions.
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Storage path prefix
+        in: formData
+        name: path
+        type: string
+      - description: File content hash (e.g., SHA256)
+        in: formData
+        name: hash
+        type: string
+      - description: Desired thumbnail width (for image processing)
+        in: formData
+        name: thumbnailWidth
+        type: string
+      - description: Desired thumbnail height (for image processing)
+        in: formData
+        name: thumbnailHeight
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File uploaded successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.FileUploadResponse'
+              type: object
+        "400":
+          description: Missing or invalid file
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal server error during file saving or URL generation
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: Upload a file
+      tags:
+      - files
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check if the service is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - health
+  /moments:
+    get:
+      description: 分页获取动态列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: 每页数量
+        in: query
+        name: size
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.MomentListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取动态列表
+      tags:
+      - moments
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新的动态
+      parameters:
+      - description: 动态信息
+        in: body
+        name: moment
+        required: true
+        schema:
+          $ref: '#/definitions/service.MomentCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.FrontendMoment'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 创建动态
+      tags:
+      - moments
+  /moments/{id}:
+    delete:
+      description: 删除指定ID的动态
+      parameters:
+      - description: 动态ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data: {}
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 删除动态
+      tags:
+      - moments
+    put:
+      consumes:
+      - application/json
+      description: 更新动态信息
+      parameters:
+      - description: 动态ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 动态信息
+        in: body
+        name: moment
+        required: true
+        schema:
+          $ref: '#/definitions/service.MomentUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.FrontendMoment'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 更新动态
+      tags:
+      - moments
+  /moments/{id}/like:
+    post:
+      description: 为指定ID的动态点赞
+      parameters:
+      - description: 动态ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.MomentLikeResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 点赞动态
+      tags:
+      - moments
+  /moments/{id}/public:
+    put:
+      consumes:
+      - application/json
+      description: 更新动态的公开状态
+      parameters:
+      - description: 动态ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: 公开状态
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/service.MomentPublicRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.FrontendMoment'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 更新动态公开状态
+      tags:
+      - moments
+  /system/dashboard/stats:
+    get:
+      description: 获取仪表盘的统计数据，用于展示系统的整体运营情况和数据概览
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.DashboardStats'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 获取仪表盘统计数据
+      tags:
+      - system
+  /system/info:
+    get:
+      description: 获取系统配置的基本信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.FrontendSystemInfo'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 获取系统信息
+      tags:
+      - system
+  /system/init:
+    get:
+      description: 检查系统是否已完成初始化
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: boolean
+                  type: object
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 检查系统初始化状态
+      tags:
+      - system
+    post:
+      consumes:
+      - application/json
+      description: 初始化系统，包括创建站点信息、用户信息和设置访问密码
+      parameters:
+      - description: 系统初始化参数
+        in: body
+        name: initSystem
+        required: true
+        schema:
+          $ref: '#/definitions/service.InitSystemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: boolean
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: 初始化系统
+      tags:
+      - system
+  /system/settings/site:
+    get:
+      description: 获取当前站点的设置信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 获取站点设置
+      tags:
+      - system
+    post:
+      consumes:
+      - application/json
+      description: 更新站点的设置信息
+      parameters:
+      - description: 站点设置
+        in: body
+        name: settings
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: 保存站点设置
+      tags:
+      - system
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: Get user info with token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: Get user info
+      tags:
+      - user
+  /user/token:
+    post:
+      consumes:
+      - application/json
+      description: User login with username and password to get token
+      parameters:
+      - description: User login credentials
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UserLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Response'
+      summary: Generate User Token
+      tags:
+      - user
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Get all users list
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: Get users list
+      tags:
+      - user
+  /users/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update user info
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User info
+        in: body
+        name: user
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: Update user info
+      tags:
+      - user
+  /users/{id}/avatars:
+    get:
+      consumes:
+      - application/json
+      description: Get user avatar history with pagination
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.Response'
+      security:
+      - OAuth2Password: []
+      summary: Get user avatar history
+      tags:
+      - user
+securityDefinitions:
+  OAuth2Password:
+    flow: password
+    scopes:
+      admin: Grants read and write access to administrative information
+      read: Grants read access
+      write: Grants write access
+    tokenUrl: /api/v1/user/token
+    type: oauth2
+swagger: "2.0"
