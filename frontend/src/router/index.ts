@@ -5,7 +5,13 @@ import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
 // 后台页面
 import AdminLayout from '@/views/admin/AdminLayout.vue'
+// 内容管理子页面
+import AlbumsManagement from '@/views/admin/content/albums/AlbumsManagementView.vue'
+import AnniversariesManagement from '@/views/admin/content/anniversaries/AnniversariesManagementView.vue'
 import ContentView from '@/views/admin/content/ContentView.vue'
+import MomentsManagement from '@/views/admin/content/moments/MomentsManagementView.vue'
+import PlacesManagement from '@/views/admin/content/places/PlacesManagementView.vue'
+import WishesManagement from '@/views/admin/content/wishes/WishesManagementView.vue'
 import DashboardView from '@/views/admin/DashboardView.vue'
 import SettingsView from '@/views/admin/SettingsView.vue'
 import UsersView from '@/views/admin/users/UsersView.vue'
@@ -91,6 +97,34 @@ const router = createRouter({
               path: 'content',
               name: 'admin-content',
               component: ContentView,
+              redirect: '/admin/content/moments',
+              children: [
+                {
+                  path: 'moments',
+                  name: 'admin-content-moments',
+                  component: MomentsManagement,
+                },
+                {
+                  path: 'anniversaries',
+                  name: 'admin-content-anniversaries',
+                  component: AnniversariesManagement,
+                },
+                {
+                  path: 'places',
+                  name: 'admin-content-places',
+                  component: PlacesManagement,
+                },
+                {
+                  path: 'albums',
+                  name: 'admin-content-albums',
+                  component: AlbumsManagement,
+                },
+                {
+                  path: 'wishes',
+                  name: 'admin-content-wishes',
+                  component: WishesManagement,
+                },
+              ],
             },
             {
               path: 'settings',

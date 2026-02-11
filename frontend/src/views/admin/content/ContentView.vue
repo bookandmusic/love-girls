@@ -1,15 +1,14 @@
 <template>
   <div class="h-full flex flex-col">
-    <h3 class="text-2xl font-bold text-gray-800 mb-6">{{ pageTitle }}</h3>
-
-    <!-- 标签页 -->
+    <!-- 标签页导航 -->
     <div class="h-full flex-1 flex flex-col min-h-0">
       <!-- PC端标签页导航 -->
       <div class="border-b border-gray-200 flex justify-between items-center">
         <nav class="-mb-px flex space-x-2 md:space-x-8" aria-label="Tabs">
-          <button
-            v-for="tab in tabs"
+          <router-link
+            v-for="tab in currentTabs"
             :key="tab.name"
+            :to="tab.path"
             :class="[
               tab.current
                 ? 'border-[#CCA4E3] text-[#FFB61E]'
@@ -17,32 +16,18 @@
               'whitespace-nowrap py-2 md:py-4 px-1 md:px-3 border-b-2 font-medium text-sm',
             ]"
             :aria-current="tab.current ? 'page' : undefined"
-            @click="switchTab(tab.name)"
           >
             <BaseIcon :name="tab.icon" size="w-6 h-6" />
-          </button>
+          </router-link>
         </nav>
         <button v-if="currentTab !== 'wishes'" @click="handleAddClick">
           <BaseIcon name="add" size="w-6 h-6" color="text-[#FFB61E]" />
         </button>
       </div>
 
-      <!-- 标签页内容区域 -->
+      <!-- 路由视图内容区域 -->
       <div class="h-full flex flex-1 flex-col pt-2 min-h-0">
-        <!-- 动态管理 -->
-        <MomentsManagement v-if="currentTab === 'moments'" :trigger-add="addTrigger" />
-
-        <!-- 纪念日管理 -->
-        <AnniversariesManagement v-if="currentTab === 'anniversaries'" :trigger-add="addTrigger" />
-
-        <!-- 旅游地点管理 -->
-        <PlacesManagement v-if="currentTab === 'places'" :trigger-add="addTrigger" />
-
-        <!-- 相册管理 -->
-        <AlbumsManagement v-if="currentTab === 'albums'" :trigger-add="addTrigger" />
-
-        <!-- 访客祝福管理 -->
-        <WishesManagement v-if="currentTab === 'wishes'" />
+        <router-view />
       </div>
     </div>
   </div>
@@ -50,39 +35,48 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import BaseIcon from '@/components/ui/BaseIcon.vue'
-import { useAddTrigger } from '@/utils/useAddTrigger'
-import AlbumsManagement from '@/views/admin/content/components/AlbumsManagement.vue'
-import AnniversariesManagement from '@/views/admin/content/components/AnniversariesManagement.vue'
-import MomentsManagement from '@/views/admin/content/components/MomentsManagement.vue'
-import PlacesManagement from '@/views/admin/content/components/PlacesManagement.vue'
-import WishesManagement from '@/views/admin/content/components/WishesManagement.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 // 定义标签页
 const tabs = ref([
-  { name: 'moments', label: '动态', current: true, icon: 'moment' },
-  { name: 'anniversaries', label: '纪念日', current: false, icon: 'anniversary' },
-  { name: 'places', label: '足迹', current: false, icon: 'place' },
-  { name: 'albums', label: '相册', current: false, icon: 'camera' },
-  { name: 'wishes', label: '留言', current: false, icon: 'wish' },
+  { name: 'moments', label: '动态', path: '/admin/content/moments', icon: 'moment' },
+  {
+    name: 'anniversaries',
+    label: '纪念日',
+    path: '/admin/content/anniversaries',
+    icon: 'anniversary',
+  },
+  { name: 'places', label: '足迹', path: '/admin/content/places', icon: 'place' },
+  { name: 'albums', label: '相册', path: '/admin/content/albums', icon: 'camera' },
+  { name: 'wishes', label: '留言', path: '/admin/content/wishes', icon: 'wish' },
 ])
 
-const currentTab = ref('moments')
-
-const { trigger: addTrigger, fire: handleAddClick } = useAddTrigger()
-
-// 添加计算页面标题的方法
-const pageTitle = computed(() => {
-  const currentTabInfo = tabs.value.find(tab => tab.name === currentTab.value)
-  return `${currentTabInfo?.label}管理`
+// 计算当前标签页
+const currentTab = computed(() => {
+  const path = route.path
+  const currentTabInfo = tabs.value.find(tab => tab.path === path)
+  return currentTabInfo?.name || 'moments'
 })
 
-// 切换标签页
-const switchTab = (tabName: string) => {
-  currentTab.value = tabName
-  tabs.value.forEach(tab => {
-    tab.current = tab.name === tabName
-  })
+// 根据路由计算当前标签页状态
+const currentTabs = computed(() => {
+  const path = route.path
+  return tabs.value.map(tab => ({
+    ...tab,
+    current: tab.path === path,
+  }))
+})
+
+// 处理添加按钮点击
+const handleAddClick = () => {
+  if (currentTab.value !== 'wishes') {
+    // 导航到当前页面并添加查询参数
+    router.push({ path: route.path, query: { action: 'add' } })
+  }
 }
 </script>
