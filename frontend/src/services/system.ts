@@ -5,6 +5,7 @@ import type { FileInfo } from './upload'
 export interface SiteSettings {
   siteTitle: string
   siteDescription: string
+  startDate: string
 }
 
 // 定义系统初始化请求参数
