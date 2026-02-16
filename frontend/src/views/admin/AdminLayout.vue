@@ -1,18 +1,26 @@
 <template>
-  <div class="admin-layout flex flex-col h-screen p-2">
+  <div class="admin-layout flex flex-col h-screen">
     <!-- 顶部导航栏 -->
-    <header class="flex-shrink-0 h-18 pb-2">
-      <div
-        class="generic-card mx-auto p-4 sm:px-6 lg:px-8 h-full flex items-center justify-between"
-      >
-        <div class="flex items-center">
-          <h1 class="text-xl font-(family-name:--font-signature) text-gray-900">后台管理</h1>
+    <header class="admin-header flex-shrink-0 p-2 pb-2">
+      <div class="admin-card mx-auto p-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-3xl">💕</span>
+          <h1 class="text-3xl font-bold font-(family-name:--font-signature) admin-text-primary">
+            后台管理
+          </h1>
         </div>
 
         <div class="flex items-center space-x-4">
           <!-- 移动端菜单按钮 -->
-          <button @click="showMobileMenu = true" class="lg:hidden p-1 rounded-full text-[#FF7500]">
-            <BaseIcon :name="showMobileMenu ? 'menu-right' : 'menu-left'" size="w-6 h-6" />
+          <button
+            @click="showMobileMenu = true"
+            class="lg:hidden p-1 rounded-full hover:bg-white/40 transition"
+          >
+            <BaseIcon
+              :name="showMobileMenu ? 'menu-right' : 'menu-left'"
+              size="w-6 h-6"
+              color="#f0ada0"
+            />
           </button>
 
           <!-- 用户头像/用户名按钮（所有设备） -->
@@ -22,11 +30,9 @@
               @click="showConfirmDialog = true"
             >
               <span
-                class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-indigo-100"
+                class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gradient-to-br from-[#f0ada0] to-[#d89388] text-white font-bold"
               >
-                <span class="text-gray-700 font-medium text-sm leading-none">
-                  {{ authStore.userInfo?.userName?.charAt(0).toUpperCase() || 'U' }}
-                </span>
+                {{ authStore.userInfo?.userName?.charAt(0).toUpperCase() || 'U' }}
               </span>
             </button>
           </div>
@@ -42,17 +48,20 @@
         @cancel="showConfirmDialog = false"
       >
         <template #content>
-          <p class="text-gray-700">
+          <p class="admin-text-primary">
             确定要退出登录吗，{{ authStore.userInfo?.userName || '用户' }}？
           </p>
         </template>
         <template #actions>
           <div class="w-full flex">
-            <div class="flex-1 text-center cursor-pointer" @click="showConfirmDialog = false">
+            <div
+              class="flex-1 text-center cursor-pointer admin-text-secondary hover:admin-text-primary transition"
+              @click="showConfirmDialog = false"
+            >
               取消
             </div>
             <div
-              class="w-1/2 border-l border-gray-300 text-center cursor-pointer text-red-500"
+              class="w-1/2 border-l border-white/60 text-center cursor-pointer text-[#E8A8A8] hover:text-[#d89898] transition"
               @click="handleLogout"
             >
               退出
@@ -62,20 +71,25 @@
       </GenericDialog>
     </header>
 
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden px-2">
       <!-- 侧边栏 -->
       <aside class="w-64 flex-shrink-0 hidden lg:block pr-2">
-        <div class="generic-card p-4 h-full w-full">
+        <div class="admin-sidebar admin-card p-4 h-full w-full">
           <nav class="mt-5 px-2">
-            <div class="space-y-1">
+            <div class="space-y-2">
               <router-link
                 v-for="item in menuItems"
                 :key="item.path"
                 :to="item.path"
-                class="text-[var(--primary-color)] hover:bg-[var(--primary-light)] group flex items-center px-2 py-2 text-md font-medium rounded-md transition-all duration-200"
-                :class="route.path === item.path ? 'bg-[var(--primary-color)] text-white' : ''"
+                class="admin-sidebar-item group flex items-center px-3 py-3 text-md font-medium rounded-xl transition-all duration-200"
+                :class="isActiveMenuItem(item.path) ? 'active' : ''"
               >
-                <component :is="item.icon" :size="24" class="mr-3" />
+                <BaseIcon
+                  :name="item.icon"
+                  size="w-6 h-6"
+                  :color="isActiveMenuItem(item.path) ? '#ffffff' : '#f0ada0'"
+                  class="mr-3"
+                />
                 {{ item.label }}
               </router-link>
             </div>
@@ -83,9 +97,9 @@
         </div>
       </aside>
 
-      <!-- 主内容区域，移除标题和按钮 -->
+      <!-- 主内容区域 -->
       <main class="flex-1 flex flex-col overflow-hidden">
-        <div class="flex-1 h-full w-full generic-card p-4 overflow-hidden">
+        <div class="admin-card flex-1 h-full w-full p-4 overflow-hidden">
           <router-view />
         </div>
       </main>
@@ -93,29 +107,39 @@
 
     <!-- 移动端抽屉菜单 - 从左侧弹出 -->
     <div v-if="showMobileMenu" class="fixed inset-0 z-50 lg:hidden" @click="showMobileMenu = false">
-      <!-- 背景遮罩 -->
-      <div class="fixed inset-0 bg-white/50 bg-opacity-80"></div>
+      <div class="fixed inset-0 bg-black/20 backdrop-blur-sm"></div>
 
-      <!-- 抽屉内容 - 从左侧滑入 -->
-      <div class="fixed top-0 left-0 h-full w-64 max-w-sm bg-[#EEEDEE]" @click.stop>
-        <div class="p-4">
-          <div class="flex justify-end mb-4">
-            <button @click="showMobileMenu = false" class="text-[var(--primary-color)]">
-              <BaseIcon name="close" size="w-6 h-6" color="text-[#FFB61E]" />
+      <div class="fixed top-0 left-0 h-full w-64 max-w-sm admin-layout" @click.stop>
+        <div class="p-4 h-full">
+          <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">💕</span>
+              <h2 class="text-lg font-(family-name:--font-signature) admin-text-primary">菜单</h2>
+            </div>
+            <button
+              @click="showMobileMenu = false"
+              class="p-2 rounded-full hover:bg-white/40 transition"
+            >
+              <BaseIcon name="close" size="w-5 h-5" color="#f0ada0" />
             </button>
           </div>
 
-          <nav class="mt-5">
-            <div class="space-y-1">
+          <nav>
+            <div class="space-y-2">
               <router-link
                 v-for="item in menuItems"
                 :key="item.path"
                 :to="item.path"
-                class="text-[var(--primary-color)] group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-all duration-200"
-                :class="route.path === item.path ? 'bg-[var(--primary-color)] text-white' : ''"
+                class="admin-sidebar-item group flex items-center px-3 py-3 text-md font-medium rounded-xl transition-all duration-200"
+                :class="isActiveMenuItem(item.path) ? 'active' : ''"
                 @click="showMobileMenu = false"
               >
-                <BaseIcon :name="item.icon" class="mr-2" size="w-6 h-6" />
+                <BaseIcon
+                  :name="item.icon"
+                  size="w-6 h-6"
+                  :color="isActiveMenuItem(item.path) ? '#ffffff' : '#f0ada0'"
+                  class="mr-3"
+                />
                 {{ item.label }}
               </router-link>
             </div>
@@ -127,6 +151,8 @@
 </template>
 
 <script setup lang="ts">
+import '@/views/admin/styles/admin-theme.css'
+
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -153,7 +179,13 @@ const handleLogout = () => {
 const route = useRoute()
 const showMobileMenu = ref(false)
 
-// 定义菜单项数组
+const isActiveMenuItem = (itemPath: string) => {
+  if (itemPath === '/admin/content') {
+    return route.path.startsWith('/admin/content')
+  }
+  return route.path === itemPath
+}
+
 const menuItems = [
   {
     path: '/admin/dashboard',

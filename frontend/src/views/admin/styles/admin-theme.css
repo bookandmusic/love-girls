@@ -1,0 +1,170 @@
+/* 后台管理系统专用样式 - 与前台樱花主题统一 */
+
+.admin-layout {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fff8fa 0%, #fafdf9 50%, #f0f7f0 100%);
+}
+
+.admin-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.admin-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.admin-btn {
+  background: linear-gradient(135deg, #f0ada0 0%, #d89388 100%);
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  padding: 10px 24px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(240, 173, 160, 0.3);
+}
+
+.admin-btn:hover {
+  background: linear-gradient(135deg, #d89388 0%, #c88378 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(240, 173, 160, 0.4);
+}
+
+.admin-btn:active {
+  transform: translateY(0);
+}
+
+.admin-btn-secondary {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #5a4a4a;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.admin-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.admin-btn-danger {
+  background: #e8a8a8;
+  box-shadow: 0 2px 8px rgba(232, 168, 168, 0.3);
+}
+
+.admin-btn-danger:hover {
+  background: #d89898;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 14px;
+  color: #5a4a4a;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.admin-input:focus {
+  border-color: rgba(240, 173, 160, 0.6);
+  box-shadow: 0 0 0 3px rgba(240, 173, 160, 0.1);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.admin-input::placeholder {
+  color: #b5a5a5;
+}
+
+.admin-sidebar {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.admin-sidebar-item {
+  color: #5a4a4a;
+  transition: all 0.2s ease;
+}
+
+.admin-sidebar-item:hover {
+  background: rgba(240, 173, 160, 0.1);
+}
+
+.admin-sidebar-item.active {
+  background: linear-gradient(135deg, rgba(240, 173, 160, 0.8) 0%, rgba(216, 147, 136, 0.8) 100%);
+  color: white;
+}
+
+.admin-header {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.admin-pagination-btn {
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #5a4a4a;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.admin-pagination-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.admin-pagination-btn.active {
+  background: linear-gradient(135deg, #f0ada0 0%, #d89388 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.admin-pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-stat-card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0ada0 0%, #d89388 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.admin-text-primary {
+  color: #5a4a4a;
+}
+
+.admin-text-secondary {
+  color: #8b7b7b;
+}
+
+.admin-text-muted {
+  color: #b5a5a5;
+}
+
+.admin-accent-green {
+  color: #7cb342;
+}

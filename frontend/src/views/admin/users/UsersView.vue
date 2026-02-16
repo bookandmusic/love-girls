@@ -1,6 +1,8 @@
 <template>
   <div class="admin-users">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6">情侣信息</h2>
+    <h2 class="text-2xl font-bold admin-text-primary mb-6 font-(family-name:--font-signature)">
+      情侣信息
+    </h2>
 
     <!-- PC端表格视图 -->
     <div class="hidden md:block">

@@ -1,6 +1,8 @@
 <template>
-  <div class="h-full w-full overflow-y-hidden flex flex-col">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6">数据概览</h2>
+  <div class="h-full w-full overflow-y-auto flex flex-col pb-4">
+    <h2 class="text-2xl font-bold admin-text-primary mb-6 font-(family-name:--font-signature)">
+      数据概览
+    </h2>
 
     <!-- 统计卡片 -->
     <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-6 mb-4">
@@ -77,7 +79,6 @@ import { dashboardApi, type DashboardData } from '@/services/dashboardApi'
 import { useUIStore } from '@/stores/ui'
 import { useToast } from '@/utils/toastUtils'
 
-// 统计数据
 const albumStats = ref({
   total: 0,
   totalPhotos: 0,
@@ -99,7 +100,6 @@ const wishStats = ref({
 const uiStore = useUIStore()
 const showToast = useToast()
 
-// 加载仪表盘数据
 const loadDashboardData = async () => {
   uiStore.setLoading(true)
   try {

@@ -1,6 +1,8 @@
 <template>
   <div class="h-full flex flex-col">
-    <h3 class="text-2xl font-bold text-gray-800 mb-6">留言管理</h3>
+    <h3 class="text-2xl font-bold admin-text-primary mb-6 font-(family-name:--font-signature)">
+      留言管理
+    </h3>
     <WishesManagement />
   </div>
 </template>
