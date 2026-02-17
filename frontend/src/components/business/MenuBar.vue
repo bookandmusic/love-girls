@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // 导入菜单图标
+import adminIcon from '@/assets/menu/admin.png'
 import anniversariesIcon from '@/assets/menu/anniversaries.png'
 import homeIcon from '@/assets/menu/home.png'
 import momentsIcon from '@/assets/menu/moments.png'
@@ -14,7 +15,10 @@ interface MenuItem {
   path: string
 }
 
-// 定义菜单项
+defineProps<{
+  isMobile?: boolean
+}>()
+
 const menuItems: MenuItem[] = [
   { icon: homeIcon, label: '首页', path: '/' },
   { icon: momentsIcon, label: '动态', path: '/moments' },
@@ -22,11 +26,8 @@ const menuItems: MenuItem[] = [
   { icon: placesIcon, label: '足迹', path: '/places' },
   { icon: anniversariesIcon, label: '纪念日', path: '/anniversaries' },
   { icon: wishesIcon, label: '祝福', path: '/wishes' },
+  { icon: adminIcon, label: '后台', path: '/admin' },
 ]
-
-defineProps<{
-  isMobile?: boolean
-}>()
 </script>
 
 <template>
@@ -47,7 +48,7 @@ defineProps<{
   </div>
 
   <!-- 手机端底部图标栏 -->
-  <div v-else class="md:hidden grid grid-cols-6 gap-3 py-3">
+  <div v-else class="md:hidden grid grid-cols-7 gap-2 py-3">
     <RouterLink v-for="(item, index) in menuItems" :key="index" :to="item.path">
       <div class="flex flex-col items-center cursor-pointer group">
         <img
