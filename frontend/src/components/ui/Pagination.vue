@@ -6,7 +6,7 @@
         :disabled="currentPage === 1"
         class="px-3 py-1 rounded-md bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/80"
       >
-        上一页
+        <BaseIcon name="left" size="w-5 h-5" color="#333333" />
       </button>
 
       <span class="px-3 py-1 flex items-center"> {{ currentPage }} / {{ totalPages }} </span>
@@ -16,13 +16,14 @@
         :disabled="currentPage === totalPages"
         class="px-3 py-1 rounded-md bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/80"
       >
-        下一页
+        <BaseIcon name="right" size="w-5 h-5" color="#333333" />
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import BaseIcon from '@/components/ui/BaseIcon.vue'
 // 添加 name 选项以符合多词组件名称规范
 defineOptions({
   name: 'CommonPagination',
