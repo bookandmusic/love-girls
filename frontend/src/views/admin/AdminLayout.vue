@@ -74,8 +74,8 @@
     <div class="flex flex-1 overflow-hidden px-2">
       <!-- 侧边栏 -->
       <aside class="w-64 flex-shrink-0 hidden lg:block pr-2">
-        <div class="admin-sidebar admin-card p-4 h-full w-full">
-          <nav class="mt-5 px-2">
+        <div class="admin-sidebar admin-card p-4 h-full w-full flex flex-col">
+          <nav class="mt-5 px-2 flex-1">
             <div class="space-y-2">
               <router-link
                 v-for="item in menuItems"
@@ -94,6 +94,24 @@
               </router-link>
             </div>
           </nav>
+          <div class="px-2 pb-4">
+            <div class="border-t border-white/30 pt-4">
+              <router-link
+                to="/"
+                class="flex items-center px-3 py-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-[#f0ada0]/20 to-transparent hover:from-[#f0ada0]/30"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-gradient-to-br from-[#f0ada0] to-[#d89388] flex items-center justify-center mr-3"
+                >
+                  <BaseIcon name="home" size="w-5 h-5" color="#ffffff" />
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold admin-text-primary">返回前台</div>
+                  <div class="text-xs admin-text-secondary">浏览网站首页</div>
+                </div>
+              </router-link>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -110,7 +128,7 @@
       <div class="fixed inset-0 bg-black/20 backdrop-blur-sm"></div>
 
       <div class="fixed top-0 left-0 h-full w-64 max-w-sm admin-layout" @click.stop>
-        <div class="p-4 h-full">
+        <div class="p-4 h-full flex flex-col">
           <div class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-2">
               <span class="text-2xl">💕</span>
@@ -124,7 +142,7 @@
             </button>
           </div>
 
-          <nav>
+          <nav class="flex-1">
             <div class="space-y-2">
               <router-link
                 v-for="item in menuItems"
@@ -144,6 +162,25 @@
               </router-link>
             </div>
           </nav>
+          <div class="pb-4">
+            <div class="border-t border-white/30 pt-4">
+              <router-link
+                to="/"
+                class="flex items-center px-3 py-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-[#f0ada0]/20 to-transparent hover:from-[#f0ada0]/30"
+                @click="showMobileMenu = false"
+              >
+                <div
+                  class="w-10 h-10 rounded-full bg-gradient-to-br from-[#f0ada0] to-[#d89388] flex items-center justify-center mr-3"
+                >
+                  <BaseIcon name="home" size="w-5 h-5" color="#ffffff" />
+                </div>
+                <div class="flex-1">
+                  <div class="text-sm font-semibold admin-text-primary">返回前台</div>
+                  <div class="text-xs admin-text-secondary">浏览网站首页</div>
+                </div>
+              </router-link>
+            </div>
+          </div>
         </div>
       </div>
     </div>
