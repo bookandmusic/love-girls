@@ -1,12 +1,12 @@
 <template>
   <div class="w-full h-screen flex flex-col">
-    <LoadingSpinner v-show="uiStore.loading" />
-    <div v-show="!uiStore.loading" class="flex-grow flex flex-col">
+    <div class="flex-grow flex flex-col">
       <WaveBackground :isPlaying="uiStore.playing" :waveColor="'#f0ada0'" class="flex-grow">
         <ToastNotification v-model:show="toast.show" :message="toast.message" :type="toast.type" />
         <RouterView />
       </WaveBackground>
     </div>
+    <LoadingSpinner v-show="uiStore.loading" />
   </div>
 </template>
 
