@@ -1,5 +1,11 @@
 <template>
-  <GenericDialog :open="open" title="编辑用户信息" @cancel="closeDialog" :loading="loading">
+  <GenericDialog
+    variant="admin"
+    :open="open"
+    title="编辑用户信息"
+    @cancel="closeDialog"
+    :loading="loading"
+  >
     <template #content>
       <!-- 用户名 -->
       <div>
@@ -103,6 +109,7 @@
 
   <!-- 确认对话框 -->
   <GenericDialog
+    variant="admin"
     :open="showConfirmDialog"
     title="确认保存"
     :loading="loading"

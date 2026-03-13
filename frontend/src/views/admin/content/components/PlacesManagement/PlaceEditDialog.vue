@@ -1,5 +1,6 @@
 <template>
   <GenericDialog
+    variant="admin"
     :open="open"
     :title="props.place?.id ? '编辑地点' : '添加地点'"
     @cancel="closeDialog"
@@ -132,6 +133,7 @@
 
   <!-- 确认对话框 -->
   <GenericDialog
+    variant="admin"
     :open="showConfirmDialog"
     title="确认保存"
     :loading="loading"

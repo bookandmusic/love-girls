@@ -1,189 +1,199 @@
 <template>
-  <div class="admin-layout flex flex-col h-screen">
-    <!-- 顶部导航栏 -->
-    <header class="admin-header flex-shrink-0 p-2 pb-2">
-      <div class="admin-card mx-auto p-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-3xl">💕</span>
-          <h1 class="text-3xl font-bold font-(family-name:--font-signature) admin-text-primary">
+  <div class="admin-layout flex flex-col h-screen overflow-hidden">
+    <!-- 顶部导航栏 - Ultra-thin 材质 -->
+    <header class="admin-header flex-shrink-0 z-50">
+      <div class="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl transition-transform cursor-default"> 💕 </span>
+          <h1
+            class="text-2xl font-bold font-(family-name:--font-signature) admin-text-primary tracking-tight"
+          >
             后台管理
           </h1>
         </div>
 
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
           <!-- 移动端菜单按钮 -->
           <button
             @click="showMobileMenu = true"
-            class="lg:hidden p-1 rounded-full hover:bg-white/40 transition"
+            class="lg:hidden p-2 rounded-full hover:bg-black/5 active:bg-black/10 transition-colors"
           >
-            <BaseIcon
-              :name="showMobileMenu ? 'menu-right' : 'menu-left'"
-              size="w-6 h-6"
-              color="#f0ada0"
-            />
+            <BaseIcon name="menu-right" size="w-6 h-6" color="var(--admin-accent-color)" />
           </button>
 
-          <!-- 用户头像/用户名按钮（所有设备） -->
-          <div class="relative">
-            <button
-              class="flex text-sm rounded-full focus:outline-none"
-              @click="showConfirmDialog = true"
+          <!-- 用户头像/用户名按钮 -->
+          <button
+            class="flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-black/5 active:bg-black/10 transition-all border border-transparent hover:border-white/40"
+            @click="showConfirmDialog = true"
+          >
+            <span
+              class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-br from-[#f0ada0] to-[#d89388] text-white font-bold shadow-sm"
             >
-              <span
-                class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gradient-to-br from-[#f0ada0] to-[#d89388] text-white font-bold"
-              >
-                {{ authStore.userInfo?.userName?.charAt(0).toUpperCase() || 'U' }}
-              </span>
-            </button>
-          </div>
+              {{ authStore.userInfo?.userName?.charAt(0).toUpperCase() || 'U' }}
+            </span>
+            <span class="hidden sm:inline text-sm font-medium admin-text-primary">
+              {{ authStore.userInfo?.userName || '管理员' }}
+            </span>
+          </button>
         </div>
       </div>
 
-      <!-- 退出确认对话框 -->
+      <!-- 退出确认对话框 - 保持 iOS Alert 风格覆盖 -->
       <GenericDialog
+        variant="admin"
         :open="showConfirmDialog"
         title="退出登录"
-        size-class="max-w-md"
+        size-class="max-w-xs"
         @update:open="showConfirmDialog = $event"
         @cancel="showConfirmDialog = false"
       >
         <template #content>
-          <p class="admin-text-primary">
-            确定要退出登录吗，{{ authStore.userInfo?.userName || '用户' }}？
-          </p>
+          <p class="text-center py-2 admin-text-secondary text-sm">确定要退出登录吗？</p>
         </template>
         <template #actions>
-          <div class="w-full flex">
-            <div
-              class="flex-1 text-center cursor-pointer admin-text-secondary hover:admin-text-primary transition"
+          <div class="w-full flex border-t border-black/5">
+            <button
+              class="flex-1 py-3 text-center admin-text-primary font-medium hover:bg-black/5 transition-colors"
               @click="showConfirmDialog = false"
             >
               取消
-            </div>
-            <div
-              class="w-1/2 border-l border-white/60 text-center cursor-pointer text-[#E8A8A8] hover:text-[#d89898] transition"
+            </button>
+            <button
+              class="flex-1 py-3 border-l border-black/5 text-center text-[#ff3b30] font-semibold hover:bg-black/5 transition-colors"
               @click="handleLogout"
             >
               退出
-            </div>
+            </button>
           </div>
         </template>
       </GenericDialog>
     </header>
 
-    <div class="flex flex-1 overflow-hidden px-2">
-      <!-- 侧边栏 -->
-      <aside class="w-64 flex-shrink-0 hidden lg:block pr-2">
-        <div class="admin-sidebar admin-card p-4 h-full w-full flex flex-col">
-          <nav class="mt-5 px-2 flex-1">
-            <div class="space-y-2">
-              <router-link
-                v-for="item in menuItems"
-                :key="item.path"
-                :to="item.path"
-                class="admin-sidebar-item group flex items-center px-3 py-3 text-md font-medium rounded-xl transition-all duration-200"
-                :class="isActiveMenuItem(item.path) ? 'active' : ''"
-              >
-                <BaseIcon
-                  :name="item.icon"
-                  size="w-6 h-6"
-                  :color="isActiveMenuItem(item.path) ? '#ffffff' : '#f0ada0'"
-                  class="mr-3"
-                />
-                {{ item.label }}
-              </router-link>
+    <div class="flex flex-1 overflow-hidden">
+      <!-- 侧边栏 - iPadOS 风格 -->
+      <aside
+        class="w-64 flex-shrink-0 hidden lg:flex flex-col border-r border-black/5 bg-white/20 backdrop-blur-md"
+      >
+        <nav class="flex-1 mt-6 px-4 space-y-1">
+          <router-link
+            v-for="item in menuItems"
+            :key="item.path"
+            :to="item.path"
+            class="admin-sidebar-item group flex items-center px-4 py-3 text-sm font-semibold transition-all duration-200"
+            :class="isActiveMenuItem(item.path) ? 'active' : 'hover:bg-black/5'"
+          >
+            <BaseIcon
+              :name="item.icon"
+              size="w-5 h-5"
+              :color="isActiveMenuItem(item.path) ? '#ffffff' : 'var(--admin-accent-color)'"
+              class="mr-3"
+            />
+            {{ item.label }}
+          </router-link>
+        </nav>
+
+        <div class="p-4 border-t border-black/5">
+          <router-link
+            to="/"
+            class="flex items-center p-3 rounded-2xl bg-white/40 hover:bg-white/60 transition-all group"
+          >
+            <div
+              class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f0ada0] to-[#d89388] flex items-center justify-center mr-3 shadow-sm transition-transform"
+            >
+              <BaseIcon name="home" size="w-5 h-5" color="#ffffff" />
             </div>
-          </nav>
-          <div class="px-2 pb-4">
-            <div class="border-t border-white/30 pt-4">
-              <router-link
-                to="/"
-                class="flex items-center px-3 py-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-[#f0ada0]/20 to-transparent hover:from-[#f0ada0]/30"
-              >
-                <div
-                  class="w-10 h-10 rounded-full bg-gradient-to-br from-[#f0ada0] to-[#d89388] flex items-center justify-center mr-3"
-                >
-                  <BaseIcon name="home" size="w-5 h-5" color="#ffffff" />
-                </div>
-                <div class="flex-1">
-                  <div class="text-sm font-semibold admin-text-primary">返回前台</div>
-                  <div class="text-xs admin-text-secondary">浏览网站首页</div>
-                </div>
-              </router-link>
+            <div class="flex-1">
+              <div class="text-sm font-bold admin-text-primary">返回前台</div>
+              <div class="text-xs admin-text-secondary">浏览首页</div>
             </div>
-          </div>
+          </router-link>
         </div>
       </aside>
 
       <!-- 主内容区域 -->
-      <main class="flex-1 flex flex-col overflow-hidden">
-        <div class="admin-card flex-1 h-full w-full p-4 overflow-hidden">
-          <router-view />
+      <main class="flex-1 flex flex-col relative bg-gray-50/30 overflow-hidden">
+        <div class="flex-1 p-4 sm:p-6 overflow-y-auto ios-touch-scroll">
+          <router-view v-slot="{ Component }">
+            <transition name="fade-slide" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
         </div>
       </main>
     </div>
 
-    <!-- 移动端抽屉菜单 - 从左侧弹出 -->
-    <div v-if="showMobileMenu" class="fixed inset-0 z-50 lg:hidden" @click="showMobileMenu = false">
-      <div class="fixed inset-0 bg-black/20 backdrop-blur-sm"></div>
+    <!-- 移动端菜单 - iOS Bottom Sheet 风格 -->
+    <Transition name="sheet">
+      <div v-if="showMobileMenu" class="fixed inset-0 z-[100] lg:hidden">
+        <!-- 背景遮罩 -->
+        <div
+          class="absolute inset-0 bg-black/30 backdrop-blur-sm"
+          @click="showMobileMenu = false"
+        ></div>
 
-      <div class="fixed top-0 left-0 h-full w-64 max-w-sm admin-layout" @click.stop>
-        <div class="p-4 h-full flex flex-col">
-          <div class="flex justify-between items-center mb-6">
+        <!-- Sheet 内容 -->
+        <div
+          class="absolute bottom-0 inset-x-0 bg-white/98 backdrop-blur-2xl rounded-t-[32px] p-6 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] transition-transform"
+        >
+          <!-- 顶部把手 -->
+          <div class="w-12 h-1.5 bg-black/10 rounded-full mx-auto mb-6"></div>
+
+          <div class="flex justify-between items-center mb-6 px-2">
             <div class="flex items-center gap-2">
               <span class="text-2xl">💕</span>
-              <h2 class="text-lg font-(family-name:--font-signature) admin-text-primary">菜单</h2>
+              <h2 class="text-xl font-bold admin-text-primary">菜单</h2>
             </div>
             <button
               @click="showMobileMenu = false"
-              class="p-2 rounded-full hover:bg-white/40 transition"
+              class="p-2 rounded-full bg-black/5 hover:bg-black/10"
             >
-              <BaseIcon name="close" size="w-5 h-5" color="#f0ada0" />
+              <BaseIcon name="close" size="w-5 h-5" color="var(--admin-accent-secondary)" />
             </button>
           </div>
 
-          <nav class="flex-1">
-            <div class="space-y-2">
-              <router-link
-                v-for="item in menuItems"
-                :key="item.path"
-                :to="item.path"
-                class="admin-sidebar-item group flex items-center px-3 py-3 text-md font-medium rounded-xl transition-all duration-200"
-                :class="isActiveMenuItem(item.path) ? 'active' : ''"
-                @click="showMobileMenu = false"
-              >
-                <BaseIcon
-                  :name="item.icon"
-                  size="w-6 h-6"
-                  :color="isActiveMenuItem(item.path) ? '#ffffff' : '#f0ada0'"
-                  class="mr-3"
-                />
-                {{ item.label }}
-              </router-link>
-            </div>
+          <nav class="grid grid-cols-2 gap-4 mb-8">
+            <router-link
+              v-for="item in menuItems"
+              :key="item.path"
+              :to="item.path"
+              class="flex flex-col items-center justify-center p-4 rounded-2xl transition-all"
+              :class="
+                isActiveMenuItem(item.path)
+                  ? 'bg-[var(--admin-accent-color)] text-white shadow-lg shadow-pink-200'
+                  : 'bg-white/50 border border-black/5'
+              "
+              @click="showMobileMenu = false"
+            >
+              <BaseIcon
+                :name="item.icon"
+                size="w-8 h-8"
+                :color="isActiveMenuItem(item.path) ? '#ffffff' : 'var(--admin-accent-color)'"
+                class="mb-2"
+              />
+              <span class="text-sm font-bold">{{ item.label }}</span>
+            </router-link>
           </nav>
-          <div class="pb-4">
-            <div class="border-t border-white/30 pt-4">
-              <router-link
-                to="/"
-                class="flex items-center px-3 py-3 rounded-xl transition-all duration-200 bg-gradient-to-r from-[#f0ada0]/20 to-transparent hover:from-[#f0ada0]/30"
-                @click="showMobileMenu = false"
+
+          <div class="pb-safe">
+            <router-link
+              to="/"
+              class="flex items-center p-4 rounded-2xl bg-black/5 active:bg-black/10 transition-all"
+              @click="showMobileMenu = false"
+            >
+              <div
+                class="w-10 h-10 rounded-full bg-gradient-to-br from-[#f0ada0] to-[#d89388] flex items-center justify-center mr-3"
               >
-                <div
-                  class="w-10 h-10 rounded-full bg-gradient-to-br from-[#f0ada0] to-[#d89388] flex items-center justify-center mr-3"
-                >
-                  <BaseIcon name="home" size="w-5 h-5" color="#ffffff" />
-                </div>
-                <div class="flex-1">
-                  <div class="text-sm font-semibold admin-text-primary">返回前台</div>
-                  <div class="text-xs admin-text-secondary">浏览网站首页</div>
-                </div>
-              </router-link>
-            </div>
+                <BaseIcon name="home" size="w-5 h-5" color="#ffffff" />
+              </div>
+              <div class="flex-1">
+                <div class="text-sm font-bold admin-text-primary">返回前台首页</div>
+              </div>
+              <BaseIcon name="menu-right" size="w-5 h-5" color="var(--admin-text-secondary)" />
+            </router-link>
           </div>
         </div>
       </div>
-    </div>
+    </Transition>
   </div>
 </template>
 
@@ -246,3 +256,47 @@ const menuItems = [
   },
 ]
 </script>
+
+<style scoped>
+/* 页面转场动画 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Bottom Sheet 动画 */
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: all 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sheet-enter-from .bg-white\/90 {
+  transform: translateY(100%);
+}
+
+.sheet-enter-from .absolute.inset-0 {
+  opacity: 0;
+}
+
+.sheet-leave-to .bg-white\/90 {
+  transform: translateY(100%);
+}
+
+.sheet-leave-to .absolute.inset-0 {
+  opacity: 0;
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+</style>

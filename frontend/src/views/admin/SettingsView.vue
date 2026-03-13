@@ -1,41 +1,47 @@
 <template>
-  <div class="h-full w-full overflow-y-auto flex flex-col pb-4">
+  <div class="flex flex-col pb-10">
     <h2 class="text-2xl font-bold admin-text-primary mb-6 font-(family-name:--font-signature)">
       站点设置
     </h2>
 
-    <div class="admin-card p-6 mb-6">
-      <h3 class="text-lg font-semibold admin-text-primary mb-4">系统信息</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="flex justify-between items-center">
-          <span class="text-sm admin-text-secondary">系统版本</span>
-          <span class="text-sm font-medium admin-text-primary">1.0.0</span>
+    <div class="admin-card overflow-hidden mb-8">
+      <div class="px-6 py-4 border-b border-black/5 bg-black/5">
+        <h3 class="text-sm font-bold admin-text-secondary uppercase tracking-wider">系统信息</h3>
+      </div>
+      <div class="divide-y divide-black/5">
+        <div class="px-6 py-4 flex justify-between items-center hover:bg-black/5 transition-colors">
+          <span class="text-sm font-medium admin-text-primary">系统版本</span>
+          <span class="text-sm font-bold admin-text-secondary bg-white/50 px-2 py-0.5 rounded-md"
+            >1.0.0</span
+          >
         </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm admin-text-secondary">数据库版本</span>
-          <span class="text-sm font-medium admin-text-primary">SQLite 3.38</span>
+        <div class="px-6 py-4 flex justify-between items-center hover:bg-black/5 transition-colors">
+          <span class="text-sm font-medium admin-text-primary">数据库版本</span>
+          <span class="text-sm font-bold admin-text-secondary bg-white/50 px-2 py-0.5 rounded-md"
+            >SQLite 3.38</span
+          >
         </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm admin-text-secondary">服务器环境</span>
-          <span class="text-sm font-medium admin-text-primary">生产环境</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-sm admin-text-secondary">最后备份时间</span>
-          <span class="text-sm font-medium admin-text-primary">2023-08-25 14:30</span>
+        <div class="px-6 py-4 flex justify-between items-center hover:bg-black/5 transition-colors">
+          <span class="text-sm font-medium admin-text-primary">服务器环境</span>
+          <span class="text-sm font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-md"
+            >生产环境</span
+          >
         </div>
       </div>
     </div>
 
-    <div class="admin-card p-6">
-      <div class="mb-6">
-        <h3 class="text-lg font-semibold admin-text-primary py-2">基本信息</h3>
-        <p class="text-sm admin-text-muted">配置站点的基本信息</p>
+    <div class="admin-card overflow-hidden">
+      <div class="px-6 py-4 border-b border-black/5 bg-black/5 flex justify-between items-center">
+        <div>
+          <h3 class="text-sm font-bold admin-text-secondary uppercase tracking-wider">基本信息</h3>
+          <p class="text-xs admin-text-muted mt-0.5">配置站点的基本信息</p>
+        </div>
       </div>
 
-      <form class="space-y-6">
-        <div>
-          <label for="site-title" class="block text-sm font-medium admin-text-primary mb-2">
-            站点标题 <span class="text-[#E8A8A8]">*</span>
+      <form class="p-6 space-y-6">
+        <div class="space-y-2">
+          <label for="site-title" class="block text-sm font-bold admin-text-primary px-1">
+            站点标题 <span class="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -46,8 +52,8 @@
           />
         </div>
 
-        <div>
-          <label for="site-description" class="block text-sm font-medium admin-text-primary mb-2">
+        <div class="space-y-2">
+          <label for="site-description" class="block text-sm font-bold admin-text-primary px-1">
             站点描述
           </label>
           <input
@@ -59,21 +65,26 @@
           />
         </div>
 
-        <div>
-          <label for="start-date" class="block text-sm font-medium admin-text-primary mb-2">
+        <div class="space-y-2">
+          <label for="start-date" class="block text-sm font-bold admin-text-primary px-1">
             故事开始日期
           </label>
-          <input type="date" id="start-date" v-model="settings.startDate" class="admin-input" />
+          <div class="relative">
+            <input type="date" id="start-date" v-model="settings.startDate" class="admin-input" />
+          </div>
         </div>
 
-        <div class="pt-4 border-t border-white/60 flex gap-4">
-          <button type="button" @click="resetForm" class="admin-btn-secondary flex-1">重置</button>
-          <button type="submit" @click="confirmSave" class="admin-btn flex-1">保存设置</button>
+        <div class="pt-6 border-t border-black/5 flex gap-4">
+          <button type="button" @click="resetForm" class="admin-btn-secondary flex-1 py-3">
+            重置
+          </button>
+          <button type="submit" @click="confirmSave" class="admin-btn flex-1 py-3">保存设置</button>
         </div>
       </form>
     </div>
 
     <GenericDialog
+      variant="admin"
       :open="showConfirmDialog"
       title="保存确认"
       :loading="uiStore.loading"

@@ -1,5 +1,11 @@
 <template>
-  <GenericDialog :open="open" :title="album?.name" @cancel="closeDialog" :loading="loading">
+  <GenericDialog
+    variant="admin"
+    :open="open"
+    :title="album?.name"
+    @cancel="closeDialog"
+    :loading="loading"
+  >
     <template #content>
       <div class="space-y-4 h-full">
         <div class="flex flex-col h-full">
@@ -74,6 +80,7 @@
 
   <!-- 确认对话框 - 设置封面 -->
   <GenericDialog
+    variant="admin"
     :open="showConfirmDialog"
     title="确认设置封面"
     :loading="loading"
@@ -97,6 +104,7 @@
 
   <!-- 确认对话框 - 删除照片 -->
   <GenericDialog
+    variant="admin"
     :open="!!photoToDelete"
     title="确认删除照片"
     :loading="loading"

@@ -1,11 +1,14 @@
 // 相册相关接口
 import type { MockMethod } from 'vite-plugin-mock'
 
+import type { FileInfo } from '../services/upload'
+
 export interface Photo {
   id: number
   albumId: number
-  url: string
-  thumbnailUrl?: string
+  file?: FileInfo
+  alt?: string
+  createdAt: string
 }
 // 定义相册类型
 interface Album {
@@ -32,9 +35,14 @@ const mockAlbums: Album[] = [
     description: '北京之旅',
     coverImage: {
       id: 1,
-      url: 'https://picsum.photos/600/400?random=2001',
-      thumbnailUrl: 'https://picsum.photos/300/200?random=2001',
       albumId: 1,
+      file: {
+        id: 1,
+        url: 'https://picsum.photos/600/400?random=2001',
+        thumbnail: 'https://picsum.photos/300/200?random=2001',
+        name: 'cover1.jpg',
+      },
+      createdAt: '2023-05-01',
     },
     createdAt: '2023-05-01',
     photoCount: 24,
@@ -45,9 +53,14 @@ const mockAlbums: Album[] = [
     description: '上海外滩',
     coverImage: {
       id: 2,
-      url: 'https://picsum.photos/600/400?random=2002',
-      thumbnailUrl: 'https://picsum.photos/300/200?random=2002',
       albumId: 2,
+      file: {
+        id: 2,
+        url: 'https://picsum.photos/600/400?random=2002',
+        thumbnail: 'https://picsum.photos/300/200?random=2002',
+        name: 'cover2.jpg',
+      },
+      createdAt: '2023-08-15',
     },
     createdAt: '2023-08-15',
     photoCount: 18,
@@ -58,9 +71,14 @@ const mockAlbums: Album[] = [
     description: '杭州西湖',
     coverImage: {
       id: 3,
-      url: 'https://picsum.photos/600/400?random=2003',
-      thumbnailUrl: 'https://picsum.photos/300/200?random=2003',
       albumId: 3,
+      file: {
+        id: 3,
+        url: 'https://picsum.photos/600/400?random=2003',
+        thumbnail: 'https://picsum.photos/300/200?random=2003',
+        name: 'cover3.jpg',
+      },
+      createdAt: '2024-03-20',
     },
     createdAt: '2024-03-20',
     photoCount: 32,

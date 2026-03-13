@@ -9,17 +9,24 @@
         @edit="editAnniversary"
         @delete="confirmDelete = $event"
       />
-    </ul>
 
-    <!-- 分页 -->
-    <div class="pt-3 flex-shrink-0">
-      <Pagination
-        :current-page="currentPage"
-        :total-pages="totalPages"
-        @prev="handlePrevPage"
-        @next="handleNextPage"
-      />
-    </div>
+      <!-- 观测点 -->
+      <div
+        ref="loadMoreTrigger"
+        class="py-4 flex flex-col items-center justify-center text-gray-500 text-sm"
+      >
+        <template v-if="uiStore.loading && currentPage > 1">
+          <div
+            class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500 mb-2"
+            style="border-color: var(--primary-color) transparent transparent transparent"
+          ></div>
+          <span>正在加载更多...</span>
+        </template>
+        <template v-else-if="!hasMore && anniversaries.length > 0">
+          <span>已经到底啦</span>
+        </template>
+      </div>
+    </ul>
 
     <!-- 编辑对话框 -->
     <AnniversaryEditDialog
@@ -32,6 +39,7 @@
 
     <!-- 删除确认对话框 -->
     <GenericDialog
+      variant="admin"
       :open="!!confirmDelete"
       title="删除确认"
       :loading="uiStore.loading"
@@ -56,10 +64,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import GenericDialog from '@/components/ui/GenericDialog.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import { type Anniversary, anniversaryApi } from '@/services/anniversaryApi'
 import { useUIStore } from '@/stores/ui'
 import { useToast } from '@/utils/toastUtils'
@@ -94,6 +101,11 @@ const pageSize = ref(5)
 
 // 计算总页数
 const totalPages = computed(() => Math.ceil(totalAnniversaries.value / pageSize.value) || 1)
+const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// 观测点相关
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 // 编辑相关
 const showEditDialog = ref(false)
@@ -108,16 +120,22 @@ const cancelDelete = () => {
 }
 
 // 加载纪念日列表
-const loadAnniversaries = async () => {
+const loadAnniversaries = async (append = false) => {
   uiStore.setLoading(true)
   try {
     const response = await anniversaryApi.getAnniversaries(currentPage.value, pageSize.value)
 
     // 为了处理可能的API响应，我们需要确保所有Anniversary对象都有有效的id
-    anniversaries.value = response.data.anniversaries.map(mem => ({
+    const newItems = response.data.anniversaries.map(mem => ({
       ...mem,
       id: mem.id ? mem.id : 0, // 确保id不会是undefined
     }))
+
+    if (append) {
+      anniversaries.value = [...anniversaries.value, ...newItems]
+    } else {
+      anniversaries.value = newItems
+    }
 
     totalAnniversaries.value =
       response.data.total || response.data.totalCount || response.data.anniversaries.length
@@ -126,6 +144,15 @@ const loadAnniversaries = async () => {
     showToast('加载纪念日失败', 'error')
   } finally {
     uiStore.setLoading(false)
+  }
+}
+
+// 处理交叉观测
+const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+  const entry = entries[0]
+  if (entry && entry.isIntersecting && hasMore.value && !uiStore.loading) {
+    currentPage.value++
+    loadAnniversaries(true)
   }
 }
 
@@ -160,19 +187,16 @@ const saveAnniversary = async (anniversaryData: Anniversary) => {
       showToast('纪念日更新成功', 'success')
     } else {
       // 添加新纪念日
-      const response = await anniversaryApi.createAnniversary({
+      await anniversaryApi.createAnniversary({
         title: anniversaryData.title,
         date: anniversaryData.date,
         description: anniversaryData.description,
         calendar: anniversaryData.calendar,
       })
 
-      // 添加到列表开头
-      anniversaries.value.unshift(response.data)
-      totalAnniversaries.value++
-
       // 重置到第一页，确保新添加的纪念日显示
       currentPage.value = 1
+      await loadAnniversaries(false)
       showToast('纪念日添加成功', 'success')
     }
   } catch (error) {
@@ -195,18 +219,9 @@ const performDelete = async () => {
     // 发送API请求删除纪念日
     await anniversaryApi.deleteAnniversary(anniversaryId)
 
-    const index = anniversaries.value.findIndex(m => m.id === anniversaryId)
-    if (index !== -1) {
-      anniversaries.value.splice(index, 1)
-      totalAnniversaries.value--
-
-      // 检查当前页是否为空，如果是，则跳转到前一页（如果存在）
-      if (anniversaries.value.length === 0 && currentPage.value > 1) {
-        currentPage.value--
-      }
-      // 重新加载当前页数据
-      await loadAnniversaries()
-    }
+    // 删除后重置到第一页
+    currentPage.value = 1
+    await loadAnniversaries(false)
     showToast('纪念日删除成功', 'success')
   } catch (error) {
     console.error('删除纪念日失败:', error)
@@ -229,23 +244,17 @@ const closeDialog = () => {
   editingAnniversary.value = null
 }
 
-// 上一页
-const handlePrevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    loadAnniversaries()
-  }
-}
-
-// 下一页
-const handleNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    loadAnniversaries()
-  }
-}
-
 onMounted(() => {
   loadAnniversaries()
+  observer = new IntersectionObserver(handleIntersect, { threshold: 0.1 })
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value)
+  }
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
 })
 </script>

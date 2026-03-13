@@ -1,11 +1,12 @@
 // 地点相关接口
 import type { MockMethod } from 'vite-plugin-mock'
 
+import type { FileInfo } from '../services/upload'
+
 export interface Photo {
   id: number
   placeId: number
-  url: string
-  thumbnailUrl?: string
+  file: FileInfo
 }
 // 定义类型
 export interface Place {
@@ -50,10 +51,13 @@ const mockPlaces: Place[] = [
     latitude: 39.9092,
     longitude: 116.3975,
     image: {
-      url: 'https://picsum.photos/200/300?random=1',
-      thumbnailUrl: 'https://picsum.photos/200/300?random=1',
       id: 1,
       placeId: 1,
+      file: {
+        id: 1,
+        url: 'https://picsum.photos/200/300?random=1',
+        thumbnail: 'https://picsum.photos/200/300?random=1',
+      },
     },
     description: '我们的第一次旅行',
     date: '2023-05-01',
@@ -64,10 +68,13 @@ const mockPlaces: Place[] = [
     latitude: 31.2363,
     longitude: 121.4903,
     image: {
-      url: 'https://picsum.photos/200/300?random=2',
-      thumbnailUrl: 'https://picsum.photos/200/300?random=2',
       id: 2,
       placeId: 2,
+      file: {
+        id: 2,
+        url: 'https://picsum.photos/200/300?random=2',
+        thumbnail: 'https://picsum.photos/200/300?random=2',
+      },
     },
     description: '浪漫的夜晚',
     date: '2023-08-15',

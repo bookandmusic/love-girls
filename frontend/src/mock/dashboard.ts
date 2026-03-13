@@ -11,21 +11,30 @@ const dashboard: MockMethod[] = [
         data: {
           // 相册统计
           albumStats: {
-            total: 12,
-            totalPhotos: 142,
+            total: 5,
+            totalPhotos: 124,
           },
           // 足迹统计
           placeStats: {
-            total: 24,
+            total: 5,
           },
-          // 纪念日统计
+          // 动态统计
           momentStats: {
             total: 8,
+            private: 1,
+          },
+          // 纪念日统计
+          anniversaryStats: {
+            total: 7,
           },
           // 祝福统计
           wishStats: {
-            total: 42,
-            pending: 3,
+            total: 8,
+            pending: 4,
+          },
+          // 用户统计
+          userStats: {
+            total: 2,
           },
         },
       }

@@ -9,20 +9,28 @@
         @approve="showApproveConfirmation"
         @delete="showDeleteConfirmation"
       />
-    </ul>
 
-    <!-- 分页 -->
-    <div class="pt-3 flex-shrink-0">
-      <Pagination
-        :currentPage="currentPage"
-        :totalPages="totalPages"
-        @prev="handlePrevPage"
-        @next="handleNextPage"
-      />
-    </div>
+      <!-- 观测点 -->
+      <div
+        ref="loadMoreTrigger"
+        class="py-4 flex flex-col items-center justify-center text-gray-500 text-sm"
+      >
+        <template v-if="uiStore.loading && currentPage > 1">
+          <div
+            class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500 mb-2"
+            style="border-color: var(--primary-color) transparent transparent transparent"
+          ></div>
+          <span>正在加载更多...</span>
+        </template>
+        <template v-else-if="!hasMore && wishes.length > 0">
+          <span>已经到底啦</span>
+        </template>
+      </div>
+    </ul>
 
     <!-- 确认删除对话框 -->
     <GenericDialog
+      variant="admin"
       :open="showConfirmDialog"
       title="确认删除"
       size-class="max-w-md"
@@ -49,6 +57,7 @@
 
     <!-- 确认批准对话框 -->
     <GenericDialog
+      variant="admin"
       :open="showApproveDialog"
       title="确认批准"
       size-class="max-w-md"
@@ -76,10 +85,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import GenericDialog from '@/components/ui/GenericDialog.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import { type Wish, wishApi } from '@/services/wishApi'
 import { useUIStore } from '@/stores/ui'
 import { useToast } from '@/utils/toastUtils'
@@ -94,6 +102,11 @@ const totalWishes = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(5)
 const totalPages = computed(() => Math.ceil(totalWishes.value / pageSize.value))
+const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// 观测点相关
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 const showConfirmDialog = ref(false)
 const showApproveDialog = ref(false)
@@ -101,12 +114,16 @@ let wishToDelete: Wish | null = null
 let wishToApprove: Wish | null = null
 
 // 加载祝福列表
-const loadWishes = async () => {
+const loadWishes = async (append = false) => {
   uiStore.setLoading(true)
   try {
     const response = await wishApi.getWishes(currentPage.value, pageSize.value)
 
-    wishes.value = response.data.wishes
+    if (append) {
+      wishes.value = [...wishes.value, ...response.data.wishes]
+    } else {
+      wishes.value = response.data.wishes
+    }
 
     totalWishes.value =
       response.data.total || response.data.totalCount || response.data.wishes.length
@@ -115,6 +132,15 @@ const loadWishes = async () => {
     showToast('加载祝福失败', 'error')
   } finally {
     uiStore.setLoading(false)
+  }
+}
+
+// 处理交叉观测
+const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+  const entry = entries[0]
+  if (entry && entry.isIntersecting && hasMore.value && !uiStore.loading) {
+    currentPage.value++
+    loadWishes(true)
   }
 }
 
@@ -139,12 +165,9 @@ const confirmDeleteWish = async () => {
     // 发送API请求删除祝福
     await wishApi.deleteWish(wishToDelete.id)
 
-    const index = wishes.value.findIndex(w => w.id === wishToDelete!.id)
-    if (index !== -1 && wishes.value[index]) {
-      wishes.value.splice(index, 1)
-      totalWishes.value--
-    }
-
+    // 删除后重置到第一页
+    currentPage.value = 1
+    await loadWishes(false)
     showToast('删除成功', 'success')
   } catch (error) {
     console.error('删除祝福失败:', error)
@@ -182,21 +205,17 @@ const confirmApproveWish = async () => {
   }
 }
 
-const handlePrevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    loadWishes()
-  }
-}
-
-const handleNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    loadWishes()
-  }
-}
-
 onMounted(() => {
   loadWishes()
+  observer = new IntersectionObserver(handleIntersect, { threshold: 0.1 })
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value)
+  }
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
 })
 </script>

@@ -13,16 +13,23 @@
           @delete="confirmDelete = $event"
         />
       </div>
-    </div>
 
-    <!-- 分页 -->
-    <div class="pt-3 flex-shrink-0">
-      <Pagination
-        :currentPage="currentPage"
-        :totalPages="totalPages"
-        @prev="handlePrevPage"
-        @next="handleNextPage"
-      />
+      <!-- 观测点 -->
+      <div
+        ref="loadMoreTrigger"
+        class="py-4 flex flex-col items-center justify-center text-gray-500 text-sm"
+      >
+        <template v-if="uiStore.loading && currentPage > 1">
+          <div
+            class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500 mb-2"
+            style="border-color: var(--primary-color) transparent transparent transparent"
+          ></div>
+          <span>正在加载更多...</span>
+        </template>
+        <template v-else-if="!hasMore && albums.length > 0">
+          <span>已经到底啦</span>
+        </template>
+      </div>
     </div>
 
     <!-- 相册编辑对话框 -->
@@ -51,6 +58,7 @@
 
     <!-- 删除确认对话框 -->
     <GenericDialog
+      variant="admin"
       :open="!!confirmDelete"
       title="删除确认"
       :loading="uiStore.loading"
@@ -77,10 +85,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import GenericDialog from '@/components/ui/GenericDialog.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import { type Album, albumApi, type Photo } from '@/services/albumApi'
 import { uploadApi } from '@/services/upload'
 import { useUIStore } from '@/stores/ui'
@@ -118,6 +125,11 @@ const totalAlbums = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(5)
 const totalPages = computed(() => Math.ceil(totalAlbums.value / pageSize.value) || 1)
+const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// 观测点相关
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 // 编辑相关
 const showEditDialog = ref(false)
@@ -165,12 +177,16 @@ watch(
 const confirmDelete = ref<Album | null>(null)
 
 // 加载相册列表
-const loadAlbums = async () => {
+const loadAlbums = async (append = false) => {
   uiStore.setLoading(true)
   try {
     const response = await albumApi.getAlbums(currentPage.value, pageSize.value)
 
-    albums.value = response.data.albums
+    if (append) {
+      albums.value = [...albums.value, ...response.data.albums]
+    } else {
+      albums.value = response.data.albums
+    }
 
     totalAlbums.value =
       response.data.total || response.data.totalCount || response.data.albums.length
@@ -179,6 +195,15 @@ const loadAlbums = async () => {
     showToast('加载相册失败', 'error')
   } finally {
     uiStore.setLoading(false)
+  }
+}
+
+// 处理交叉观测
+const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+  const entry = entries[0]
+  if (entry && entry.isIntersecting && hasMore.value && !uiStore.loading) {
+    currentPage.value++
+    loadAlbums(true)
   }
 }
 
@@ -192,11 +217,9 @@ const performDelete = async () => {
   try {
     await albumApi.deleteAlbum(albumId)
 
-    const index = albums.value.findIndex(a => a.id === albumId)
-    if (index !== -1) {
-      albums.value.splice(index, 1)
-      totalAlbums.value--
-    }
+    // 删除后重置到第一页
+    currentPage.value = 1
+    await loadAlbums(false)
     showToast('相册删除成功', 'success')
     confirmDelete.value = null
   } catch (error: unknown) {
@@ -257,9 +280,9 @@ const saveAlbum = async (albumData: Album) => {
         createdAt: new Date().toISOString(),
       })
       if (response.code === 0 && response.data) {
-        // 添加到本地列表
-        albums.value.unshift(response.data)
-        totalAlbums.value++
+        // 重置到第一页，确保新添加的相册显示
+        currentPage.value = 1
+        await loadAlbums(false)
         showToast('相册添加成功', 'success')
       }
     }
@@ -464,21 +487,17 @@ const closeDetailsDialog = () => {
   currentAlbumDetails.value = null
 }
 
-const handlePrevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    loadAlbums()
-  }
-}
-
-const handleNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    loadAlbums()
-  }
-}
-
 onMounted(() => {
   loadAlbums()
+  observer = new IntersectionObserver(handleIntersect, { threshold: 0.1 })
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value)
+  }
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
 })
 </script>

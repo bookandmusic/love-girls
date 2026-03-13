@@ -12,6 +12,11 @@ export interface PlaceStats {
 
 export interface MomentStats {
   total: number
+  private: number
+}
+
+export interface AnniversaryStats {
+  total: number
 }
 
 export interface WishStats {
@@ -19,11 +24,17 @@ export interface WishStats {
   pending: number
 }
 
+export interface UserStats {
+  total: number
+}
+
 export interface DashboardData {
   albumStats: AlbumStats
   placeStats: PlaceStats
   momentStats: MomentStats
+  anniversaryStats: AnniversaryStats
   wishStats: WishStats
+  userStats: UserStats
 }
 
 // 仪表盘相关API接口

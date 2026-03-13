@@ -1,25 +1,33 @@
 <template>
   <div class="w-full h-full flex flex-col overflow-hidden">
-    <!-- 主体内容区域：包含列表和分页，允许内部滚动 -->
-    <ul class="flex-1 min-h-0 overflow-y-auto pr-2">
-      <MomentItem
-        v-for="moment in moments"
-        :key="moment.id"
-        :moment="moment"
-        @toggle-public="confirmToggle = $event"
-        @edit="editMoment"
-        @delete="confirmDelete = $event"
-      />
-    </ul>
+    <!-- 主体内容区域：包含列表，允许内部滚动 -->
+    <div class="flex-1 min-h-0 overflow-y-auto pr-2">
+      <ul class="space-y-4 pb-4">
+        <MomentItem
+          v-for="moment in moments"
+          :key="moment.id"
+          :moment="moment"
+          @toggle-public="confirmToggle = $event"
+          @edit="editMoment"
+          @delete="confirmDelete = $event"
+        />
+      </ul>
 
-    <!-- 分页：固定在底部，不随内容滚动 -->
-    <div class="pt-3 flex-shrink-0">
-      <Pagination
-        :currentPage="currentPage"
-        :totalPages="totalPages"
-        @prev="handlePrevPage"
-        @next="handleNextPage"
-      />
+      <!-- 加载更多指示器 -->
+      <div ref="loadMoreTrigger" class="py-10 flex justify-center items-center">
+        <div v-if="uiStore.loading && moments.length > 0" class="flex flex-col items-center gap-2">
+          <div
+            class="w-6 h-6 border-2 border-[var(--admin-accent-color)] border-t-transparent rounded-full animate-spin"
+          ></div>
+          <span class="text-xs font-semibold admin-text-secondary tracking-wide">正在加载...</span>
+        </div>
+        <div
+          v-else-if="currentPage >= totalPages && moments.length > 0"
+          class="admin-text-muted text-[10px] font-black uppercase tracking-[0.2em] opacity-50"
+        >
+          已经到底啦
+        </div>
+      </div>
     </div>
 
     <!-- 编辑对话框 -->
@@ -34,6 +42,7 @@
 
     <!-- 删除确认对话框 -->
     <GenericDialog
+      variant="admin"
       :open="!!confirmDelete"
       title="删除确认"
       :loading="uiStore.loading"
@@ -58,6 +67,7 @@
 
     <!-- 切换公开状态确认对话框 -->
     <GenericDialog
+      variant="admin"
       :open="!!confirmToggle"
       :title="confirmToggle?.isPublic ? '设为私密确认' : '设为公开确认'"
       :loading="uiStore.loading"
@@ -89,10 +99,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import GenericDialog from '@/components/ui/GenericDialog.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import { type Moment, momentApi, type Photo } from '@/services/momentApi'
 import { uploadApi } from '@/services/upload'
 import { useAuthStore } from '@/stores/auth'
@@ -132,16 +141,47 @@ const currentPage = ref(1)
 const pageSize = ref(5)
 const totalPages = computed(() => Math.ceil(totalMoments.value / pageSize.value) || 1)
 
+// 无限滚动逻辑
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
+
+const initObserver = () => {
+  observer = new IntersectionObserver(
+    entries => {
+      const entry = entries[0]
+      if (
+        entry &&
+        entry.isIntersecting &&
+        !uiStore.loading &&
+        currentPage.value < totalPages.value
+      ) {
+        handleNextPage()
+      }
+    },
+    { threshold: 0.1 }
+  )
+
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value)
+  }
+}
+
 // 加载动态列表
-const loadMoments = async () => {
+const loadMoments = async (append = false) => {
   uiStore.setLoading(true)
   try {
     const response = await momentApi.getMoments(currentPage.value, pageSize.value)
 
-    moments.value = response.data.moments.map((moment: Moment) => ({
+    const newMoments = response.data.moments.map((moment: Moment) => ({
       ...moment,
       isPublic: moment.isPublic !== undefined ? moment.isPublic : true, // 默认为公开
     }))
+
+    if (append) {
+      moments.value = [...moments.value, ...newMoments]
+    } else {
+      moments.value = newMoments
+    }
 
     totalMoments.value =
       response.data.total || response.data.totalCount || response.data.moments.length
@@ -152,22 +192,25 @@ const loadMoments = async () => {
   }
 }
 
-onMounted(() => {
-  loadMoments()
+onMounted(async () => {
+  await loadMoments()
+  initObserver()
 })
 
-const handlePrevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    loadMoments()
-  }
-}
+onUnmounted(() => {
+  if (observer) observer.disconnect()
+})
 
 const handleNextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
-    loadMoments()
+    loadMoments(true)
   }
+}
+
+const refreshList = async () => {
+  currentPage.value = 1
+  await loadMoments(false)
 }
 
 const confirmToggle = ref<Moment | null>(null)
@@ -184,23 +227,19 @@ const performTogglePublic = async () => {
   uiStore.setLoading(true)
   try {
     // 发送API请求更新动态的公开状态
-    const response = await momentApi.updateMomentPublic(confirmToggle.value.id, {
+    await momentApi.updateMomentPublic(confirmToggle.value.id, {
       isPublic: !confirmToggle.value.isPublic,
     })
-    if (response.code === 0) {
-      confirmToggle.value.isPublic = !confirmToggle.value.isPublic
-      const momentIndex = moments.value.findIndex(u => u.id === confirmToggle!.value!.id)
-      if (momentIndex !== -1) {
-        moments.value[momentIndex] = {
-          ...confirmToggle.value,
-        }
+    confirmToggle.value.isPublic = !confirmToggle.value.isPublic
+    const momentIndex = moments.value.findIndex(u => u.id === confirmToggle.value!.id)
+    if (momentIndex !== -1) {
+      moments.value[momentIndex] = {
+        ...confirmToggle.value,
       }
-
-      // 更新本地状态
-      showToast(confirmToggle.value.isPublic ? '动态已设为公开' : '动态已设为私密', 'success')
-    } else {
-      showToast('状态更新失败', 'error')
     }
+
+    // 更新本地状态
+    showToast(confirmToggle.value.isPublic ? '动态已设为公开' : '动态已设为私密', 'success')
   } catch {
     showToast('状态更新失败', 'error')
   } finally {
@@ -228,7 +267,7 @@ const saveMoment = async (momentData: Moment) => {
       const imageIds = momentData.images?.map(img => img.id) || []
 
       // 编辑现有动态
-      const response = await momentApi.updateMoment(momentData.id, {
+      await momentApi.updateMoment(momentData.id, {
         content: momentData.content,
         isPublic: momentData.isPublic,
         imageIds: imageIds,
@@ -239,10 +278,7 @@ const saveMoment = async (momentData: Moment) => {
       const index = moments.value.findIndex(m => m.id === momentData.id)
       if (index !== -1) {
         moments.value[index] = {
-          ...response.data,
-          content: momentData.content,
-          isPublic: momentData.isPublic,
-          images: momentData.images,
+          ...momentData,
         } // 保存图片信息
       }
       showToast('动态更新成功', 'success')
@@ -251,7 +287,7 @@ const saveMoment = async (momentData: Moment) => {
       const imageIds = momentData.images?.map(img => img.id) || []
 
       // 添加新动态
-      const response = await momentApi.createMoment({
+      await momentApi.createMoment({
         content: momentData.content || '',
         isPublic: momentData.isPublic || false,
         imageIds: imageIds, // 发送图片 ID 数组
@@ -261,16 +297,8 @@ const saveMoment = async (momentData: Moment) => {
         userId: authStore.userInfo?.userId || 1, // 使用当前登录用户 ID，默认为 1
       })
 
-      // 添加到列表开头
-      moments.value.unshift({
-        ...response.data,
-        images: momentData.images || [], // 保存图片信息
-        isPublic: response.data.isPublic !== undefined ? response.data.isPublic : true,
-      })
-      totalMoments.value++
-
-      // 重置到第一页，确保新添加的动态显示
-      currentPage.value = 1
+      // 刷新列表显示最新数据
+      await refreshList()
       showToast('动态添加成功', 'success')
     }
   } catch {
@@ -376,19 +404,7 @@ const performDelete = async () => {
   try {
     // 发送API请求删除动态
     await momentApi.deleteMoment(momentId)
-
-    const index = moments.value.findIndex(m => m.id === momentId)
-    if (index !== -1) {
-      moments.value.splice(index, 1)
-      totalMoments.value--
-
-      // 检查当前页是否为空，如果是，则跳转到前一页（如果存在）
-      if (moments.value.length === 0 && currentPage.value > 1) {
-        currentPage.value--
-      }
-      // 重新加载当前页数据
-      await loadMoments()
-    }
+    await refreshList()
     showToast('动态删除成功', 'success')
   } catch {
     showToast('删除失败', 'error')

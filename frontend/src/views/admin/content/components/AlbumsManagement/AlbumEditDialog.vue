@@ -1,5 +1,11 @@
 <template>
-  <GenericDialog :open="open" :title="dialogTitle" @cancel="closeDialog" :loading="loading">
+  <GenericDialog
+    variant="admin"
+    :open="open"
+    :title="dialogTitle"
+    @cancel="closeDialog"
+    :loading="loading"
+  >
     <template #content>
       <form class="space-y-4">
         <div class="mb-3">
@@ -42,6 +48,7 @@
 
   <!-- 确认对话框 -->
   <GenericDialog
+    variant="admin"
     :open="showConfirmDialog"
     title="确认保存"
     :loading="loading"

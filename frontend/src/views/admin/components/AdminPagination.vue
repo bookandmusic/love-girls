@@ -1,15 +1,15 @@
 <template>
-  <div class="flex justify-center py-4 flex-shrink-0 w-full">
-    <div class="flex items-center space-x-2">
+  <div class="flex justify-center py-6 flex-shrink-0 w-full sticky bottom-0 z-10">
+    <div class="admin-pagination-container">
       <button @click="onFirst" :disabled="currentPage === 1" class="admin-pagination-btn">
-        首页
+        <BaseIcon name="left-double" size="w-4 h-4" />
       </button>
 
       <button @click="onPrev" :disabled="currentPage === 1" class="admin-pagination-btn">
-        上一页
+        <BaseIcon name="left" size="w-4 h-4" />
       </button>
 
-      <div class="flex items-center space-x-1">
+      <div class="flex items-center space-x-1 px-2 border-x border-black/5">
         <template v-for="page in visiblePages" :key="page">
           <button
             v-if="typeof page === 'number'"
@@ -19,16 +19,16 @@
           >
             {{ page }}
           </button>
-          <span v-else class="admin-text-muted px-2">...</span>
+          <span v-else class="text-gray-400 px-1 text-xs">•••</span>
         </template>
       </div>
 
       <button @click="onNext" :disabled="currentPage === totalPages" class="admin-pagination-btn">
-        下一页
+        <BaseIcon name="right" size="w-4 h-4" />
       </button>
 
       <button @click="onLast" :disabled="currentPage === totalPages" class="admin-pagination-btn">
-        末页
+        <BaseIcon name="right-double" size="w-4 h-4" />
       </button>
     </div>
   </div>
@@ -36,6 +36,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+
+import BaseIcon from '@/components/ui/BaseIcon.vue'
 
 defineOptions({
   name: 'AdminPagination',

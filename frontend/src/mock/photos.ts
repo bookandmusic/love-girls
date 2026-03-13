@@ -1,33 +1,36 @@
 // 照片相关接口
 import type { MockMethod } from 'vite-plugin-mock'
 
+import type { FileInfo } from '../services/upload'
+
+export interface Photo {
+  id: number
+  albumId: number
+  file: FileInfo
+  description: string
+  createdAt: string
+}
+
 // 模拟照片数据存储
-const albumPhotosStore: Record<
-  number,
-  Array<{
-    id: number
-    albumId: number
-    url: string
-    thumbnailUrl: string
-    description: string
-    createdAt: string
-  }>
-> = {}
+const albumPhotosStore: Record<number, Photo[]> = {}
 
 // 生成相册照片数据
-function generateAlbumPhotos(albumId: number) {
+function generateAlbumPhotos(albumId: number): Photo[] {
   if (albumPhotosStore[albumId]) {
     return albumPhotosStore[albumId]
   }
 
-  let photos = []
+  let photos: Photo[] = []
   switch (albumId) {
     case 1: // 第一次旅行
       photos = Array.from({ length: 12 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 100}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 100}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 100}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 100}`,
+        },
         description: `旅行中的美好时光 ${i + 1}`,
         createdAt: new Date(2023, 4, 1 + i).toISOString(),
       }))
@@ -37,8 +40,11 @@ function generateAlbumPhotos(albumId: number) {
       photos = Array.from({ length: 8 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 200}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 200}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 200}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 200}`,
+        },
         description: `浪漫时刻 ${i + 1}`,
         createdAt: new Date(2023, 7, 15 + i).toISOString(),
       }))
@@ -48,8 +54,11 @@ function generateAlbumPhotos(albumId: number) {
       photos = Array.from({ length: 15 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 300}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 300}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 300}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 300}`,
+        },
         description: `春日踏青 ${i + 1}`,
         createdAt: new Date(2024, 2, 20 + i).toISOString(),
       }))
@@ -59,8 +68,11 @@ function generateAlbumPhotos(albumId: number) {
       photos = Array.from({ length: 22 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 400}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 400}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 400}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 400}`,
+        },
         description: `美味食物 ${i + 1}`,
         createdAt: new Date(2024, 4, 1 + i).toISOString(),
       }))
@@ -70,8 +82,11 @@ function generateAlbumPhotos(albumId: number) {
       photos = Array.from({ length: 18 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 500}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 500}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 500}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 500}`,
+        },
         description: `历史文物 ${i + 1}`,
         createdAt: new Date(2024, 6, 15 + i).toISOString(),
       }))
@@ -81,8 +96,11 @@ function generateAlbumPhotos(albumId: number) {
       photos = Array.from({ length: 25 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 600}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 600}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 600}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 600}`,
+        },
         description: `海滩美景 ${i + 1}`,
         createdAt: new Date(2024, 7, 10 + i).toISOString(),
       }))
@@ -92,8 +110,11 @@ function generateAlbumPhotos(albumId: number) {
       photos = Array.from({ length: 14 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 700}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 700}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 700}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 700}`,
+        },
         description: `雪山风光 ${i + 1}`,
         createdAt: new Date(2024, 11, 1 + i).toISOString(),
       }))
@@ -103,8 +124,11 @@ function generateAlbumPhotos(albumId: number) {
       photos = Array.from({ length: 10 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 800}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 800}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 800}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 800}`,
+        },
         description: `城市街景 ${i + 1}`,
         createdAt: new Date(2024, 11, 10 + i).toISOString(),
       }))
@@ -114,8 +138,11 @@ function generateAlbumPhotos(albumId: number) {
       photos = Array.from({ length: 15 }, (_, i) => ({
         id: albumId * 100 + i + 1,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${i + 900}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${i + 900}`,
+        file: {
+          id: albumId * 100 + i + 1,
+          url: `https://picsum.photos/800/600?random=${i + 900}`,
+          thumbnail: `https://picsum.photos/300/200?random=${i + 900}`,
+        },
         description: `照片 ${i + 1}`,
         createdAt: new Date().toISOString(),
       }))
@@ -196,11 +223,14 @@ const photos: MockMethod[] = [
       const { photoIds } = params.body
 
       // 模拟添加照片
-      const newPhotos = photoIds.map((id, index) => ({
+      const newPhotos: Photo[] = photoIds.map((id, index) => ({
         id: id,
         albumId: albumId,
-        url: `https://picsum.photos/800/600?random=${Date.now() + index}`,
-        thumbnailUrl: `https://picsum.photos/300/200?random=${Date.now() + index}`,
+        file: {
+          id: id,
+          url: `https://picsum.photos/800/600?random=${Date.now() + index}`,
+          thumbnail: `https://picsum.photos/300/200?random=${Date.now() + index}`,
+        },
         description: `新添加的照片`,
         createdAt: new Date().toISOString(),
       }))

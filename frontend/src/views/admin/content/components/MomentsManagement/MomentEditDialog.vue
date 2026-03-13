@@ -1,5 +1,6 @@
 <template>
   <GenericDialog
+    variant="admin"
     :open="open"
     :title="props.moment?.id ? '编辑动态' : '添加动态'"
     @cancel="closeDialog"
@@ -109,6 +110,7 @@
 
   <!-- 确认对话框 -->
   <GenericDialog
+    variant="admin"
     :open="showConfirmDialog"
     title="确认保存"
     :loading="loading"

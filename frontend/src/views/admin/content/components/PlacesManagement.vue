@@ -11,16 +11,23 @@
           @delete="confirmDelete = $event"
         />
       </div>
-    </div>
 
-    <!-- 分页 -->
-    <div class="pt-3 flex-shrink-0">
-      <Pagination
-        :currentPage="currentPage"
-        :totalPages="totalPages"
-        @prev="handlePrevPage"
-        @next="handleNextPage"
-      />
+      <!-- 观测点 -->
+      <div
+        ref="loadMoreTrigger"
+        class="py-4 flex flex-col items-center justify-center text-gray-500 text-sm"
+      >
+        <template v-if="uiStore.loading && currentPage > 1">
+          <div
+            class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500 mb-2"
+            style="border-color: var(--primary-color) transparent transparent transparent"
+          ></div>
+          <span>正在加载更多...</span>
+        </template>
+        <template v-else-if="!hasMore && places.length > 0">
+          <span>已经到底啦</span>
+        </template>
+      </div>
     </div>
 
     <!-- 地点编辑对话框 -->
@@ -35,6 +42,7 @@
 
     <!-- 删除确认对话框 -->
     <GenericDialog
+      variant="admin"
       :open="!!confirmDelete"
       title="删除确认"
       :loading="uiStore.loading"
@@ -60,10 +68,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import GenericDialog from '@/components/ui/GenericDialog.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import { type Photo, type Place, placeApi } from '@/services/placeApi'
 import { uploadApi } from '@/services/upload'
 import { useUIStore } from '@/stores/ui'
@@ -100,6 +107,11 @@ const totalPlaces = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(5)
 const totalPages = computed(() => Math.ceil(totalPlaces.value / pageSize.value) || 1)
+const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// 观测点相关
+const loadMoreTrigger = ref<HTMLElement | null>(null)
+let observer: IntersectionObserver | null = null
 
 // 编辑相关
 const showDialog = ref(false)
@@ -167,12 +179,16 @@ const handleImageUpload = async (event: Event): Promise<void> => {
 }
 
 // 加载地点列表
-const loadPlaces = async () => {
+const loadPlaces = async (append = false) => {
   uiStore.setLoading(true)
   try {
     const response = await placeApi.getPlaces(currentPage.value, pageSize.value)
 
-    places.value = response.data.places
+    if (append) {
+      places.value = [...places.value, ...response.data.places]
+    } else {
+      places.value = response.data.places
+    }
 
     totalPlaces.value =
       response.data.total || response.data.totalCount || response.data.places.length
@@ -180,6 +196,15 @@ const loadPlaces = async () => {
     showToast('加载地点失败', 'error')
   } finally {
     uiStore.setLoading(false)
+  }
+}
+
+// 处理交叉观测
+const handleIntersect = (entries: IntersectionObserverEntry[]) => {
+  const entry = entries[0]
+  if (entry && entry.isIntersecting && hasMore.value && !uiStore.loading) {
+    currentPage.value++
+    loadPlaces(true)
   }
 }
 
@@ -193,11 +218,9 @@ const performDelete = async () => {
   try {
     await placeApi.deletePlace(placeId)
 
-    const index = places.value.findIndex(p => p.id === placeId)
-    if (index !== -1) {
-      places.value.splice(index, 1)
-      totalPlaces.value--
-    }
+    // 删除后重置到第一页
+    currentPage.value = 1
+    await loadPlaces(false)
     showToast('地点删除成功', 'success')
     confirmDelete.value = null
   } catch {
@@ -241,9 +264,9 @@ const savePlace = async (placeData: Partial<Place>) => {
       // 创建新地点
       response = await placeApi.createPlace(placeData as Omit<Place, 'id'>)
       if (response.code === 0 && response.data) {
-        // 添加到本地列表
-        places.value.unshift(response.data)
-        totalPlaces.value++
+        // 重置到第一页，确保新添加的地点显示
+        currentPage.value = 1
+        await loadPlaces(false)
         showToast('地点添加成功', 'success')
       }
     }
@@ -266,21 +289,17 @@ const closeDialog = () => {
   currentPlace.value = null
 }
 
-const handlePrevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    loadPlaces()
-  }
-}
-
-const handleNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    loadPlaces()
-  }
-}
-
 onMounted(() => {
   loadPlaces()
+  observer = new IntersectionObserver(handleIntersect, { threshold: 0.1 })
+  if (loadMoreTrigger.value) {
+    observer.observe(loadMoreTrigger.value)
+  }
+})
+
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect()
+  }
 })
 </script>

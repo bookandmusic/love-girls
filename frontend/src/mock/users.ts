@@ -1,6 +1,8 @@
 // 用户相关的mock数据
 import type { MockMethod } from 'vite-plugin-mock'
 
+import type { FileInfo } from '../services/upload'
+
 interface RequestParams {
   body: Record<string, unknown>
   headers: Record<string, string>
@@ -14,8 +16,7 @@ interface User {
   email: string
   role: string
   joinDate: string
-  avatar: string
-  avatarId: number
+  avatar?: FileInfo
 }
 
 // 模拟用户数据
@@ -26,8 +27,7 @@ const mockUsers: User[] = [
     email: 'xiaowu@example.com',
     role: '男朋友',
     joinDate: '2021-01-01',
-    avatar: '',
-    avatarId: 0,
+    avatar: undefined,
   },
   {
     id: 2,
@@ -35,8 +35,7 @@ const mockUsers: User[] = [
     email: 'xiaolu@example.com',
     role: '女朋友',
     joinDate: '2021-01-01',
-    avatar: '',
-    avatarId: 0,
+    avatar: undefined,
   },
 ]
 
@@ -130,13 +129,23 @@ const users: MockMethod[] = [
 
       // 更新用户信息
       const user = mockUsers[userIndex]!
+
+      // 模拟查找 avatar 文件
+      let newAvatar = user.avatar
+      if (params.body.avatarId) {
+        newAvatar = {
+          id: params.body.avatarId as number,
+          url: 'https://picsum.photos/200/200?random=avatar',
+          thumbnail: 'https://picsum.photos/100/100?random=avatar',
+        }
+      }
+
       const updatedUser: User = {
         ...user,
         name: (params.body.name as string) || user.name,
         email: (params.body.email as string) || user.email,
-        avatar: (params.body.avatar as string) || user.avatar,
-        avatarId: (params.body.avatarId as number) || user.avatarId,
         role: (params.body.role as string) || user.role,
+        avatar: newAvatar,
         joinDate: user.joinDate, // 保持原有的加入日期
         id: user.id, // 保持原有的id，不被更新
       }

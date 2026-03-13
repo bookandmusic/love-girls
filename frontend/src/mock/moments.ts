@@ -1,6 +1,8 @@
 // 动态相关接口
 import type { MockMethod } from 'vite-plugin-mock'
 
+import type { FileInfo } from '../services/upload'
+
 // 定义嵌套类型
 interface Author {
   name: string
@@ -9,8 +11,7 @@ interface Author {
 interface Photo {
   id: number
   momentId: number
-  url: string
-  thumbnailUrl: string
+  file?: FileInfo
   alt?: string
 }
 interface Moment {
@@ -56,8 +57,11 @@ const mockMoments: Moment[] = [
       {
         id: 1,
         momentId: 1,
-        url: 'https://picsum.photos/600/400?random=1001',
-        thumbnailUrl: 'https://picsum.photos/200/150?random=1001',
+        file: {
+          id: 1,
+          url: 'https://picsum.photos/600/400?random=1001',
+          thumbnail: 'https://picsum.photos/200/150?random=1001',
+        },
       },
     ],
     likes: 5,
@@ -87,14 +91,20 @@ const mockMoments: Moment[] = [
       {
         id: 2,
         momentId: 3,
-        url: 'https://picsum.photos/600/400?random=1002',
-        thumbnailUrl: 'https://picsum.photos/200/150?random=1002',
+        file: {
+          id: 2,
+          url: 'https://picsum.photos/600/400?random=1002',
+          thumbnail: 'https://picsum.photos/200/150?random=1002',
+        },
       },
       {
         id: 3,
         momentId: 3,
-        url: 'https://picsum.photos/600/400?random=1003',
-        thumbnailUrl: 'https://picsum.photos/200/150?random=1003',
+        file: {
+          id: 3,
+          url: 'https://picsum.photos/600/400?random=1003',
+          thumbnail: 'https://picsum.photos/200/150?random=1003',
+        },
       },
     ],
     likes: 3,
@@ -124,14 +134,20 @@ const mockMoments: Moment[] = [
       {
         id: 4,
         momentId: 4,
-        url: 'https://picsum.photos/600/400?random=1004',
-        thumbnailUrl: 'https://picsum.photos/200/150?random=1004',
+        file: {
+          id: 4,
+          url: 'https://picsum.photos/600/400?random=1004',
+          thumbnail: 'https://picsum.photos/200/150?random=1004',
+        },
       },
       {
         id: 5,
         momentId: 4,
-        url: 'https://picsum.photos/600/400?random=1005',
-        thumbnailUrl: 'https://picsum.photos/200/150?random=1005',
+        file: {
+          id: 5,
+          url: 'https://picsum.photos/600/400?random=1005',
+          thumbnail: 'https://picsum.photos/200/150?random=1005',
+        },
       },
     ],
     likes: 6,
@@ -149,14 +165,20 @@ const mockMoments: Moment[] = [
       {
         id: 6,
         momentId: 5,
-        url: 'https://picsum.photos/600/400?random=1006',
-        thumbnailUrl: 'https://picsum.photos/200/150?random=1006',
+        file: {
+          id: 6,
+          url: 'https://picsum.photos/600/400?random=1006',
+          thumbnail: 'https://picsum.photos/200/150?random=1006',
+        },
       },
       {
         id: 7,
         momentId: 5,
-        url: 'https://picsum.photos/600/400?random=1007',
-        thumbnailUrl: 'https://picsum.photos/200/150?random=1007',
+        file: {
+          id: 7,
+          url: 'https://picsum.photos/600/400?random=1007',
+          thumbnail: 'https://picsum.photos/200/150?random=1007',
+        },
       },
     ],
     likes: 9,

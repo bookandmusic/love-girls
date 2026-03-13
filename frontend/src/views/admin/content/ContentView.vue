@@ -1,34 +1,56 @@
 <template>
   <div class="h-full flex flex-col">
-    <div class="h-full flex-1 flex flex-col min-h-0">
-      <div class="border-b border-white/60 flex justify-between items-center pb-2">
-        <nav class="-mb-px flex space-x-1 md:space-x-2" aria-label="Tabs">
+    <div class="h-full flex-1 flex flex-col min-h-0 relative">
+      <!-- iOS Segmented Control 风格导航 -->
+      <div class="flex justify-between items-center mb-6 px-1">
+        <nav
+          class="p-1 bg-black/5 backdrop-blur-md rounded-2xl flex flex-1 sm:flex-initial space-x-1 overflow-x-auto no-scrollbar"
+          aria-label="Tabs"
+        >
           <router-link
             v-for="tab in currentTabs"
             :key="tab.name"
             :to="tab.path"
-            class="flex items-center justify-center p-2 md:p-3 rounded-xl transition-all duration-200"
+            class="flex items-center justify-center px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 text-sm font-bold whitespace-nowrap"
             :class="[
               tab.current
-                ? 'bg-gradient-to-r from-[#f0ada0] to-[#d89388] text-white shadow-md'
-                : 'text-[#f0ada0] hover:bg-white/40',
+                ? 'bg-white admin-text-primary shadow-sm scale-100'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-white/40 scale-95',
             ]"
             :aria-current="tab.current ? 'page' : undefined"
           >
-            <BaseIcon :name="tab.icon" size="w-6 h-6" />
+            <BaseIcon :name="tab.icon" size="w-5 h-5" class="mr-2" />
+            <span class="hidden sm:inline">{{ tab.label }}</span>
           </router-link>
         </nav>
+
+        <!-- PC端：保留原始位置的玻璃质感按钮 -->
         <button
           v-if="currentTab !== 'wishes'"
           @click="handleAddClick"
-          class="p-2 rounded-xl bg-gradient-to-r from-[#f0ada0] to-[#d89388] text-white hover:shadow-md transition-all"
+          class="hidden sm:flex w-12 h-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white/40 backdrop-blur-md border border-white/40 text-[var(--admin-accent-color)] shadow-sm hover:bg-white/60 active:scale-95 transition-all ml-4"
         >
           <BaseIcon name="add" size="w-6 h-6" />
         </button>
       </div>
 
-      <div class="h-full flex flex-1 flex-col pt-4 min-h-0">
-        <router-view />
+      <!-- 移动端：仅在手机端显示的悬浮动作按钮 (FAB) -->
+      <Transition name="fab">
+        <button
+          v-if="currentTab !== 'wishes'"
+          @click="handleAddClick"
+          class="sm:hidden fixed bottom-24 right-6 w-14 h-14 z-[60] flex items-center justify-center rounded-2xl bg-[var(--admin-accent-color)]/80 backdrop-blur-xl border border-white/20 text-white shadow-[0_8px_24px_rgba(240,173,160,0.35)] active:scale-90 active:bg-[var(--admin-accent-color)]/90 transition-all"
+        >
+          <BaseIcon name="add" size="w-7 h-7" />
+        </button>
+      </Transition>
+
+      <div class="flex-1 min-h-0">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
       </div>
     </div>
   </div>
@@ -58,7 +80,7 @@ const tabs = ref([
 
 const currentTab = computed(() => {
   const path = route.path
-  const currentTabInfo = tabs.value.find(tab => tab.path === path)
+  const currentTabInfo = tabs.value.find(tab => path.startsWith(tab.path))
   return currentTabInfo?.name || 'moments'
 })
 
@@ -66,7 +88,7 @@ const currentTabs = computed(() => {
   const path = route.path
   return tabs.value.map(tab => ({
     ...tab,
-    current: tab.path === path,
+    current: path.startsWith(tab.path),
   }))
 })
 
@@ -76,3 +98,35 @@ const handleAddClick = () => {
   }
 }
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* FAB 动画 */
+.fab-enter-active,
+.fab-leave-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fab-enter-from,
+.fab-leave-to {
+  opacity: 0;
+  transform: scale(0.5) translateY(20px);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>

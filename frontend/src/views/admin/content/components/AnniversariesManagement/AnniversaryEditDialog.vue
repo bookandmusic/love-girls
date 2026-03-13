@@ -1,5 +1,6 @@
 <template>
   <GenericDialog
+    variant="admin"
     :open="open"
     :title="props.anniversary?.id ? '编辑纪念日' : '添加纪念日'"
     @cancel="closeDialog"
@@ -91,6 +92,7 @@
 
   <!-- 确认对话框 -->
   <GenericDialog
+    variant="admin"
     :open="showConfirmDialog"
     title="确认保存"
     :loading="props.loading"
