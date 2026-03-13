@@ -1,22 +1,26 @@
 <template>
-  <div class="flex justify-center py-2 flex-shrink-0 w-full">
-    <div class="flex space-x-2">
+  <div class="flex justify-center py-4 flex-shrink-0 w-full">
+    <div class="glass-thick rounded-full p-1 flex items-center border border-white/40 shadow-sm">
       <button
         @click="onPrev"
         :disabled="currentPage === 1"
-        class="px-3 py-1 rounded-md bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/80"
+        class="p-2 rounded-full ios-transition tap-feedback disabled:opacity-30 disabled:pointer-events-none"
       >
-        <BaseIcon name="left" size="w-5 h-5" color="#333333" />
+        <BaseIcon name="left" size="w-5 h-5" color="var(--fe-text-primary)" />
       </button>
 
-      <span class="px-3 py-1 flex items-center"> {{ currentPage }} / {{ totalPages }} </span>
+      <div class="px-4 py-1 flex items-center text-sm font-semibold text-[var(--fe-text-primary)]">
+        <span class="mr-1">{{ currentPage }}</span>
+        <span class="opacity-30 mx-1">/</span>
+        <span class="opacity-60">{{ totalPages }}</span>
+      </div>
 
       <button
         @click="onNext"
         :disabled="currentPage === totalPages"
-        class="px-3 py-1 rounded-md bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/80"
+        class="p-2 rounded-full ios-transition tap-feedback disabled:opacity-30 disabled:pointer-events-none"
       >
-        <BaseIcon name="right" size="w-5 h-5" color="#333333" />
+        <BaseIcon name="right" size="w-5 h-5" color="var(--fe-text-primary)" />
       </button>
     </div>
   </div>

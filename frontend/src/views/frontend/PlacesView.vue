@@ -182,35 +182,50 @@ function flyToPlace(place: Place) {
 
     <template #main-content>
       <!-- 有地点数据时显示地图和列表 -->
-      <div class="flex-grow flex flex-col overflow-hidden">
-        <!-- 地图区域 -->
-        <div class="h-96 md:h-[500px] flex-shrink-0">
-          <div ref="mapRef" class="w-full h-full"></div>
+      <div class="flex-grow flex flex-col overflow-hidden bg-[var(--fe-bg-gray)]/30">
+        <!-- 地图区域 - 增加圆角和阴影 -->
+        <div class="p-4 md:p-6 flex-shrink-0">
+          <div
+            class="h-64 md:h-96 rounded-[var(--fe-radius-card)] overflow-hidden shadow-lg border border-white/40 relative"
+          >
+            <div ref="mapRef" class="w-full h-full z-0"></div>
+          </div>
         </div>
 
-        <!-- 列表区域 -->
-        <div class="p-4 flex-grow overflow-y-auto">
-          <h2 class="text-xl font-bold mb-3 font-[Ma_Shan_Zheng]">我们去过的地方</h2>
+        <!-- 列表区域 - iOS Grouped List 风格 -->
+        <div class="px-4 md:px-8 pb-8 flex-grow overflow-y-auto custom-scrollbar">
+          <h2
+            class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-3 ml-1"
+          >
+            我们去过的地方
+          </h2>
 
-          <!-- 有地点数据时显示列表 -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div
               v-for="place in places"
               :key="place.id"
               @click="flyToPlace(place)"
-              class="flex items-center p-3 generic-card hover:bg-white/80 transition-colors cursor-pointer"
+              class="flex items-center p-4 glass-thick rounded-2xl border border-white/40 shadow-sm tap-feedback ios-transition active:scale-[0.98]"
             >
               <div
-                class="w-10 h-10 rounded-full bg-gradient-to-br from-red-400 to-pink-500 flex items-center justify-center text-white font-bold mr-3"
+                class="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--fe-primary)] to-[#f8c9c0] flex items-center justify-center text-white font-bold mr-4 shadow-sm flex-shrink-0"
               >
                 {{ place.name.substring(0, 1) }}
               </div>
-              <div>
-                <h3 class="font-bold">{{ place.name }}</h3>
-                <p class="text-sm text-gray-600">{{ place.date }}</p>
+              <div class="min-w-0">
+                <h3 class="font-bold text-[var(--fe-text-primary)] truncate">{{ place.name }}</h3>
+                <p class="text-xs font-medium text-[var(--fe-text-secondary)] mt-0.5">
+                  {{ place.date }}
+                </p>
+              </div>
+              <div class="ml-auto">
+                <BaseIcon name="right" size="w-4 h-4" color="var(--fe-text-secondary)" />
               </div>
             </div>
           </div>
+
+          <!-- 占位 -->
+          <div class="h-20 md:hidden"></div>
         </div>
       </div>
     </template>

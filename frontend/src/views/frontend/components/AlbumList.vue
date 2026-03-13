@@ -1,66 +1,114 @@
 <template>
-  <div class="flex-grow overflow-y-auto">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-      <CardItem v-for="album in albums" :key="album.id" @click="onSelectAlbum(album)">
-        <!-- 背景图 -->
-        <template #background>
-          <div
-            class="absolute inset-0 bg-cover bg-center"
-            :style="{
-              backgroundImage: `url(${album.coverImage?.file?.thumbnail || album.coverImage?.file?.url || ''})`,
-            }"
-          />
-        </template>
+  <div
+    class="flex-grow overflow-y-auto custom-scrollbar bg-[var(--fe-bg-gray)]/30"
+    @scroll="handleScroll"
+  >
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+      <div
+        v-for="album in albums"
+        :key="album.id"
+        class="relative aspect-[4/3] rounded-[var(--fe-radius-card)] overflow-hidden shadow-lg border border-white/40 cursor-pointer tap-feedback ios-transition group"
+        @click="onSelectAlbum(album)"
+      >
+        <!-- 基础渐变背景（作为底层垫片，解决封面加载瞬间的留白问题） -->
+        <div class="absolute inset-0 w-full h-full" :style="getPlaceholderStyle(album.id)"></div>
 
-        <!-- 遮罩 -->
-        <template #overlay>
-          <div class="absolute inset-0 bg-black/45"></div>
-        </template>
+        <!-- 封面图 (仅在数据存在时渲染) -->
+        <img
+          v-if="album.coverImage?.file"
+          :src="album.coverImage.file.thumbnail || album.coverImage.file.url"
+          :alt="album.name"
+          class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+          @load="$event.target && (($event.target as HTMLImageElement).style.opacity = '1')"
+          style="opacity: 0"
+        />
 
-        <!-- header -->
-        <template #header>
-          <p class="text-xl font-medium text-white truncate">
-            {{ album.name }}
-          </p>
-        </template>
-
-        <!-- content -->
-        <template #content>
-          <div class="flex items-center space-x-2">
-            <div class="flex text-sm text-white/90">
-              <BaseIcon name="photo-heart" size="w-5 h-5" class="mr-1" />
+        <!-- 底部毛玻璃信息栏 -->
+        <div
+          class="absolute inset-x-0 bottom-0 p-4 glass-thick border-t border-white/20 ios-transition"
+        >
+          <div class="flex justify-between items-center mb-1">
+            <h3 class="text-lg font-bold text-[var(--fe-text-primary)] truncate">
+              {{ album.name }}
+            </h3>
+            <div class="flex items-center text-xs font-bold text-[var(--fe-primary)]">
+              <BaseIcon name="photo-heart" size="w-4 h-4" class="mr-1" />
               {{ album.photoCount }}
             </div>
-            <div class="flex text-sm text-white/90">
-              <BaseIcon name="calendar" size="w-5 h-5" class="mr-1" />
-              {{ album.createdAt }}
-            </div>
           </div>
-          <p class="mt-3 text-sm text-white/90">
-            {{ album.description }}
+          <p class="text-xs text-[var(--fe-text-secondary)] line-clamp-1">
+            {{ album.description || '这一刻，永恒。' }}
           </p>
-        </template>
-      </CardItem>
+        </div>
+      </div>
     </div>
+
+    <!-- 加载状态指示器 -->
+    <div v-if="loading || hasMore" class="py-10 flex justify-center">
+      <div v-if="loading" class="flex items-center space-x-2 text-[var(--fe-text-secondary)]">
+        <div
+          class="w-5 h-5 border-2 border-[var(--fe-primary)] border-t-transparent rounded-full animate-spin"
+        ></div>
+        <span class="text-xs font-bold uppercase tracking-widest">加载中...</span>
+      </div>
+      <div
+        v-else-if="!hasMore && albums.length > 0"
+        class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest opacity-30"
+      >
+        已显示全部相册
+      </div>
+    </div>
+
+    <!-- 占位 -->
+    <div class="h-20 md:hidden"></div>
   </div>
 </template>
 
 <script setup lang="ts">
 import BaseIcon from '@/components/ui/BaseIcon.vue'
-import CardItem from '@/components/ui/CardItem.vue'
 import type { Album } from '@/services/albumApi'
 
 interface Props {
   albums: Album[]
+  loading?: boolean
+  hasMore?: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: 'select-album', album: Album): void
+  (e: 'load-more'): void
 }>()
 
 const onSelectAlbum = (album: Album) => {
   emit('select-album', album)
+}
+
+// 预设的一组精致渐变色 (iOS 风格)
+const gradients = [
+  'linear-gradient(135deg, #f0ada0 0%, #f8c9c0 100%)',
+  'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+  'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+  'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
+  'linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)',
+  'linear-gradient(135deg, #a6c0fe 0%, #f68084 100%)',
+]
+
+const getPlaceholderStyle = (id: number) => {
+  const index = id % gradients.length
+  return {
+    background: gradients[index],
+  }
+}
+
+const handleScroll = (e: Event) => {
+  const target = e.target as HTMLElement
+  if (!target || props.loading || !props.hasMore) return
+
+  const bottomDistance = target.scrollHeight - target.scrollTop - target.clientHeight
+  if (bottomDistance < 100) {
+    emit('load-more')
+  }
 }
 </script>

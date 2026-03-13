@@ -1,0 +1,90 @@
+/* iOS Glass UI Theme for Frontend */
+
+.frontend-root {
+  /* Materials - Using backdrop-filter for the glass effect */
+  --fe-glass-ultra-thin: rgba(255, 255, 255, 0.4);
+  --fe-glass-regular: rgba(255, 255, 255, 0.7);
+  --fe-glass-thick: rgba(255, 255, 255, 0.9);
+
+  --fe-blur-ultra-thin: blur(20px);
+  --fe-blur-regular: blur(15px);
+  --fe-blur-thick: blur(10px);
+
+  /* Corners */
+  --fe-radius-card: 20px;
+  --fe-radius-button: 12px;
+
+  /* Typography */
+  --fe-font-system:
+    SF Pro Display, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+
+  /* Colors */
+  --fe-primary: #f0ada0;
+  --fe-primary-dark: #d89388;
+  --fe-bg-gray: #f2f2f7; /* iOS System Gray 6 */
+  --fe-text-primary: #1c1c1e;
+  --fe-text-secondary: #8e8e93;
+
+  /* Layout */
+  --fe-safe-area-bottom: env(safe-area-inset-bottom);
+}
+
+.frontend-root {
+  font-family: var(--fe-font-system);
+  color: var(--fe-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glass Utility Classes */
+.glass-ultra-thin {
+  background: var(--fe-glass-ultra-thin);
+  backdrop-filter: var(--fe-blur-ultra-thin);
+  -webkit-backdrop-filter: var(--fe-blur-ultra-thin);
+}
+
+.glass-regular {
+  background: var(--fe-glass-regular);
+  backdrop-filter: var(--fe-blur-regular);
+  -webkit-backdrop-filter: var(--fe-blur-regular);
+}
+
+.glass-thick {
+  background: var(--fe-glass-thick);
+  backdrop-filter: var(--fe-blur-thick);
+  -webkit-backdrop-filter: var(--fe-blur-thick);
+}
+
+/* iOS Style Transitions */
+.ios-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tap-feedback:active {
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+
+/* 
+   极致纤细滚动条优化 - 强制全局生效
+   针对 Webkit (Chrome, Edge, Safari) 
+*/
+.frontend-root *::-webkit-scrollbar {
+  width: 2px !important;
+  height: 2px !important;
+}
+
+.frontend-root *::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.frontend-root *::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-radius: 10px !important;
+}
+
+/* 针对 Firefox */
+.frontend-root * {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
+}

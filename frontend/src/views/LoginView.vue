@@ -1,44 +1,60 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen p-4">
-    <AnimatedBorderCard
-      :borderColor="'#f0ada0'"
-      :borderWidth="3"
-      class="generic-card p-4 w-full max-w-md"
+  <div
+    class="flex items-center justify-center min-h-screen p-4 frontend-root"
+    :style="{
+      backgroundImage: `url(${bgSrc})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    }"
+  >
+    <!-- 背景遮罩 -->
+    <div class="absolute inset-0 bg-white/10 pointer-events-none"></div>
+
+    <div
+      class="glass-thick p-8 w-full max-w-md rounded-[var(--fe-radius-card)] border border-white/40 shadow-2xl relative z-10"
     >
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">登录</h1>
-        <p class="text-gray-600 mt-2">请登录以继续访问管理面板</p>
+      <div class="text-center mb-10">
+        <h1 class="text-3xl font-bold text-[var(--fe-text-primary)]">登录</h1>
+        <p class="text-[var(--fe-text-secondary)] mt-2 font-medium">请登录以管理您的纪念空间</p>
       </div>
 
       <form @submit.prevent="handleLogin" class="space-y-6">
         <div>
-          <label for="username" class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
+          <label
+            for="username"
+            class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+            >用户名</label
+          >
           <input
             id="username"
             v-model="username"
             type="text"
-            class="w-full win11-input"
+            class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
             placeholder="请输入用户名"
             required
           />
         </div>
 
         <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+          <label
+            for="password"
+            class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+            >密码</label
+          >
           <input
             id="password"
             v-model="password"
             type="password"
-            class="w-full win11-input"
+            class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
             placeholder="请输入密码"
             required
           />
         </div>
 
-        <div class="flex items-center justify-center">
+        <div class="pt-4">
           <button
             type="submit"
-            class="w-full win11-button disabled:opacity-50"
+            class="w-full bg-[var(--fe-primary)] text-white py-3 rounded-xl text-sm font-bold shadow-md shadow-[var(--fe-primary)]/20 ios-transition tap-feedback disabled:opacity-50"
             :disabled="uiStore.loading"
           >
             <span v-if="!uiStore.loading">登录</span>
@@ -46,15 +62,27 @@
           </button>
         </div>
       </form>
-    </AnimatedBorderCard>
+
+      <!-- 返回首页 -->
+      <div class="mt-8 text-center">
+        <RouterLink
+          to="/"
+          class="text-xs font-bold text-[var(--fe-primary)] uppercase tracking-widest"
+        >
+          返回首页
+        </RouterLink>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import '@/assets/frontend-theme.css'
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import AnimatedBorderCard from '@/components/ui/AnimatedBorderCard.vue'
+import bgSrc from '@/assets/images/bg.png'
 import { userApi } from '@/services/userApi'
 import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'

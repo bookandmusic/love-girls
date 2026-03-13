@@ -42,23 +42,40 @@ const lunarDate = computed(() => {
 
 <template>
   <MainLayout
-    :title="systemInfo?.site.name"
-    :subtitle="systemInfo?.site.description"
-    :start-date="systemInfo?.site.startDate"
+    :title="systemInfo?.couple?.boy?.name + ' ❤️ ' + systemInfo?.couple?.girl?.name"
+    :subtitle="systemInfo?.site?.description"
+    :start-date="systemInfo?.site?.startDate"
   >
     <template #main-content>
-      <div class="flex items-center justify-center h-full">
-        <div v-if="systemInfo" class="w-full max-w-4xl">
+      <div
+        class="flex flex-col items-center justify-start min-h-full p-4 space-y-2 md:space-y-6 pt-2 md:pt-10"
+      >
+        <div v-if="systemInfo" class="w-full max-w-4xl flex flex-col items-center">
           <!-- 情侣信息 -->
-          <CoupleAvatar :boy="systemInfo.couple.boy" :girl="systemInfo.couple.girl"></CoupleAvatar>
+          <div class="relative w-full py-2 md:py-4">
+            <CoupleAvatar
+              :boy="systemInfo.couple.boy"
+              :girl="systemInfo.couple.girl"
+            ></CoupleAvatar>
+          </div>
+
+          <!-- 故事开始于 - 极致压缩内边距 -->
           <div
-            class="md:hidden p-6 m-4 h-32 flex flex-col items-center justify-center text-center text-[#ff7500] font-(family-name:--font-heading)"
+            class="glass-thick rounded-[var(--fe-radius-card)] p-4 md:p-6 mt-2 md:mt-4 border border-white/40 shadow-lg text-center ios-transition"
           >
-            <div class="text-lg font-semibold mb-1">我们的故事开始于</div>
-            <div class="text-2xl font-bold text-secondary-color font-(family-name:--font-math)">
+            <div
+              class="text-[var(--fe-text-secondary)] font-bold mb-1 tracking-widest uppercase text-[10px] opacity-60"
+            >
+              我们的故事开始于
+            </div>
+            <div
+              class="text-3xl md:text-5xl font-bold text-[var(--fe-primary)] font-(family-name:--font-math) mb-1"
+            >
               {{ date }}
             </div>
-            <div class="mt-1 font-(family-name:--font-decor)">
+            <div
+              class="text-sm md:text-lg font-medium text-[var(--fe-text-primary)] font-(family-name:--font-decor)"
+            >
               {{ lunarDate.lunarYearCN + '年' + lunarDate.lunarMonCN + lunarDate.lunarDayCN }}
             </div>
           </div>

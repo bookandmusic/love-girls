@@ -1,33 +1,41 @@
 <template>
   <div
-    class="w-full h-screen flex flex-col"
+    class="w-full h-screen flex flex-col frontend-root relative overflow-hidden"
     :style="{
       backgroundImage: `url(${backgroundImage})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     }"
   >
+    <!-- 背景遮罩 - 可选，用于提升文字清晰度 -->
+    <div class="absolute inset-0 bg-white/10 pointer-events-none"></div>
+
     <!-- 标题区域 -->
-    <div class="w-full max-w-6xl mx-auto p-4 px-6 flex-shrink-0">
+    <div class="w-full max-w-6xl mx-auto p-4 px-6 flex-shrink-0 relative z-10 pt-8">
       <h1
         v-if="title"
-        class="text-4xl md:text-5xl text-left font-bold font-(family-name:--font-signature)"
+        class="text-4xl md:text-5xl text-left font-bold font-(family-name:--font-signature) text-[var(--fe-text-primary)]"
       >
         {{ title }}
       </h1>
-      <p v-if="subtitle" class="text-md text-left mt-1 font-(family-name:--font-decor)">
+      <p
+        v-if="subtitle"
+        class="text-md text-left mt-2 font-(family-name:--font-decor) text-[var(--fe-text-secondary)]"
+      >
         {{ subtitle }}
       </p>
     </div>
 
     <!-- 主内容区域 -->
-    <div class="flex-1 flex flex-grow min-h-0 overflow-hidden">
+    <div class="flex-1 flex flex-grow min-h-0 overflow-hidden relative z-10">
       <!-- PC端左侧图标栏 -->
       <MenuBar class="flex-shrink-0" />
 
       <!-- 页面内容插槽 -->
       <div class="flex-1 flex-grow min-h-0 overflow-y-auto md:p-8 w-full flex justify-center">
-        <div class="w-full max-w-6xl h-full flex flex-col overflow-hidden generic-card">
+        <div
+          class="w-full max-w-6xl h-full flex flex-col overflow-hidden bg-transparent md:glass-regular md:rounded-[var(--fe-radius-card)] md:border md:border-white/40 md:shadow-xl"
+        >
           <div v-if="showEmptyState" class="h-full w-full p-4 flex items-center justify-center">
             <div class="text-[#FF7500] flex flex-col justify-center items-center text-center">
               <slot name="empty-state">
@@ -46,14 +54,16 @@
     </div>
 
     <!-- 手机端底部图标栏 -->
-    <MenuBar :is-mobile="true" class="flex-shrink-0" />
+    <MenuBar :is-mobile="true" class="flex-shrink-0 relative z-20" />
 
-    <!-- 页脚 -->
-    <div class="glass-footer w-full flex-shrink-0 hidden md:block">
-      <div class="max-w-4xl mx-auto py-3 xl:2 text-center">
-        <p class="text-md text-gray-500">
+    <!-- 页脚 (PC可见) -->
+    <div
+      class="glass-ultra-thin w-full flex-shrink-0 hidden md:block border-t border-white/20 relative z-10"
+    >
+      <div class="max-w-4xl mx-auto py-3 text-center">
+        <p class="text-sm text-[var(--fe-text-secondary)]">
           我们的故事开始于:
-          <span class="font-bold">{{ computedStartDate }}</span>
+          <span class="font-bold text-[var(--fe-text-primary)]">{{ computedStartDate }}</span>
         </p>
       </div>
     </div>
@@ -61,6 +71,8 @@
 </template>
 
 <script setup lang="ts">
+import '@/assets/frontend-theme.css'
+
 import { computed, ref } from 'vue'
 
 import bgSrc from '@/assets/images/bg.png'
@@ -98,10 +110,5 @@ const computedStartDate = computed(() => {
 </script>
 
 <style scoped>
-.glass-footer {
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(15px);
-  border-top: 1px solid rgba(229, 231, 235, 0.3);
-  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
-}
+/* 局部样式，全局滚动条已在 frontend-theme.css 处理 */
 </style>

@@ -1,76 +1,97 @@
 <template>
-  <div class="h-screen w-full flex items-center justify-center p-2 md:p-4">
-    <AnimatedBorderCard
-      :borderColor="'#f0ada0'"
-      :borderWidth="3"
-      class="w-full max-w-lg px-8 py-10 flex flex-col overflow-y-auto"
+  <div
+    class="h-screen w-full flex items-center justify-center p-4 frontend-root overflow-hidden"
+    :style="{
+      backgroundImage: `url(${bgSrc})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    }"
+  >
+    <!-- 背景遮罩 -->
+    <div class="absolute inset-0 bg-white/10 pointer-events-none"></div>
+
+    <div
+      class="w-full max-w-xl glass-thick rounded-[var(--fe-radius-card)] border border-white/40 shadow-2xl relative z-10 flex flex-col max-h-[90vh] overflow-hidden"
     >
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-2xl md:text-3xl font-bold mb-4 font-[ZCOOL_KuaiLe]">
+      <div class="p-8 pb-4 text-center">
+        <h1 class="text-2xl md:text-3xl font-bold text-[var(--fe-text-primary)] mb-2">
           欢迎使用情侣纪念站点
         </h1>
-        <p class="text-md font-[Ma_Shan_Zheng]">初始化你们的专属纪念空间</p>
+        <p class="text-[var(--fe-text-secondary)] font-medium">初始化您的专属纪念空间</p>
       </div>
 
       <!-- Step Indicator -->
-      <div class="flex items-center justify-between mb-6 text-sm text-on-surface">
-        <span
-          v-for="i in totalSteps"
-          :key="i"
-          :class="[
-            'flex-1 text-center py-1',
-            i === currentStep ? 'text-primary font-bold bg-primary-light/30 rounded-lg' : '',
-          ]"
+      <div class="px-8 mb-4">
+        <div
+          class="flex items-center justify-between p-1 glass-ultra-thin rounded-full border border-white/40"
         >
-          {{ i }}/{{ totalSteps }}
-        </span>
+          <div
+            v-for="i in totalSteps"
+            :key="i"
+            class="flex-1 text-[10px] font-bold py-1.5 text-center rounded-full ios-transition"
+            :class="[
+              i === currentStep
+                ? 'bg-white shadow-sm text-[var(--fe-text-primary)]'
+                : 'text-[var(--fe-text-secondary)]',
+            ]"
+          >
+            {{ i }} / {{ totalSteps }}
+          </div>
+        </div>
       </div>
-      <!-- Fixed height form container -->
-      <div class="flex-grow h-100 pt-4 pb-4 flex flex-col">
+
+      <!-- Scrollable form container -->
+      <div class="flex-grow overflow-y-auto px-8 py-4 custom-scrollbar">
         <!-- Step 1: Site -->
-        <div v-if="currentStep === 1" class="flex flex-col gap-4 flex-grow">
+        <div v-if="currentStep === 1" class="space-y-6">
           <div>
-            <label class="win11-label">站点名称</label>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >站点名称</label
+            >
             <input
               v-model="form.siteName"
               placeholder="例如：鹿与星的纪念站"
-              class="win11-input w-full"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
             />
           </div>
 
           <div>
-            <label class="win11-label">站点描述（可选）</label>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >站点描述（可选）</label
+            >
             <input
               v-model="form.siteDescription"
               placeholder="例如：记录我们的美好时光"
-              class="win11-input w-full"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
             />
           </div>
 
           <div>
-            <label class="win11-label">故事开始的日期</label>
-            <input v-model="form.startDate" type="date" class="win11-input w-full" />
-          </div>
-
-          <!-- Error Message Display -->
-          <div class="min-h-[20px] w-full">
-            <div v-if="getCurrentError" class="win11-error text-left">
-              {{ getCurrentError }}
-            </div>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >故事开始的日期</label
+            >
+            <input
+              v-model="form.startDate"
+              type="date"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
+            />
           </div>
         </div>
 
         <!-- Step 2: User A -->
-        <div v-if="currentStep === 2" class="flex flex-col gap-4 flex-grow">
-          <div class="flex justify-center">
+        <div v-if="currentStep === 2" class="space-y-6">
+          <div class="flex justify-center mb-4">
             <div
-              class="w-16 h-16 rounded-full bg-surface flex items-center justify-center text-lg text-on-surface-variant cursor-pointer overflow-hidden ring-1 ring-border-color hover:ring-primary transition"
+              class="w-20 h-20 rounded-2xl glass-ultra-thin border-2 border-white/60 flex items-center justify-center text-2xl text-[var(--fe-primary)] font-bold shadow-sm"
             >
               <img
                 v-if="avatarAPreview"
                 :src="avatarAPreview"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover rounded-2xl"
                 draggable="false"
               />
               <span v-else>{{ form.userAName?.[0] || 'A' }}</span>
@@ -78,57 +99,55 @@
           </div>
 
           <div>
-            <label class="win11-label">昵称</label>
-            <input v-model="form.userAName" placeholder="昵称" class="win11-input w-full" />
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >昵称</label
+            >
+            <input
+              v-model="form.userAName"
+              placeholder="昵称"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
+            />
           </div>
 
           <div>
-            <label class="win11-label">角色</label>
-            <select v-model="form.userARole" class="win11-input w-full">
-              <option value="" disabled>请选择角色</option>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >角色</label
+            >
+            <select
+              v-model="form.userARole"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition appearance-none"
+            >
               <option value="boy">男生</option>
               <option value="girl">女生</option>
             </select>
           </div>
 
           <div>
-            <label class="win11-label">邮箱（可选）</label>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >邮箱（可选）</label
+            >
             <input
               v-model="form.userAEmail"
               type="email"
-              placeholder="邮箱（可选）"
-              class="win11-input w-full"
+              placeholder="邮箱"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
             />
-          </div>
-
-          <div>
-            <label class="win11-label">手机号（可选）</label>
-            <input
-              v-model="form.userAPhone"
-              type="tel"
-              placeholder="手机号（可选）"
-              class="win11-input w-full"
-            />
-          </div>
-
-          <!-- Error Message Display -->
-          <div class="min-h-[20px] w-full">
-            <div v-if="getCurrentError" class="win11-error text-left">
-              {{ getCurrentError }}
-            </div>
           </div>
         </div>
 
         <!-- Step 3: User B -->
-        <div v-if="currentStep === 3" class="flex flex-col gap-4 flex-grow">
-          <div class="flex justify-center">
+        <div v-if="currentStep === 3" class="space-y-6">
+          <div class="flex justify-center mb-4">
             <div
-              class="w-16 h-16 rounded-full bg-surface flex items-center justify-center text-lg text-on-surface-variant cursor-pointer overflow-hidden ring-1 ring-border-color hover:ring-primary transition"
+              class="w-20 h-20 rounded-2xl glass-ultra-thin border-2 border-white/60 flex items-center justify-center text-2xl text-[var(--fe-primary)] font-bold shadow-sm"
             >
               <img
                 v-if="avatarBPreview"
                 :src="avatarBPreview"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover rounded-2xl"
                 draggable="false"
               />
               <span v-else>{{ form.userBName?.[0] || 'B' }}</span>
@@ -136,102 +155,119 @@
           </div>
 
           <div>
-            <label class="win11-label">昵称</label>
-            <input v-model="form.userBName" placeholder="昵称" class="win11-input w-full" />
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >昵称</label
+            >
+            <input
+              v-model="form.userBName"
+              placeholder="昵称"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
+            />
           </div>
 
           <div>
-            <label class="win11-label">角色</label>
-            <select v-model="form.userBRole" class="win11-input w-full">
-              <option value="" disabled>请选择角色</option>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >角色</label
+            >
+            <select
+              v-model="form.userBRole"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition appearance-none"
+            >
               <option value="boy">男生</option>
               <option value="girl">女生</option>
             </select>
           </div>
 
           <div>
-            <label class="win11-label">邮箱（可选）</label>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >邮箱（可选）</label
+            >
             <input
               v-model="form.userBEmail"
               type="email"
-              placeholder="邮箱（可选）"
-              class="win11-input w-full"
+              placeholder="邮箱"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
             />
-          </div>
-
-          <div>
-            <label class="win11-label">手机号（可选）</label>
-            <input
-              v-model="form.userBPhone"
-              type="tel"
-              placeholder="手机号（可选）"
-              class="win11-input w-full"
-            />
-          </div>
-
-          <!-- Error Message Display -->
-          <div class="min-h-[20px] w-full">
-            <div v-if="getCurrentError" class="win11-error text-left">
-              {{ getCurrentError }}
-            </div>
           </div>
         </div>
 
         <!-- Step 4: Password -->
-        <div v-if="currentStep === 4" class="flex flex-col gap-4 flex-grow">
+        <div v-if="currentStep === 4" class="space-y-6">
           <div>
-            <label class="win11-label">站点访问密码</label>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >站点访问密码</label
+            >
             <input
               v-model="form.sitePassword"
               type="password"
-              placeholder="站点访问密码"
-              class="win11-input w-full"
+              placeholder="建议使用强密码"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
             />
           </div>
 
           <div>
-            <label class="win11-label">确认密码</label>
+            <label
+              class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+              >确认密码</label
+            >
             <input
               v-model="form.sitePasswordConfirm"
               type="password"
-              placeholder="确认密码"
-              class="win11-input w-full"
+              placeholder="请再次输入密码"
+              class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
             />
           </div>
+        </div>
 
-          <!-- Error Message Display -->
-          <div class="min-h-[20px] w-full">
-            <div v-if="getCurrentError" class="win11-error text-left">
+        <!-- Error Message Display -->
+        <div class="mt-4 min-h-[24px]">
+          <Transition name="fade">
+            <div
+              v-if="getCurrentError"
+              class="text-xs font-bold text-red-500 bg-red-50/50 p-2 rounded-lg border border-red-200/50"
+            >
               {{ getCurrentError }}
             </div>
-          </div>
+          </Transition>
         </div>
       </div>
 
       <!-- Actions -->
-      <div class="flex justify-between mt-8">
+      <div class="p-8 pt-4 flex space-x-4">
         <button
+          v-if="currentStep > 1"
           @click="prevStep"
-          :class="[
-            'px-4 py-2 rounded-full text-sm transition',
-            currentStep === 1 ? 'invisible' : 'win11-button outline',
-          ]"
+          class="flex-1 py-3 rounded-xl text-sm font-bold text-[var(--fe-text-secondary)] ios-transition tap-feedback"
         >
           上一步
         </button>
 
-        <button type="button" @click.prevent="nextStep" class="win11-button">
-          {{ currentStep === totalSteps ? '完成' : '下一步' }}
+        <button
+          type="button"
+          @click.prevent="nextStep"
+          class="flex-[2] bg-[var(--fe-primary)] text-white py-3 rounded-xl text-sm font-bold shadow-md shadow-[var(--fe-primary)]/20 ios-transition tap-feedback disabled:opacity-50"
+          :disabled="uiStore.loading"
+        >
+          <span v-if="!uiStore.loading">{{
+            currentStep === totalSteps ? '完成初始化' : '下一步'
+          }}</span>
+          <span v-else>处理中...</span>
         </button>
       </div>
-    </AnimatedBorderCard>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import '@/assets/frontend-theme.css'
+
 import { computed, reactive, ref, watch } from 'vue'
 
-import AnimatedBorderCard from '@/components/ui/AnimatedBorderCard.vue'
+import bgSrc from '@/assets/images/bg.png'
 import router from '@/router'
 import { systemApi } from '@/services/system'
 import { useSystemStore } from '@/stores/system'
@@ -398,20 +434,12 @@ function submit() {
 </script>
 
 <style scoped>
-/* Win11风格标签 */
-.win11-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--on-surface-variant);
-  margin-bottom: 4px;
-  display: block;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
-
-/* Win11风格错误信息 */
-.win11-error {
-  color: #ff4757;
-  font-size: 12px;
-  margin-top: 4px;
-  min-height: 18px;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

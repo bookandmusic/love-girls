@@ -1,12 +1,7 @@
 <script setup lang="ts">
-// 导入菜单图标
-import adminIcon from '@/assets/menu/admin.png'
-import anniversariesIcon from '@/assets/menu/anniversaries.png'
-import homeIcon from '@/assets/menu/home.png'
-import momentsIcon from '@/assets/menu/moments.png'
-import photosIcon from '@/assets/menu/photos.png'
-import placesIcon from '@/assets/menu/places.png'
-import wishesIcon from '@/assets/menu/wishes.png'
+import { useRoute } from 'vue-router'
+
+import BaseIcon from '@/components/ui/BaseIcon.vue'
 
 // 定义菜单项类型
 interface MenuItem {
@@ -19,44 +14,105 @@ defineProps<{
   isMobile?: boolean
 }>()
 
+const route = useRoute()
+
 const menuItems: MenuItem[] = [
-  { icon: homeIcon, label: '首页', path: '/' },
-  { icon: momentsIcon, label: '动态', path: '/moments' },
-  { icon: photosIcon, label: '相册', path: '/albums' },
-  { icon: placesIcon, label: '足迹', path: '/places' },
-  { icon: anniversariesIcon, label: '纪念日', path: '/anniversaries' },
-  { icon: wishesIcon, label: '祝福', path: '/wishes' },
-  { icon: adminIcon, label: '后台', path: '/admin' },
+  { icon: 'home-heart', label: '首页', path: '/' },
+  { icon: 'moment', label: '动态', path: '/moments' },
+  { icon: 'photo-heart', label: '相册', path: '/albums' },
+  { icon: 'place', label: '足迹', path: '/places' },
+  { icon: 'anniversary', label: '纪念日', path: '/anniversaries' },
+  { icon: 'wish', label: '祝福', path: '/wishes' },
+  { icon: 'setting-heart', label: '后台', path: '/admin' },
 ]
+
+const isActive = (path: string) => {
+  if (path === '/') return route.path === '/'
+  return route.path.startsWith(path)
+}
 </script>
 
 <template>
-  <div v-if="!isMobile" class="hidden md:flex flex-col items-center justify-center space-y-4 w-32">
+  <!-- PC端左侧悬浮导航栏 -->
+  <div
+    v-if="!isMobile"
+    class="hidden md:flex flex-col items-center justify-center w-28 py-8 h-full"
+  >
     <div
-      v-for="(item, index) in menuItems"
-      :key="index"
-      class="flex flex-col items-center cursor-pointer group"
+      class="glass-ultra-thin rounded-full py-6 px-3 flex flex-col space-y-6 border border-white/20 shadow-lg"
     >
-      <RouterLink :to="item.path">
-        <img
-          :src="item.icon"
-          :alt="item.label"
-          class="w-20 h-20 object-contain transition-all duration-300 group-hover:scale-125"
-        />
+      <RouterLink
+        v-for="(item, index) in menuItems"
+        :key="index"
+        :to="item.path"
+        class="relative group flex flex-col items-center tap-feedback ios-transition"
+      >
+        <div
+          class="p-3 rounded-2xl ios-transition flex items-center justify-center"
+          :class="isActive(item.path) ? 'bg-white/40 shadow-sm scale-110' : ''"
+        >
+          <BaseIcon
+            :name="item.icon"
+            size="w-7 h-7"
+            :color="
+              isActive(item.path)
+                ? 'text-[var(--fe-primary)]'
+                : 'text-[var(--fe-text-primary)] opacity-70'
+            "
+          />
+        </div>
+        <!-- Tooltip -->
+        <span
+          class="absolute left-full ml-4 px-2 py-1 glass-thick rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/20 shadow-sm"
+        >
+          {{ item.label }}
+        </span>
       </RouterLink>
     </div>
   </div>
 
-  <!-- 手机端底部图标栏 -->
-  <div v-else class="md:hidden grid grid-cols-7 gap-2 py-3">
-    <RouterLink v-for="(item, index) in menuItems" :key="index" :to="item.path">
-      <div class="flex flex-col items-center cursor-pointer group">
-        <img
-          :src="item.icon"
-          :alt="item.label"
-          class="w-16 h-16 object-contain transition-all duration-300 group-hover:scale-110"
-        />
-      </div>
-    </RouterLink>
+  <!-- 手机端底部 Tab Bar -->
+  <div
+    v-else
+    class="md:hidden glass-thick border-t border-white/20 px-2 pt-2 pb-[calc(0.5rem+var(--fe-safe-area-bottom))] z-50"
+  >
+    <div class="flex justify-around items-center max-w-lg mx-auto">
+      <RouterLink
+        v-for="(item, index) in menuItems"
+        :key="index"
+        :to="item.path"
+        class="flex flex-col items-center justify-center flex-1 py-1 tap-feedback ios-transition"
+      >
+        <div
+          class="p-2 rounded-xl ios-transition flex items-center justify-center"
+          :class="isActive(item.path) ? 'bg-white/40' : ''"
+        >
+          <BaseIcon
+            :name="item.icon"
+            size="w-6 h-6"
+            :color="
+              isActive(item.path) ? 'text-[var(--fe-primary)]' : 'text-[var(--fe-text-secondary)]'
+            "
+          />
+        </div>
+        <span
+          class="text-[10px] mt-1 font-bold ios-transition"
+          :class="
+            isActive(item.path)
+              ? 'text-[var(--fe-text-primary)] scale-110'
+              : 'text-[var(--fe-text-secondary)]'
+          "
+        >
+          {{ item.label }}
+        </span>
+      </RouterLink>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.tap-feedback:active {
+  transform: scale(0.92);
+  transition: transform 0.1s ease-out;
+}
+</style>

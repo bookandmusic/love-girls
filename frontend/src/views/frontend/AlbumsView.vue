@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 
 import BaseIcon from '@/components/ui/BaseIcon.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { type Album, albumApi, type Photo } from '@/services/albumApi'
 import { useSystemStore } from '@/stores/system'
@@ -19,19 +18,24 @@ const systemStore = useSystemStore()
 const systemInfo = computed(() => systemStore.getSystemInfo)
 
 const showToast = useToast()
+
 // 相册相关状态
 const albums = ref<Album[]>([])
 const currentAlbum = ref<Album | null>(null)
 const currentPage = ref(1)
 const totalPages = ref(0)
-const pageSize = ref(6) // 每页显示6个相册
+const pageSize = ref(9) // 每页显示数量
+const loadingMoreAlbums = ref(false)
+const hasMoreAlbums = computed(() => currentPage.value < totalPages.value)
 
 // 照片相关状态
 const photos = ref<Photo[]>([])
 const currentAlbumId = ref<number | null>(null)
 const currentPhotoPage = ref(1)
 const totalPhotoPages = ref(0)
-const photoPageSize = ref(9) // 每页显示9张照片
+const photoPageSize = ref(12) // 每页显示数量
+const loadingMorePhotos = ref(false)
+const hasMorePhotos = computed(() => currentPhotoPage.value < totalPhotoPages.value)
 
 // 计算当前显示的标题和副标题
 const pageTitle = computed(() => {
@@ -49,43 +53,69 @@ const pageSubtitle = computed(() => {
 })
 
 // 获取相册列表
-const fetchAlbums = async (page: number) => {
-  uiStore.setLoading(true)
+const fetchAlbums = async (page: number, append = false) => {
+  if (loadingMoreAlbums.value) return
+  loadingMoreAlbums.value = true
+
   try {
     const response = await albumApi.getAlbums(page, pageSize.value)
-
-    albums.value = response.data.albums
+    if (append) {
+      albums.value = [...albums.value, ...response.data.albums]
+    } else {
+      albums.value = response.data.albums
+    }
     totalPages.value = response.data.totalPages
     currentPage.value = page
   } catch {
     showToast('获取相册列表失败', 'error')
   } finally {
+    loadingMoreAlbums.value = false
     uiStore.setLoading(false)
   }
 }
 
 // 获取相册中的照片
-const fetchPhotos = async (albumId: number, page: number) => {
-  uiStore.setLoading(true)
-  try {
-    // 先获取相册信息
-    const albumResponse = await albumApi.getAlbums(1, 100) // 获取所有相册以便找到当前相册
+const fetchPhotos = async (albumId: number, page: number, append = false) => {
+  if (loadingMorePhotos.value) return
+  loadingMorePhotos.value = true
 
-    const album = albumResponse.data.albums.find((a: Album) => a.id === albumId)
-    if (album) {
-      currentAlbum.value = album
+  try {
+    // 首次进入相册详情时设置当前相册信息
+    if (!append) {
+      const album = albums.value.find(a => a.id === albumId)
+      if (album) {
+        currentAlbum.value = album
+      }
     }
 
     const response = await albumApi.getPhotos(albumId, page, photoPageSize.value)
-
-    photos.value = response.data.photos
+    if (append) {
+      photos.value = [...photos.value, ...response.data.photos]
+    } else {
+      photos.value = response.data.photos
+    }
     totalPhotoPages.value = response.data.totalPages
     currentPhotoPage.value = page
     currentAlbumId.value = albumId
   } catch {
     showToast('获取照片列表失败', 'error')
   } finally {
+    loadingMorePhotos.value = false
     uiStore.setLoading(false)
+  }
+}
+
+// 加载更多相册
+const handleLoadMoreAlbums = () => {
+  if (hasMoreAlbums.value) {
+    fetchAlbums(currentPage.value + 1, true)
+  }
+}
+
+// 加载更多照片
+const handleLoadMorePhotos = () => {
+  if (currentAlbumId.value && hasMorePhotos.value) {
+    fetchPhotos(currentAlbumId.value, currentPhotoPage.value + 1, true)
   }
 }
 
@@ -98,21 +128,9 @@ const backToAlbums = () => {
   totalPhotoPages.value = 0
 }
 
-// 页面跳转
-const goToAlbumPage = (page: number) => {
-  if (page >= 1 && page <= totalPages.value) {
-    fetchAlbums(page)
-  }
-}
-
-const goToPhotoPage = (page: number) => {
-  if (currentAlbumId.value && page >= 1 && page <= totalPhotoPages.value) {
-    fetchPhotos(currentAlbumId.value, page)
-  }
-}
-
 // 处理相册选择
 const handleSelectAlbum = (album: Album) => {
+  uiStore.setLoading(true)
   fetchPhotos(album.id, 1)
 }
 
@@ -122,8 +140,9 @@ const handleBack = () => {
 }
 
 onMounted(async () => {
+  uiStore.setLoading(true)
   await systemStore.fetchSystemInfo()
-  fetchAlbums(1)
+  await fetchAlbums(1)
 })
 </script>
 
@@ -132,34 +151,35 @@ onMounted(async () => {
     :title="pageTitle"
     :subtitle="pageSubtitle"
     :start-date="systemInfo?.site.startDate"
-    :show-empty-state="!currentAlbumId && albums.length === 0"
+    :show-empty-state="!currentAlbumId && albums.length === 0 && !loadingMoreAlbums"
   >
     <template #empty-state>
-      <BaseIcon name="camera" size="w-24" />
-      <p class="text-xl font-medium mt-4">暂无相册</p>
-      <p class="text-md mt-2">还没有创建任何相册</p>
+      <div class="flex flex-col items-center justify-center py-20 text-[var(--fe-text-secondary)]">
+        <BaseIcon name="camera" size="w-24" />
+        <p class="text-xl font-bold mt-4 text-[var(--fe-text-primary)]">暂无相册</p>
+      </div>
     </template>
 
     <template #main-content>
       <!-- 相册列表视图 -->
-      <div v-if="!currentAlbumId" class="flex flex-col h-full">
-        <AlbumList :albums="albums" @select-album="handleSelectAlbum" />
-        <Pagination
-          :current-page="currentPage"
-          :total-pages="totalPages"
-          @prev="goToAlbumPage(currentPage - 1)"
-          @next="goToAlbumPage(currentPage + 1)"
+      <div v-if="!currentAlbumId" class="flex flex-col h-full bg-[var(--fe-bg-gray)]/30">
+        <AlbumList
+          :albums="albums"
+          :loading="loadingMoreAlbums"
+          :has-more="hasMoreAlbums"
+          @select-album="handleSelectAlbum"
+          @load-more="handleLoadMoreAlbums"
         />
       </div>
 
       <!-- 照片列表视图 -->
-      <div v-else class="flex flex-col h-full">
-        <PhotoList :photos="photos" @back="handleBack" />
-        <Pagination
-          :current-page="currentPhotoPage"
-          :total-pages="totalPhotoPages"
-          @prev="goToPhotoPage(currentPhotoPage - 1)"
-          @next="goToPhotoPage(currentPhotoPage + 1)"
+      <div v-else class="flex flex-col h-full bg-[var(--fe-bg-gray)]/30">
+        <PhotoList
+          :photos="photos"
+          :loading="loadingMorePhotos"
+          :has-more="hasMorePhotos"
+          @back="handleBack"
+          @load-more="handleLoadMorePhotos"
         />
       </div>
     </template>

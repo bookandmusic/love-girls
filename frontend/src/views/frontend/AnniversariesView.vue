@@ -1,4 +1,3 @@
-AnniversariesView.vue
 <script setup lang="ts">
 import { getSolarDateFromLunar } from 'chinese-days'
 import { computed, onMounted, ref } from 'vue'
@@ -255,98 +254,105 @@ onMounted(async () => {
     </template>
 
     <template #main-content>
-      <div class="flex flex-col h-full">
-        <!-- 下一个纪念日信息 -->
+      <div class="flex flex-col h-full bg-[var(--fe-bg-gray)]/30">
+        <!-- 下一个纪念日信息 - 采用显眼的玻璃卡片 -->
         <div
           v-if="upcomingAnniversaryInfo"
-          class="p-3 flex justify-center items-center text-center border-b border-white/50 flex-shrink-0"
+          class="p-6 flex justify-center items-center text-center flex-shrink-0"
         >
-          <div class="flex items-center space-x-2">
-            <div class="text-xl font-bold font-[Ma_Shan_Zheng]">
-              {{ upcomingAnniversaryInfo.message }}
+          <div
+            class="glass-thick rounded-[var(--fe-radius-card)] p-6 w-full max-w-lg border border-white/40 shadow-lg relative overflow-hidden group"
+          >
+            <div class="absolute -right-4 -top-4 opacity-10 transition-transform duration-700">
+              <BaseIcon
+                :name="upcomingAnniversaryInfo.isToday ? 'calendar' : 'clock'"
+                size="w-32 h-32"
+              />
             </div>
 
-            <div v-if="!upcomingAnniversaryInfo.isToday">
-              <BaseIcon name="clock" size="w-6" color="text-[#ff7500]" />
-            </div>
-
-            <div v-else>
-              <BaseIcon name="calendar" size="w-6" color="text-[#ff7500]" />
+            <div class="relative z-10 flex flex-col items-center">
+              <span
+                class="text-[10px] font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-1 opacity-60"
+              >
+                {{ upcomingAnniversaryInfo.isToday ? ' işte 今天' : 'Upcoming' }}
+              </span>
+              <div class="text-xl md:text-2xl font-bold text-[var(--fe-text-primary)]">
+                {{ upcomingAnniversaryInfo.message }}
+              </div>
             </div>
           </div>
         </div>
 
         <!-- 时间轴 -->
-        <div class="p-4 flex-grow overflow-y-auto flex flex-col">
-          <!-- 当有纪念日数据时显示时间轴 -->
-          <div class="relative flex-grow">
-            <!-- 时间轴线 -->
-            <div
-              class="absolute left-2 top-0 bottom-0 w-0.5 bg-pink-300 transform translate-x-[-1px]"
-            ></div>
+        <div class="px-4 md:px-8 pb-8 flex-grow overflow-y-auto custom-scrollbar">
+          <div class="relative max-w-2xl mx-auto py-4">
+            <!-- 时间轴线 - iOS 风格细线 -->
+            <div class="absolute left-6 top-0 bottom-0 w-px bg-black/10"></div>
 
             <!-- 纪念日列表 -->
-            <div class="space-y-8 pb-4">
+            <div class="space-y-6">
               <div
-                v-for="(anniversary, index) in sortedAnniversaries"
+                v-for="anniversary in sortedAnniversaries"
                 :key="anniversary.id"
-                class="relative flex items-start"
-                :class="{ 'pt-8': index === 0 && upcomingAnniversaryInfo }"
+                class="relative flex items-center group"
               >
-                <!-- 时间轴节点 -->
+                <!-- 时间轴节点 - iOS 风格小圆点 -->
                 <div
-                  class="absolute left-4 w-4 h-4 rounded-full border-4 border-white transform translate-x-[-100%] z-10"
-                  :class="{
-                    'bg-pink-500':
-                      upcomingAnniversaryInfo &&
-                      anniversary.id === upcomingAnniversaryInfo.anniversary.id,
-                    'bg-pink-300':
-                      !upcomingAnniversaryInfo ||
-                      (upcomingAnniversaryInfo &&
-                        anniversary.id !== upcomingAnniversaryInfo.anniversary.id),
-                  }"
-                ></div>
-
-                <!-- 箭头指示器 -->
-                <div
-                  v-if="
+                  class="absolute left-6 w-3 h-3 rounded-full border-2 border-white transform translate-x-[-50%] z-10 ios-transition"
+                  :class="[
                     upcomingAnniversaryInfo &&
                     anniversary.id === upcomingAnniversaryInfo.anniversary.id
-                  "
-                  class="absolute left-2 transform translate-x-[-50%] translate-y-[10%] z-10"
-                  :style="{ top: '-1rem' }"
-                >
-                  <BaseIcon name="arrow-down" size="w-12" color="text-[#ff7500]" />
-                </div>
+                      ? 'bg-[var(--fe-primary)] scale-125 shadow-[0_0_8px_rgba(240,173,160,0.6)]'
+                      : 'bg-[var(--fe-text-secondary)] opacity-30',
+                  ]"
+                ></div>
 
-                <!-- 内容 -->
-                <div class="ml-8 flex-grow">
+                <!-- 内容卡片 -->
+                <div class="ml-12 flex-grow">
                   <div
-                    class="generic-card p-4"
-                    :class="{
-                      'opacity-50': isPastAnniversary(anniversary),
-                    }"
+                    class="glass-thick p-4 rounded-2xl border border-white/40 shadow-sm ios-transition tap-feedback active:scale-[0.98]"
+                    :class="{ 'opacity-50 grayscale-[0.2]': isPastAnniversary(anniversary) }"
                   >
-                    <h3 class="font-bold text-lg flex items-center gap-2">
-                      {{ anniversary.title }}
-                    </h3>
-                    <div class="mt-2 flex justify-between items-center">
-                      <span class="text-sm text-gray-500 whitespace-nowrap ml-2">{{
-                        formatAnniversaryDate(anniversary)
-                      }}</span>
-                      <span
-                        v-if="anniversary.calendar === 'lunar'"
-                        class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-600"
+                    <div class="flex justify-between items-start">
+                      <div class="min-w-0">
+                        <h3 class="font-bold text-[var(--fe-text-primary)] text-lg truncate">
+                          {{ anniversary.title }}
+                        </h3>
+                        <p class="text-xs font-medium text-[var(--fe-text-secondary)] mt-0.5">
+                          {{ formatAnniversaryDate(anniversary) }}
+                          <span
+                            v-if="anniversary.calendar === 'lunar'"
+                            class="ml-1 text-[var(--fe-primary-dark)]"
+                          >
+                            (农历)
+                          </span>
+                        </p>
+                      </div>
+                      <div
+                        v-if="
+                          upcomingAnniversaryInfo &&
+                          anniversary.id === upcomingAnniversaryInfo.anniversary.id
+                        "
+                        class="flex-shrink-0"
                       >
-                        农历
-                      </span>
+                        <div
+                          class="px-2 py-0.5 rounded-full bg-[var(--fe-primary)]/20 text-[var(--fe-primary)] text-[10px] font-bold uppercase tracking-wider"
+                        >
+                          Next
+                        </div>
+                      </div>
                     </div>
-                    <p class="mt-2 text-md text-gray-700">{{ anniversary.description }}</p>
+                    <p class="mt-2 text-sm text-[var(--fe-text-primary)] leading-relaxed">
+                      {{ anniversary.description }}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- 占位 -->
+          <div class="h-20 md:hidden"></div>
         </div>
       </div>
     </template>

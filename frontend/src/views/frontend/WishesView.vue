@@ -6,167 +6,199 @@
     :show-empty-state="false"
   >
     <template #main-content>
-      <!-- 标签页头部 -->
-      <div class="border-b border-gray-200">
-        <nav class="-mb-px flex" aria-label="Tabs">
-          <button
-            @click="activeTab = 'form'"
-            :class="[
-              activeTab === 'form'
-                ? 'border-pink-500 text-pink-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-              'w-1/2 py-4 px-4 text-center border-b-2 font-medium text-sm',
-            ]"
+      <div class="flex flex-col h-full bg-[var(--fe-bg-gray)]/30">
+        <!-- 标签页头部 - iOS 分段控制器风格 -->
+        <div class="p-4 flex justify-center flex-shrink-0">
+          <div
+            class="glass-thick p-1 rounded-xl flex w-full max-w-sm border border-white/40 shadow-sm"
           >
-            留下祝福
-          </button>
-          <button
-            @click="activeTab = 'list'"
-            :class="[
-              activeTab === 'list'
-                ? 'border-pink-500 text-pink-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-              'w-1/2 py-4 px-4 text-center border-b-2 font-medium text-sm',
-            ]"
-          >
-            祝福列表
-            <span
-              v-if="totalCount"
-              class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold rounded-full bg-pink-100 text-pink-800"
+            <button
+              @click="activeTab = 'form'"
+              :class="[
+                activeTab === 'form'
+                  ? 'bg-white shadow-sm text-[var(--fe-text-primary)]'
+                  : 'text-[var(--fe-text-secondary)]',
+                'flex-1 py-1.5 px-4 text-center rounded-lg font-bold text-sm ios-transition tap-feedback',
+              ]"
             >
-              {{ totalCount }}
-            </span>
-          </button>
-        </nav>
-      </div>
-
-      <!-- 标签页内容 -->
-      <div class="p-4 h-full overflow-y-auto">
-        <!-- 祝福表单 -->
-        <div v-if="activeTab === 'form'" class="p-4 md:p-8 generic-card h-full flex flex-col">
-          <h2 class="text-xl font-bold mb-4 font-[Ma_Shan_Zheng]">留下您的祝福</h2>
-          <form @submit.prevent="confirmSubmit" class="flex-1 flex flex-col">
-            <div class="flex-grow">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="authorName" class="block text-sm font-medium text-gray-700 mb-1"
-                    >您的姓名</label
-                  >
-                  <input
-                    id="authorName"
-                    v-model="newWish.authorName"
-                    type="text"
-                    required
-                    class="w-full win11-input"
-                    placeholder="请输入您的姓名"
-                  />
-                </div>
-                <div>
-                  <label for="email" class="block text-sm font-medium text-gray-700 mb-1"
-                    >邮箱地址（可选）</label
-                  >
-                  <input
-                    id="email"
-                    v-model="newWish.email"
-                    type="email"
-                    class="w-full win11-input"
-                    placeholder="请输入您的邮箱"
-                  />
-                </div>
-              </div>
-              <div class="mt-4">
-                <label for="content" class="block text-sm font-medium text-gray-700 mb-1"
-                  >祝福内容</label
-                >
-                <div class="relative">
-                  <textarea
-                    id="content"
-                    v-model="newWish.content"
-                    required
-                    rows="4"
-                    class="w-full win11-input"
-                    placeholder="请输入您的祝福语..."
-                    maxlength="500"
-                  ></textarea>
-                  <span class="absolute bottom-2 right-2 text-xs text-gray-500">
-                    {{ newWish.content.length }}/500
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-300">
-              <div class="w-full flex">
-                <button
-                  type="button"
-                  @click="resetForm"
-                  class="flex-1 text-sm font-medium text-gray-700 focus:outline-none"
-                >
-                  重置
-                </button>
-                <button
-                  type="submit"
-                  class="flex-1 border-l border-gray-300 text-sm font-medium text-pink-500 focus:outline-none"
-                >
-                  提交祝福
-                </button>
-              </div>
-            </div>
-          </form>
+              留下祝福
+            </button>
+            <button
+              @click="activeTab = 'list'"
+              :class="[
+                activeTab === 'list'
+                  ? 'bg-white shadow-sm text-[var(--fe-text-primary)]'
+                  : 'text-[var(--fe-text-secondary)]',
+                'flex-1 py-1.5 px-4 text-center rounded-lg font-bold text-sm ios-transition tap-feedback relative',
+              ]"
+            >
+              祝福列表
+              <span
+                v-if="totalCount"
+                class="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-[var(--fe-primary)] text-white"
+              >
+                {{ totalCount }}
+              </span>
+            </button>
+          </div>
         </div>
 
-        <!-- 祝福列表 -->
-        <div v-else class="flex flex-col h-full overflow-y-auto">
+        <!-- 标签页内容 -->
+        <div class="flex-grow overflow-hidden relative">
+          <!-- 祝福表单 -->
           <div
-            v-if="wishes.length === 0"
-            class="h-full w-full p-4 flex flex-col items-center justify-center py-8 text-[#FF7500]"
+            v-if="activeTab === 'form'"
+            class="h-full overflow-y-auto p-4 md:p-8 custom-scrollbar"
           >
-            <BaseIcon name="wish" size="w-24" />
-            <p class="text-xl font-medium mt-4">暂无祝福</p>
-            <p class="text-md mt-2">还没有收到任何祝福</p>
-          </div>
-
-          <div v-else class="flex-grow overflow-y-auto space-y-4 px-3">
             <div
-              v-for="wish in wishes"
-              :key="wish.id"
-              class="generic-card p-4 hover:bg-white/80 transition-all duration-300"
+              class="max-w-2xl mx-auto glass-thick rounded-[var(--fe-radius-card)] p-6 md:p-10 border border-white/40 shadow-lg"
             >
-              <div class="flex items-start">
-                <!-- 用户头像 -->
-                <div
-                  class="w-12 h-12 rounded-full bg-gradient-to-br from-red-400 to-pink-500 flex items-center justify-center text-white font-bold mr-3 flex-shrink-0"
-                >
-                  <span>{{ wish.authorName.substring(0, 1) }}</span>
-                </div>
-
-                <!-- 祝福内容 -->
-                <div class="flex-grow">
-                  <div class="flex justify-between items-start">
-                    <div>
-                      <h3 class="font-bold">
-                        {{ wish.authorName }}
-                        <span v-if="wish.email" class="text-xs text-gray-500 ml-2">{{
-                          wish.email
-                        }}</span>
-                      </h3>
-                      <p class="text-xs text-gray-500">{{ wish.createdAt }}</p>
-                    </div>
+              <h2 class="text-2xl font-bold mb-6 text-[var(--fe-text-primary)] text-center">
+                留下您的祝福
+              </h2>
+              <form @submit.prevent="confirmSubmit" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label
+                      for="authorName"
+                      class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+                      >您的姓名</label
+                    >
+                    <input
+                      id="authorName"
+                      v-model="newWish.authorName"
+                      type="text"
+                      required
+                      class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
+                      placeholder="如何称呼您"
+                    />
                   </div>
-
-                  <p class="my-2 text-gray-700">{{ wish.content }}</p>
+                  <div>
+                    <label
+                      for="email"
+                      class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+                      >邮箱地址</label
+                    >
+                    <input
+                      id="email"
+                      v-model="newWish.email"
+                      type="email"
+                      class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition"
+                      placeholder="仅用于接收回复"
+                    />
+                  </div>
                 </div>
-              </div>
+                <div>
+                  <label
+                    for="content"
+                    class="block text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-2 ml-1"
+                    >祝福内容</label
+                  >
+                  <div class="relative">
+                    <textarea
+                      id="content"
+                      v-model="newWish.content"
+                      required
+                      rows="5"
+                      class="w-full glass-ultra-thin border border-white/60 rounded-xl px-4 py-3 text-sm focus:border-[var(--fe-primary)] focus:ring-2 focus:ring-[var(--fe-primary)]/20 outline-none ios-transition resize-none"
+                      placeholder="写下对我们的祝愿..."
+                      maxlength="500"
+                    ></textarea>
+                    <span
+                      class="absolute bottom-3 right-3 text-[10px] font-bold text-[var(--fe-text-secondary)] opacity-50"
+                    >
+                      {{ newWish.content.length }}/500
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex space-x-4 pt-4">
+                  <button
+                    type="button"
+                    @click="resetForm"
+                    class="flex-1 py-3 text-sm font-bold text-[var(--fe-text-secondary)] ios-transition tap-feedback"
+                  >
+                    重置
+                  </button>
+                  <button
+                    type="submit"
+                    class="flex-[2] bg-[var(--fe-primary)] text-white py-3 rounded-xl text-sm font-bold shadow-md shadow-[var(--fe-primary)]/20 ios-transition tap-feedback"
+                  >
+                    提交祝福
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
 
-          <!-- 分页组件 -->
-          <div v-if="wishes.length > 0" class="mt-4">
-            <Pagination
-              :current-page="currentPage"
-              :total-pages="totalPages"
-              @prev="goToPage(currentPage - 1)"
-              @next="goToPage(currentPage + 1)"
-            />
+          <!-- 祝福列表 -->
+          <div v-else class="h-full flex flex-col overflow-hidden">
+            <div
+              v-if="wishes.length === 0 && !loadingMore"
+              class="flex-1 flex flex-col items-center justify-center py-20 text-[var(--fe-text-secondary)]"
+            >
+              <BaseIcon name="wish" size="w-24" />
+              <p class="text-xl font-bold mt-4 text-[var(--fe-text-primary)]">暂无祝福</p>
+              <p class="text-md mt-2">成为第一个留下祝福的人吧</p>
+            </div>
+
+            <div
+              v-else
+              class="flex-grow overflow-y-auto px-4 md:px-8 space-y-4 py-4 custom-scrollbar"
+              @scroll="handleScroll"
+            >
+              <div
+                v-for="wish in wishes"
+                :key="wish.id"
+                class="glass-thick p-5 rounded-2xl border border-white/40 shadow-sm ios-transition"
+              >
+                <div class="flex items-start">
+                  <!-- 用户头像 -->
+                  <div
+                    class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#f8c9c0] to-[var(--fe-primary)] flex items-center justify-center text-white font-bold mr-4 flex-shrink-0 shadow-sm"
+                  >
+                    <span>{{ wish.authorName.substring(0, 1) }}</span>
+                  </div>
+
+                  <!-- 祝福内容 -->
+                  <div class="flex-grow min-w-0">
+                    <div class="flex justify-between items-center mb-1">
+                      <h3 class="font-bold text-[var(--fe-text-primary)] truncate">
+                        {{ wish.authorName }}
+                      </h3>
+                      <span class="text-[10px] font-bold text-[var(--fe-text-secondary)] uppercase">
+                        {{ wish.createdAt }}
+                      </span>
+                    </div>
+                    <p class="text-sm text-[var(--fe-text-primary)] leading-relaxed mt-2">
+                      {{ wish.content }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 加载状态指示器 -->
+              <div v-if="loadingMore || hasMore" class="py-10 flex justify-center">
+                <div
+                  v-if="loadingMore"
+                  class="flex items-center space-x-2 text-[var(--fe-text-secondary)]"
+                >
+                  <div
+                    class="w-5 h-5 border-2 border-[var(--fe-primary)] border-t-transparent rounded-full animate-spin"
+                  ></div>
+                  <span class="text-xs font-bold uppercase tracking-widest">正在加载更多...</span>
+                </div>
+                <div
+                  v-else-if="!hasMore && wishes.length > 0"
+                  class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest opacity-30"
+                >
+                  没有更多祝福了
+                </div>
+              </div>
+
+              <!-- 占位 -->
+              <div class="h-20 md:hidden"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -203,7 +235,6 @@ import { computed, onMounted, ref } from 'vue'
 
 import BaseIcon from '@/components/ui/BaseIcon.vue'
 import GenericDialog from '@/components/ui/GenericDialog.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { type Wish, wishApi } from '@/services/wishApi'
 import { useSystemStore } from '@/stores/system'
@@ -240,26 +271,41 @@ const newWish = ref({
 const showConfirmDialog = ref(false)
 
 // 获取祝福列表
-const fetchWishes = async (page: number) => {
-  uiStore.setLoading(true)
+const fetchWishes = async (page: number, append = false) => {
+  if (loadingMore.value) return
+  loadingMore.value = true
+
   try {
     const response = await wishApi.getWishes(page, pageSize.value, true)
 
-    wishes.value = response.data.wishes
+    if (append) {
+      wishes.value = [...wishes.value, ...response.data.wishes]
+    } else {
+      wishes.value = response.data.wishes
+    }
+
     totalPages.value = response.data.totalPages
     totalCount.value = response.data.total
     currentPage.value = page
   } catch {
     showToast('获取祝福列表失败', 'error')
   } finally {
+    loadingMore.value = false
     uiStore.setLoading(false)
   }
 }
 
-// 页面跳转
-const goToPage = (page: number) => {
-  if (page >= 1 && page <= totalPages.value) {
-    fetchWishes(page)
+const loadingMore = ref(false)
+const hasMore = computed(() => currentPage.value < totalPages.value)
+
+const handleScroll = (e: Event) => {
+  if (activeTab.value !== 'list') return
+  const target = e.target as HTMLElement
+  if (loadingMore.value || !hasMore.value) return
+
+  const bottomDistance = target.scrollHeight - target.scrollTop - target.clientHeight
+  if (bottomDistance < 100) {
+    fetchWishes(currentPage.value + 1, true)
   }
 }
 
