@@ -12,6 +12,14 @@ import (
 	"github.com/bookandmusic/love-girl/internal/repo"
 )
 
+type AlbumQueryParams struct {
+	Page    int
+	Size    int
+	SortBy  string
+	Order   string
+	Filters []repo.FilterCondition
+}
+
 // AlbumCoverImage 相册封面图片结构
 type AlbumCoverImage struct {
 	ID      uint64        `json:"id"`
@@ -139,7 +147,6 @@ func (s *AlbumService) convertToAlbumPhoto(ctx context.Context, file *model.File
 
 // ListAlbums 获取相册列表
 func (s *AlbumService) ListAlbums(ctx context.Context, page, size int) (*AlbumListResponse, error) {
-	// 使用默认分页参数
 	if page < 1 {
 		page = 1
 	}
@@ -149,7 +156,6 @@ func (s *AlbumService) ListAlbums(ctx context.Context, page, size int) (*AlbumLi
 		size = 100
 	}
 
-	// 获取相册列表
 	albums, total, err := s.AlbumRepo.ListAlbums(ctx, page, size)
 	if err != nil {
 		s.Log.Error("获取相册列表失败", "error", err, "page", page, "size", size)
@@ -158,7 +164,6 @@ func (s *AlbumService) ListAlbums(ctx context.Context, page, size int) (*AlbumLi
 
 	totalPages := int((total + int64(size) - 1) / int64(size))
 
-	// 转换为响应格式
 	responseAlbums := make([]*Album, len(albums))
 	for i, album := range albums {
 		albumPtr := &album
@@ -169,6 +174,49 @@ func (s *AlbumService) ListAlbums(ctx context.Context, page, size int) (*AlbumLi
 		Albums:     responseAlbums,
 		Page:       page,
 		Size:       size,
+		Total:      total,
+		TotalPages: totalPages,
+		TotalCount: total,
+	}, nil
+}
+
+// ListAlbumsWithQuery 根据查询参数获取相册列表
+func (s *AlbumService) ListAlbumsWithQuery(ctx context.Context, params *AlbumQueryParams) (*AlbumListResponse, error) {
+	if params.Page < 1 {
+		params.Page = 1
+	}
+	if params.Size < 1 {
+		params.Size = 10
+	} else if params.Size > 100 {
+		params.Size = 100
+	}
+
+	var opts []repo.QueryOption
+	if len(params.Filters) > 0 {
+		opts = append(opts, repo.WithConditions(params.Filters...))
+	}
+	if params.SortBy != "" {
+		opts = append(opts, repo.WithOrder(params.SortBy, params.Order == "desc"))
+	}
+
+	albums, total, err := s.AlbumRepo.ListAlbums(ctx, params.Page, params.Size, opts...)
+	if err != nil {
+		s.Log.Error("获取相册列表失败", "error", err, "params", params)
+		return nil, fmt.Errorf("系统内部错误")
+	}
+
+	totalPages := int((total + int64(params.Size) - 1) / int64(params.Size))
+
+	responseAlbums := make([]*Album, len(albums))
+	for i, album := range albums {
+		albumPtr := &album
+		responseAlbums[i] = s.convertToAlbum(ctx, albumPtr)
+	}
+
+	return &AlbumListResponse{
+		Albums:     responseAlbums,
+		Page:       params.Page,
+		Size:       params.Size,
 		Total:      total,
 		TotalPages: totalPages,
 		TotalCount: total,

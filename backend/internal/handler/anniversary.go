@@ -41,11 +41,14 @@ func (h *AnniversaryHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *s
 
 // ListAnniversaries 获取纪念日列表
 // @Summary 获取纪念日列表
-// @Description 分页获取纪念日列表
+// @Description 分页获取纪念日列表，支持排序和过滤
 // @Tags anniversaries
 // @Produce json
-// @Param page query int true "页码" default(1)
-// @Param size query int true "每页数量" default(10)
+// @Param page query int false "页码" default(1)
+// @Param size query int false "每页数量" default(10)
+// @Param sort_by query string false "排序字段 (date, created_at)"
+// @Param order query string false "排序方向 (asc, desc)" default(desc)
+// @Param filter query []string false "过滤条件，格式: field:op:value"
 // @Success 200 {object} Response{data=service.AnniversaryListResponse}
 // @Failure 400 {object} Response
 // @Failure 500 {object} Response
@@ -53,29 +56,15 @@ func (h *AnniversaryHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *s
 func (h *AnniversaryHandler) ListAnniversaries(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	// 解析分页参数
-	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
-	if err != nil || page < 1 {
-		c.JSON(http.StatusBadRequest, Response{
-			Code:    1,
-			Message: "页码参数无效",
-			Data:    nil,
-		})
-		return
-	}
+	queryParams := ParseQueryParams(c, "anniversaries")
 
-	size, err := strconv.Atoi(c.DefaultQuery("size", "10"))
-	if err != nil || size < 1 || size > 100 {
-		c.JSON(http.StatusBadRequest, Response{
-			Code:    1,
-			Message: "每页数量参数无效",
-			Data:    nil,
-		})
-		return
-	}
-
-	// 调用服务层获取纪念日列表
-	response, err := h.AnniversaryService.ListAnniversaries(ctx, page, size)
+	response, err := h.AnniversaryService.ListAnniversariesWithQuery(ctx, &service.AnniversaryQueryParams{
+		Page:    queryParams.Page,
+		Size:    queryParams.Size,
+		SortBy:  queryParams.SortBy,
+		Order:   queryParams.Order,
+		Filters: queryParams.Filters,
+	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, Response{
 			Code:    1,

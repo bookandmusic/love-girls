@@ -38,7 +38,12 @@ func NewPlaceRepo(dbCli *gorm.DB) *PlaceRepo {
 //
 // 返回：地点列表、总数、错误
 func (r *PlaceRepo) ListPlaces(ctx context.Context, page, size int, opts ...QueryOption) ([]model.Place, int64, error) {
-	// 确保预加载关联数据
+	allOpts := append(opts, WithPreloads("Image"))
+	return r.BaseRepo.FindWithPagination(ctx, page, size, allOpts...)
+}
+
+// ListPlacesWithOpts 分页展示所有地点数据，支持完整查询选项
+func (r *PlaceRepo) ListPlacesWithOpts(ctx context.Context, page, size int, opts ...QueryOption) ([]model.Place, int64, error) {
 	allOpts := append(opts, WithPreloads("Image"))
 	return r.BaseRepo.FindWithPagination(ctx, page, size, allOpts...)
 }

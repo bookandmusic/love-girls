@@ -12,6 +12,14 @@ import (
 	"github.com/bookandmusic/love-girl/internal/repo"
 )
 
+type MomentQueryParams struct {
+	Page    int
+	Size    int
+	SortBy  string
+	Order   string
+	Filters []repo.FilterCondition
+}
+
 // FrontendMoment 前端期望的Moment数据结构
 type FrontendMoment struct {
 	ID        uint64          `json:"id"`
@@ -212,6 +220,52 @@ func (s *MomentService) ListMomentsByAuthStatus(ctx context.Context, page, size 
 		Moments:    frontendMoments,
 		Page:       page,
 		Size:       size,
+		Total:      total,
+		TotalPages: totalPage,
+	}, nil
+}
+
+// ListMomentsWithQuery 根据查询参数获取动态列表
+func (s *MomentService) ListMomentsWithQuery(ctx context.Context, params *MomentQueryParams, isLoggedIn bool, userID uint64) (*MomentListResponse, error) {
+	var (
+		moments []model.Moment
+		total   int64
+		err     error
+	)
+
+	var conditions []repo.FilterCondition
+	if isLoggedIn {
+		conditions = append(conditions, repo.FilterCondition{Field: "user_id", Operator: "eq", Value: userID})
+	} else {
+		conditions = append(conditions, repo.FilterCondition{Field: "is_public", Operator: "eq", Value: true})
+	}
+	conditions = append(conditions, params.Filters...)
+
+	var opts []repo.QueryOption
+	opts = append(opts, repo.WithConditions(conditions...))
+
+	if params.SortBy != "" {
+		opts = append(opts, repo.WithOrder(params.SortBy, params.Order == "desc"))
+	}
+
+	moments, total, err = s.MomentRepo.ListMomentsWithOpts(ctx, params.Page, params.Size, opts...)
+	if err != nil {
+		s.Log.Error("获取动态列表失败", "error", err, "params", params, "isLoggedIn", isLoggedIn)
+		return nil, fmt.Errorf("系统内部错误")
+	}
+
+	totalPage := int((total + int64(params.Size) - 1) / int64(params.Size))
+
+	frontendMoments := make([]*FrontendMoment, len(moments))
+	for i, moment := range moments {
+		momentPtr := &moment
+		frontendMoments[i] = s.convertToFrontendFormat(ctx, momentPtr)
+	}
+
+	return &MomentListResponse{
+		Moments:    frontendMoments,
+		Page:       params.Page,
+		Size:       params.Size,
 		Total:      total,
 		TotalPages: totalPage,
 	}, nil

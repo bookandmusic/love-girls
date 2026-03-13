@@ -66,7 +66,7 @@ format_code() {
 # 静态检查
 static_check() {
     echo "正在执行静态检查..."
-    golangci-lint run
+    golangci-lint run --timeout 5m
 }
 
 # 复杂度检查

@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/anniversaries": {
             "get": {
-                "description": "分页获取纪念日列表",
+                "description": "分页获取纪念日列表，支持排序和过滤",
                 "produces": [
                     "application/json"
                 ],
@@ -40,16 +40,37 @@ const docTemplate = `{
                         "default": 1,
                         "description": "页码",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
                         "default": 10,
                         "description": "每页数量",
                         "name": "size",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "排序字段 (date, created_at)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "排序方向 (asc, desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "过滤条件，格式: field:op:value",
+                        "name": "filter",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -287,7 +308,7 @@ const docTemplate = `{
         },
         "/api/v1/albums": {
             "get": {
-                "description": "获取相册列表，保持分页数据结构",
+                "description": "获取相册列表，支持分页、排序和过滤",
                 "consumes": [
                     "application/json"
                 ],
@@ -309,6 +330,29 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "每页数量，默认10",
                         "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "排序字段 (created_at, name)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "排序方向 (asc, desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "过滤条件，格式: field:op:value (如: name:like:旅行)",
+                        "name": "filter",
                         "in": "query"
                     }
                 ],
@@ -719,7 +763,7 @@ const docTemplate = `{
         },
         "/api/v1/places": {
             "get": {
-                "description": "获取所有地点，保持分页数据结构",
+                "description": "获取所有地点，支持分页、排序和过滤",
                 "consumes": [
                     "application/json"
                 ],
@@ -730,6 +774,43 @@ const docTemplate = `{
                     "places"
                 ],
                 "summary": "获取所有地点",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页码，默认1",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页数量，默认10",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "排序字段 (created_at, name)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "排序方向 (asc, desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "过滤条件，格式: field:op:value (如: name:like:北京)",
+                        "name": "filter",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -908,7 +989,7 @@ const docTemplate = `{
         },
         "/api/v1/wishes": {
             "get": {
-                "description": "获取祝福列表，支持分页查询。未认证用户只能查看已审核的祝福，已认证用户可以查看所有祝福。",
+                "description": "获取祝福列表，支持分页查询、排序和过滤。未认证用户只能查看已审核的祝福，已认证用户可以查看所有祝福。",
                 "consumes": [
                     "application/json"
                 ],
@@ -922,14 +1003,39 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "default": 1,
                         "description": "页码，从 1 开始",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
+                        "default": 10,
                         "description": "每页数量",
                         "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "排序字段 (created_at)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "排序方向 (asc, desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "过滤条件，格式: field:op:value (如: approved:eq:true)",
+                        "name": "filter",
                         "in": "query"
                     },
                     {
@@ -1252,7 +1358,7 @@ const docTemplate = `{
         },
         "/moments": {
             "get": {
-                "description": "分页获取动态列表",
+                "description": "分页获取动态列表，支持排序和过滤",
                 "produces": [
                     "application/json"
                 ],
@@ -1263,17 +1369,40 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
+                        "default": 1,
                         "description": "页码",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
+                        "default": 10,
                         "description": "每页数量",
                         "name": "size",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "排序字段 (created_at, likes)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "排序方向 (asc, desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "过滤条件，格式: field:op:value (如: is_public:eq:true)",
+                        "name": "filter",
+                        "in": "query"
                     }
                 ],
                 "responses": {

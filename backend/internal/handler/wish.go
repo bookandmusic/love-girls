@@ -45,33 +45,23 @@ func (h *WishHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server.G
 
 // ListWishs 获取祝福列表
 // @Summary 获取祝福列表
-// @Description 获取祝福列表，支持分页查询。未认证用户只能查看已审核的祝福，已认证用户可以查看所有祝福。
+// @Description 获取祝福列表，支持分页查询、排序和过滤。未认证用户只能查看已审核的祝福，已认证用户可以查看所有祝福。
 // @Tags wishes
 // @Accept json
 // @Produce json
-// @Param page query int false "页码，从 1 开始"
-// @Param size query int false "每页数量"
+// @Param page query int false "页码，从 1 开始" default(1)
+// @Param size query int false "每页数量" default(10)
+// @Param sort_by query string false "排序字段 (created_at)"
+// @Param order query string false "排序方向 (asc, desc)" default(desc)
+// @Param filter query []string false "过滤条件，格式: field:op:value (如: approved:eq:true)"
 // @Param approved query bool false "是否只获取已审核的祝福，仅对已认证用户有效"
 // @Success 200 {object} Response{data=service.WishListResponse}
 // @Router /api/v1/wishes [get]
 func (h *WishHandler) ListWishs(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	// 解析分页参数
-	pageStr := c.DefaultQuery("page", "1")
-	sizeStr := c.DefaultQuery("size", "10")
+	queryParams := ParseQueryParams(c, "wishes")
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 1 {
-		page = 1
-	}
-
-	size, err := strconv.Atoi(sizeStr)
-	if err != nil || size < 1 || size > 100 {
-		size = 10
-	}
-
-	// 尝试从 Authorization header 中获取用户认证状态（可选认证）
 	var isAuthenticated bool
 	authHeader := c.GetHeader("Authorization")
 	if authHeader != "" {
@@ -89,22 +79,24 @@ func (h *WishHandler) ListWishs(c *gin.Context) {
 	approvedStr := c.Query("approved")
 
 	if isAuthenticated {
-		// 已认证用户：根据参数决定
 		if approvedStr != "" {
 			approvedValue, err := strconv.ParseBool(approvedStr)
 			if err == nil {
 				approved = &approvedValue
 			}
 		}
-		// 如果没有参数，approved为nil，返回所有祝福
 	} else {
-		// 未认证用户：只能查看已审核的祝福
 		defaultApproved := true
 		approved = &defaultApproved
 	}
 
-	// 调用服务层获取祝福列表
-	wish, err := h.WishService.ListWishs(ctx, page, size, approved)
+	wish, err := h.WishService.ListWishsWithQuery(ctx, &service.WishQueryParams{
+		Page:    queryParams.Page,
+		Size:    queryParams.Size,
+		SortBy:  queryParams.SortBy,
+		Order:   queryParams.Order,
+		Filters: queryParams.Filters,
+	}, approved)
 	if err != nil {
 		h.WishService.Log.Error("获取祝福列表失败", "error", err)
 		c.JSON(http.StatusInternalServerError, Response{

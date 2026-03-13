@@ -13,6 +13,14 @@ import (
 	"github.com/bookandmusic/love-girl/internal/repo"
 )
 
+type WishQueryParams struct {
+	Page    int
+	Size    int
+	SortBy  string
+	Order   string
+	Filters []repo.FilterCondition
+}
+
 // Wish 祝福结构（与前端保持一致的命名）
 type Wish struct {
 	ID         uint64    `json:"id"`
@@ -72,7 +80,6 @@ func (s *WishService) convertToWish(wish *model.Wish) *Wish {
 
 // ListWishs 获取祝福列表
 func (s *WishService) ListWishs(ctx context.Context, page, size int, approved *bool) (*WishListResponse, error) {
-	// 使用默认分页参数
 	if page < 1 {
 		page = 1
 	}
@@ -82,13 +89,11 @@ func (s *WishService) ListWishs(ctx context.Context, page, size int, approved *b
 		size = 100
 	}
 
-	// 构建查询选项
 	var opts []repo.QueryOption
 	if approved != nil {
 		opts = append(opts, repo.WithConditions(repo.FilterCondition{Field: "approved", Operator: "eq", Value: *approved}))
 	}
 
-	// 获取祝福列表
 	wishesData, total, err := s.WishRepo.FindWithPagination(ctx, page, size, opts...)
 	if err != nil {
 		s.Log.Error("获取祝福列表失败", "error", err, "page", page, "size", size, "approved", approved)
@@ -97,7 +102,6 @@ func (s *WishService) ListWishs(ctx context.Context, page, size int, approved *b
 
 	totalPages := int((total + int64(size) - 1) / int64(size))
 
-	// 转换为响应格式
 	wish := make([]*Wish, len(wishesData))
 	for i, wishItem := range wishesData {
 		wish[i] = s.convertToWish(&wishItem)
@@ -107,6 +111,51 @@ func (s *WishService) ListWishs(ctx context.Context, page, size int, approved *b
 		Wishs:      wish,
 		Page:       page,
 		Size:       size,
+		Total:      total,
+		TotalPages: totalPages,
+		TotalCount: total,
+	}, nil
+}
+
+// ListWishsWithQuery 根据查询参数获取祝福列表
+func (s *WishService) ListWishsWithQuery(ctx context.Context, params *WishQueryParams, approved *bool) (*WishListResponse, error) {
+	if params.Page < 1 {
+		params.Page = 1
+	}
+	if params.Size < 1 {
+		params.Size = 10
+	} else if params.Size > 100 {
+		params.Size = 100
+	}
+
+	var opts []repo.QueryOption
+	if approved != nil {
+		opts = append(opts, repo.WithConditions(repo.FilterCondition{Field: "approved", Operator: "eq", Value: *approved}))
+	}
+	if len(params.Filters) > 0 {
+		opts = append(opts, repo.WithConditions(params.Filters...))
+	}
+	if params.SortBy != "" {
+		opts = append(opts, repo.WithOrder(params.SortBy, params.Order == "desc"))
+	}
+
+	wishesData, total, err := s.WishRepo.FindWithPagination(ctx, params.Page, params.Size, opts...)
+	if err != nil {
+		s.Log.Error("获取祝福列表失败", "error", err, "params", params, "approved", approved)
+		return nil, fmt.Errorf("系统内部错误")
+	}
+
+	totalPages := int((total + int64(params.Size) - 1) / int64(params.Size))
+
+	wish := make([]*Wish, len(wishesData))
+	for i, wishItem := range wishesData {
+		wish[i] = s.convertToWish(&wishItem)
+	}
+
+	return &WishListResponse{
+		Wishs:      wish,
+		Page:       params.Page,
+		Size:       params.Size,
 		Total:      total,
 		TotalPages: totalPages,
 		TotalCount: total,

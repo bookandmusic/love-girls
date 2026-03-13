@@ -143,3 +143,10 @@ func (r *MomentRepo) ListMoments(ctx context.Context, page, size int, conditions
 	ops := append([]QueryOption{WithConditions(conditions...)}, preloadOps...)
 	return r.BaseRepo.FindWithPagination(ctx, page, size, ops...)
 }
+
+// ListMomentsWithOpts 分页查询动态列表，支持完整查询选项
+func (r *MomentRepo) ListMomentsWithOpts(ctx context.Context, page, size int, opts ...QueryOption) ([]model.Moment, int64, error) {
+	preloadOps := WithMomentPreloads()
+	allOpts := append(opts, preloadOps...)
+	return r.BaseRepo.FindWithPagination(ctx, page, size, allOpts...)
+}

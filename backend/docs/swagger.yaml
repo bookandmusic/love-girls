@@ -556,20 +556,34 @@ info:
 paths:
   /anniversaries:
     get:
-      description: 分页获取纪念日列表
+      description: 分页获取纪念日列表，支持排序和过滤
       parameters:
       - default: 1
         description: 页码
         in: query
         name: page
-        required: true
         type: integer
       - default: 10
         description: 每页数量
         in: query
         name: size
-        required: true
         type: integer
+      - description: 排序字段 (date, created_at)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: 排序方向 (asc, desc)
+        in: query
+        name: order
+        type: string
+      - collectionFormat: csv
+        description: '过滤条件，格式: field:op:value'
+        in: query
+        items:
+          type: string
+        name: filter
+        type: array
       produces:
       - application/json
       responses:
@@ -716,7 +730,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取相册列表，保持分页数据结构
+      description: 获取相册列表，支持分页、排序和过滤
       parameters:
       - description: 页码，默认1
         in: query
@@ -726,6 +740,22 @@ paths:
         in: query
         name: size
         type: integer
+      - description: 排序字段 (created_at, name)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: 排序方向 (asc, desc)
+        in: query
+        name: order
+        type: string
+      - collectionFormat: csv
+        description: '过滤条件，格式: field:op:value (如: name:like:旅行)'
+        in: query
+        items:
+          type: string
+        name: filter
+        type: array
       produces:
       - application/json
       responses:
@@ -970,7 +1000,32 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取所有地点，保持分页数据结构
+      description: 获取所有地点，支持分页、排序和过滤
+      parameters:
+      - description: 页码，默认1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认10
+        in: query
+        name: size
+        type: integer
+      - description: 排序字段 (created_at, name)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: 排序方向 (asc, desc)
+        in: query
+        name: order
+        type: string
+      - collectionFormat: csv
+        description: '过滤条件，格式: field:op:value (如: name:like:北京)'
+        in: query
+        items:
+          type: string
+        name: filter
+        type: array
       produces:
       - application/json
       responses:
@@ -1079,16 +1134,34 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取祝福列表，支持分页查询。未认证用户只能查看已审核的祝福，已认证用户可以查看所有祝福。
+      description: 获取祝福列表，支持分页查询、排序和过滤。未认证用户只能查看已审核的祝福，已认证用户可以查看所有祝福。
       parameters:
-      - description: 页码，从 1 开始
+      - default: 1
+        description: 页码，从 1 开始
         in: query
         name: page
         type: integer
-      - description: 每页数量
+      - default: 10
+        description: 每页数量
         in: query
         name: size
         type: integer
+      - description: 排序字段 (created_at)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: 排序方向 (asc, desc)
+        in: query
+        name: order
+        type: string
+      - collectionFormat: csv
+        description: '过滤条件，格式: field:op:value (如: approved:eq:true)'
+        in: query
+        items:
+          type: string
+        name: filter
+        type: array
       - description: 是否只获取已审核的祝福，仅对已认证用户有效
         in: query
         name: approved
@@ -1288,18 +1361,34 @@ paths:
       - health
   /moments:
     get:
-      description: 分页获取动态列表
+      description: 分页获取动态列表，支持排序和过滤
       parameters:
-      - description: 页码
+      - default: 1
+        description: 页码
         in: query
         name: page
-        required: true
         type: integer
-      - description: 每页数量
+      - default: 10
+        description: 每页数量
         in: query
         name: size
-        required: true
         type: integer
+      - description: 排序字段 (created_at, likes)
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: 排序方向 (asc, desc)
+        in: query
+        name: order
+        type: string
+      - collectionFormat: csv
+        description: '过滤条件，格式: field:op:value (如: is_public:eq:true)'
+        in: query
+        items:
+          type: string
+        name: filter
+        type: array
       produces:
       - application/json
       responses:

@@ -84,11 +84,14 @@ func (h *MomentHandler) CreateMoment(c *gin.Context) {
 
 // ListMoments 获取动态列表
 // @Summary 获取动态列表
-// @Description 分页获取动态列表
+// @Description 分页获取动态列表，支持排序和过滤
 // @Tags moments
 // @Produce json
-// @Param page query int true "页码"
-// @Param size query int true "每页数量"
+// @Param page query int false "页码" default(1)
+// @Param size query int false "每页数量" default(10)
+// @Param sort_by query string false "排序字段 (created_at, likes)"
+// @Param order query string false "排序方向 (asc, desc)" default(desc)
+// @Param filter query []string false "过滤条件，格式: field:op:value (如: is_public:eq:true)"
 // @Success 200 {object} Response{data=service.MomentListResponse}
 // @Failure 400 {object} Response
 // @Failure 500 {object} Response
@@ -96,32 +99,8 @@ func (h *MomentHandler) CreateMoment(c *gin.Context) {
 func (h *MomentHandler) ListMoments(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	pageStr := c.DefaultQuery("page", "1")
-	sizeStr := c.DefaultQuery("size", "10")
+	queryParams := ParseQueryParams(c, "moments")
 
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 1 {
-		h.MomentService.Log.Error("无效的页码参数", "page", pageStr, "error", err)
-		c.JSON(http.StatusBadRequest, Response{
-			Code:    1,
-			Message: "无效的页码参数",
-			Data:    nil,
-		})
-		return
-	}
-
-	size, err := strconv.Atoi(sizeStr)
-	if err != nil || size < 1 || size > 100 {
-		h.MomentService.Log.Error("无效的每页数量参数", "size", sizeStr, "error", err)
-		c.JSON(http.StatusBadRequest, Response{
-			Code:    1,
-			Message: "无效的每页数量参数",
-			Data:    nil,
-		})
-		return
-	}
-
-	// 检查用户是否已登录
 	claims, isLoggedIn := auth.GetAuthClaims(c)
 
 	var userID uint64
@@ -129,8 +108,13 @@ func (h *MomentHandler) ListMoments(c *gin.Context) {
 		userID = claims.UserID
 	}
 
-	// 根据登录状态决定是否获取所有动态或仅公开动态
-	listResp, err := h.MomentService.ListMomentsByAuthStatus(ctx, page, size, isLoggedIn, userID)
+	listResp, err := h.MomentService.ListMomentsWithQuery(ctx, &service.MomentQueryParams{
+		Page:    queryParams.Page,
+		Size:    queryParams.Size,
+		SortBy:  queryParams.SortBy,
+		Order:   queryParams.Order,
+		Filters: queryParams.Filters,
+	}, isLoggedIn, userID)
 	if err != nil {
 		h.MomentService.Log.Error("获取动态列表失败", "error", err)
 		c.JSON(http.StatusInternalServerError, Response{

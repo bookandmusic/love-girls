@@ -91,7 +91,24 @@ A: 使用 `POST /api/v1/upload/image` 接口上传图片，Content-Type 为 `mul
 
 ### Q: 如何处理分页？
 
-A: 在请求参数中添加 `page` 和 `size`参数，响应中会包含 `totalPages` 和 `total` 信息。
+A: 在请求参数中添加 `page` 和 `size` 参数，响应中会包含 `totalPages` 和 `total` 信息。
+
+### Q: 如何使用排序功能？
+
+A: 使用 `sort_by` 和 `order` 参数：
+- `sort_by`: 排序字段，不同接口支持不同字段
+- `order`: 排序方向，`asc`（升序）或 `desc`（降序）
+
+示例：`?sort_by=created_at&order=desc`
+
+### Q: 如何使用过滤功能？
+
+A: 使用 `filter` 参数，格式为 `field:op:value`：
+- `field`: 字段名
+- `op`: 操作符（eq, ne, gt, lt, gte, lte, like）
+- `value`: 过滤值
+
+示例：`?filter=is_public:eq:true&filter=likes:gt:10`
 
 ### Q: 日期格式有什么要求？
 
@@ -107,7 +124,8 @@ A:
 | 1.0.0 | 2026-01-28 | 初始版本，完整的 API 文档 |
 | 1.1.0 | 2026-01-29 | 修改：将Memory API重命名为Anniversary API，将Photo API合并到Album API |
 | 1.2.0 | 2026-01-30 | 修改：将Blessing API复原为Wish API |
+| 1.3.0 | 2026-03-13 | 新增：列表接口支持排序和过滤功能，更新各 API 文档 |
 
 ---
 
-**最后更新时间**: 2026-01-30
+**最后更新时间**: 2026-03-13

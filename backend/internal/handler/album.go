@@ -45,25 +45,31 @@ func (h *AlbumHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server.
 
 // ListAlbums 获取相册列表
 // @Summary 获取相册列表
-// @Description 获取相册列表，保持分页数据结构
+// @Description 获取相册列表，支持分页、排序和过滤
 // @Tags albums
 // @Accept json
 // @Produce json
 // @Param page query int false "页码，默认1"
 // @Param size query int false "每页数量，默认10"
+// @Param sort_by query string false "排序字段 (created_at, name)"
+// @Param order query string false "排序方向 (asc, desc)" default(desc)
+// @Param filter query []string false "过滤条件，格式: field:op:value (如: name:like:旅行)"
 // @Success 200 {object} Response{data=service.AlbumListResponse}
 // @Router /api/v1/albums [get]
 func (h *AlbumHandler) ListAlbums(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	// 解析分页参数
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	queryParams := ParseQueryParams(c, "albums")
 
-	// 调用服务层获取相册列表
-	albums, err := h.AlbumService.ListAlbums(ctx, page, size)
+	albums, err := h.AlbumService.ListAlbumsWithQuery(ctx, &service.AlbumQueryParams{
+		Page:    queryParams.Page,
+		Size:    queryParams.Size,
+		SortBy:  queryParams.SortBy,
+		Order:   queryParams.Order,
+		Filters: queryParams.Filters,
+	})
 	if err != nil {
-		h.AlbumService.Log.Error("获取相册列表失败", "error", err, "page", page, "size", size)
+		h.AlbumService.Log.Error("获取相册列表失败", "error", err, "params", queryParams)
 		c.JSON(http.StatusInternalServerError, Response{
 			Code:    1,
 			Message: "系统内部错误",

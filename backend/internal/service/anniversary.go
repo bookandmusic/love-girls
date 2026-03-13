@@ -9,6 +9,14 @@ import (
 	"github.com/bookandmusic/love-girl/internal/repo"
 )
 
+type AnniversaryQueryParams struct {
+	Page    int
+	Size    int
+	SortBy  string
+	Order   string
+	Filters []repo.FilterCondition
+}
+
 // FrontendAnniversary 前端期望的Anniversary数据结构
 type FrontendAnniversary struct {
 	ID          uint64 `json:"id"`
@@ -76,30 +84,69 @@ type AnniversaryListResponse struct {
 
 // ListAnniversaries 获取纪念日列表
 func (s *AnniversaryService) ListAnniversaries(ctx context.Context, page, size int) (*AnniversaryListResponse, error) {
-	// 获取所有纪念日数据，不进行分页
 	anniversaries, err := s.AnniversaryRepo.List(ctx)
 	if err != nil {
 		s.Log.Error("获取纪念日列表失败", "error", err)
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	// 转换为前端格式
 	frontendAnniversaries := make([]*FrontendAnniversary, len(anniversaries))
 	for i, anniversary := range anniversaries {
 		frontendAnniversaries[i] = s.convertToFrontendFormat(&anniversary)
 	}
 
-	// 计算总数和总页数（总页数为1，因为返回所有数据）
 	totalCount := int64(len(anniversaries))
 	totalPages := 1
 
 	return &AnniversaryListResponse{
 		Anniversaries: frontendAnniversaries,
-		Page:          page, // 保持传入的页码不变
-		Size:          size, // 保持传入的每页数量不变
+		Page:          page,
+		Size:          size,
 		Total:         totalCount,
-		TotalPages:    totalPages, // 总页数为1，因为返回所有数据
+		TotalPages:    totalPages,
 		TotalCount:    totalCount,
+	}, nil
+}
+
+// ListAnniversariesWithQuery 根据查询参数获取纪念日列表
+func (s *AnniversaryService) ListAnniversariesWithQuery(ctx context.Context, params *AnniversaryQueryParams) (*AnniversaryListResponse, error) {
+	if params.Page < 1 {
+		params.Page = 1
+	}
+	if params.Size < 1 {
+		params.Size = 10
+	} else if params.Size > 100 {
+		params.Size = 100
+	}
+
+	var opts []repo.QueryOption
+	if len(params.Filters) > 0 {
+		opts = append(opts, repo.WithConditions(params.Filters...))
+	}
+	if params.SortBy != "" {
+		opts = append(opts, repo.WithOrder(params.SortBy, params.Order == "desc"))
+	}
+
+	anniversaries, total, err := s.AnniversaryRepo.FindWithPagination(ctx, params.Page, params.Size, opts...)
+	if err != nil {
+		s.Log.Error("获取纪念日列表失败", "error", err, "params", params)
+		return nil, fmt.Errorf("系统内部错误")
+	}
+
+	totalPages := int((total + int64(params.Size) - 1) / int64(params.Size))
+
+	frontendAnniversaries := make([]*FrontendAnniversary, len(anniversaries))
+	for i, anniversary := range anniversaries {
+		frontendAnniversaries[i] = s.convertToFrontendFormat(&anniversary)
+	}
+
+	return &AnniversaryListResponse{
+		Anniversaries: frontendAnniversaries,
+		Page:          params.Page,
+		Size:          params.Size,
+		Total:         total,
+		TotalPages:    totalPages,
+		TotalCount:    total,
 	}, nil
 }
 

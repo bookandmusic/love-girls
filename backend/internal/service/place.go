@@ -12,6 +12,14 @@ import (
 	"github.com/bookandmusic/love-girl/internal/repo"
 )
 
+type PlaceQueryParams struct {
+	Page    int
+	Size    int
+	SortBy  string
+	Order   string
+	Filters []repo.FilterCondition
+}
+
 // PlaceImage 地点图片结构
 type PlaceImage struct {
 	ID      uint64        `json:"id"`
@@ -105,14 +113,12 @@ func (s *PlaceService) convertToResponse(ctx context.Context, place *model.Place
 
 // ListPlaces 获取所有地点（保持分页结构）
 func (s *PlaceService) ListPlaces(ctx context.Context) (*PlaceListResponse, error) {
-	// 不使用分页参数，获取所有数据
-	places, total, err := s.PlaceRepo.ListPlaces(ctx, 1, 10000) // 使用大数值获取所有
+	places, total, err := s.PlaceRepo.ListPlaces(ctx, 1, 10000)
 	if err != nil {
 		s.Log.Error("获取地点列表失败", "error", err)
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	// 转换为响应格式
 	responsePlaces := make([]*PlaceResponse, len(places))
 	for i, place := range places {
 		placePtr := &place
@@ -122,9 +128,52 @@ func (s *PlaceService) ListPlaces(ctx context.Context) (*PlaceListResponse, erro
 	return &PlaceListResponse{
 		Places:     responsePlaces,
 		Page:       1,
-		Size:       int(total), // 每页大小设为总数
+		Size:       int(total),
 		Total:      total,
-		TotalPages: 1, // 总页数为1
+		TotalPages: 1,
+		TotalCount: total,
+	}, nil
+}
+
+// ListPlacesWithQuery 根据查询参数获取地点列表
+func (s *PlaceService) ListPlacesWithQuery(ctx context.Context, params *PlaceQueryParams) (*PlaceListResponse, error) {
+	if params.Page < 1 {
+		params.Page = 1
+	}
+	if params.Size < 1 {
+		params.Size = 10
+	} else if params.Size > 100 {
+		params.Size = 100
+	}
+
+	var opts []repo.QueryOption
+	if len(params.Filters) > 0 {
+		opts = append(opts, repo.WithConditions(params.Filters...))
+	}
+	if params.SortBy != "" {
+		opts = append(opts, repo.WithOrder(params.SortBy, params.Order == "desc"))
+	}
+
+	places, total, err := s.PlaceRepo.ListPlacesWithOpts(ctx, params.Page, params.Size, opts...)
+	if err != nil {
+		s.Log.Error("获取地点列表失败", "error", err, "params", params)
+		return nil, fmt.Errorf("系统内部错误")
+	}
+
+	totalPages := int((total + int64(params.Size) - 1) / int64(params.Size))
+
+	responsePlaces := make([]*PlaceResponse, len(places))
+	for i, place := range places {
+		placePtr := &place
+		responsePlaces[i] = s.convertToResponse(ctx, placePtr)
+	}
+
+	return &PlaceListResponse{
+		Places:     responsePlaces,
+		Page:       params.Page,
+		Size:       params.Size,
+		Total:      total,
+		TotalPages: totalPages,
 		TotalCount: total,
 	}, nil
 }

@@ -8,25 +8,63 @@ Moment API 提供动态（时光动态）管理功能，支持发布动态、点
 
 ## 1. 获取动态列表
 
-获取动态列表，支持分页查询。
+获取动态列表，支持分页、排序和过滤查询。
 
 ### 请求信息
 
 - **接口路径**: `GET /api/v1/moments`
 - **Content-Type**: `application/json`
-- **需要认证**: 否
+- **需要认证**: 否（未登录用户只能查看公开动态，已登录用户可以查看自己的所有动态）
 
 ### 请求参数
 
+#### 分页参数
+
+| 参数名 | 类型 | 必填 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| page | int | 否 | 1 | 页码，从 1 开始 |
+| size | int | 否 | 10 | 每页数量，最大 100 |
+
+#### 排序参数
+
+| 参数名 | 类型 | 必填 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| sort_by | string | 否 | created_at | 排序字段，可选值：`created_at`、`likes` |
+| order | string | 否 | desc | 排序方向，可选值：`asc`、`desc` |
+
+#### 过滤参数
+
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| page | int | 否 | 页码，从 1 开始，默认 1 |
-| size | int | 否 | 每页数量，默认 10 |
+| filter | []string | 否 | 过滤条件，格式：`field:op:value`，可传多个 |
+
+**支持的过滤字段和操作符**：
+
+| 字段 | 支持的操作符 | 说明 |
+|------|-------------|------|
+| is_public | eq | 按公开状态过滤，值：`true`/`false` |
+| user_id | eq | 按用户ID过滤 |
+| likes | eq, gt, lt, gte, lte | 按点赞数过滤 |
+
+**过滤示例**：
+- `filter=is_public:eq:true` - 只查看公开动态
+- `filter=likes:gt:10` - 点赞数大于10的动态
+- `filter=likes:gte:5&filter=likes:lte:20` - 点赞数在5到20之间的动态
 
 ### 请求示例（curl）
 
 ```bash
-curl -X GET "http://localhost:8080/api/v1/moments?page=1&size=10"
+# 基础分页查询
+curl -X GET "http://localhost:8182/api/v1/moments?page=1&size=10"
+
+# 按点赞数降序排序
+curl -X GET "http://localhost:8182/api/v1/moments?page=1&size=10&sort_by=likes&order=desc"
+
+# 只查看公开动态
+curl -X GET "http://localhost:8182/api/v1/moments?page=1&size=10&filter=is_public:eq:true"
+
+# 查看点赞数大于10的动态
+curl -X GET "http://localhost:8182/api/v1/moments?page=1&size=10&sort_by=likes&order=desc&filter=likes:gt:10"
 ```
 
 ### 响应参数
@@ -42,18 +80,20 @@ curl -X GET "http://localhost:8080/api/v1/moments?page=1&size=10"
 | data.moments[].images | array | 图片列表 |
 | data.moments[].images[].id | uint64 | 图片 ID |
 | data.moments[].images[].momentId | uint64 | 动态 ID |
-| data.moments[].images[].url | string | 图片 URL |
-| data.moments[].images[].thumbnailUrl | string | 缩略图 URL |
+| data.moments[].images[].file | object | 文件信息 |
+| data.moments[].images[].file.id | uint64 | 文件 ID |
+| data.moments[].images[].file.url | string | 文件访问 URL |
+| data.moments[].images[].file.thumbnailUrl | string | 缩略图 URL |
 | data.moments[].likes | int | 点赞数 |
 | data.moments[].createdAt | string | 创建时间 |
 | data.moments[].author | object | 作者信息 |
 | data.moments[].author.name | string | 作者姓名 |
-| data.moments[].author.avatar | string | 作者头像 |
+| data.moments[].author.avatar | object | 作者头像文件信息 |
 | data.moments[].isPublic | boolean | 是否公开 |
 | data.page | int | 当前页码 |
 | data.size | int | 每页数量 |
 | data.total | int64 | 总数量 |
-| data.totalPage | int | 总页数 |
+| data.totalPages | int | 总页数 |
 
 ### 成功响应示例
 
@@ -70,15 +110,22 @@ curl -X GET "http://localhost:8080/api/v1/moments?page=1&size=10"
           {
             "id": 101,
             "momentId": 1,
-            "url": "/uploads/moment1.jpg",
-            "thumbnailUrl": "/uploads/thumbnail/moment1_thumb.jpg"
+            "file": {
+              "id": 101,
+              "url": "http://localhost:8182/api/v1/file/101",
+              "thumbnailUrl": "http://localhost:8182/api/v1/file/101?w=200&h=200"
+            }
           }
         ],
         "likes": 5,
         "createdAt": "2024-01-20 14:30:05",
         "author": {
           "name": "鹿",
-          "avatar": "/avatars/user1.jpg"
+          "avatar": {
+            "id": 10,
+            "url": "http://localhost:8182/api/v1/file/10",
+            "thumbnailUrl": "http://localhost:8182/api/v1/file/10?w=200&h=200"
+          }
         },
         "isPublic": true
       }
@@ -86,7 +133,7 @@ curl -X GET "http://localhost:8080/api/v1/moments?page=1&size=10"
     "page": 1,
     "size": 10,
     "total": 15,
-    "totalPage": 2
+    "totalPages": 2
   }
 }
 ```
@@ -566,4 +613,5 @@ curl -X DELETE "http://localhost:8080/api/v1/moments/1" \
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
+| 1.1.0 | 2026-03-13 | 新增：列表接口支持排序和过滤功能，新增 sort_by、order、filter 参数 |
 | 1.0.0 | 2026-01-31 | 完善版本，支持动态的增删改查、点赞和公开状态设置 |

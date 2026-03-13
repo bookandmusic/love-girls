@@ -41,17 +41,29 @@ func (h *PlaceHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server.
 
 // ListPlaces 获取所有地点
 // @Summary 获取所有地点
-// @Description 获取所有地点，保持分页数据结构
+// @Description 获取所有地点，支持分页、排序和过滤
 // @Tags places
 // @Accept json
 // @Produce json
+// @Param page query int false "页码，默认1"
+// @Param size query int false "每页数量，默认10"
+// @Param sort_by query string false "排序字段 (created_at, name)"
+// @Param order query string false "排序方向 (asc, desc)" default(desc)
+// @Param filter query []string false "过滤条件，格式: field:op:value (如: name:like:北京)"
 // @Success 200 {object} Response{data=service.PlaceListResponse}
 // @Router /api/v1/places [get]
 func (h *PlaceHandler) ListPlaces(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	// 调用服务层获取所有地点
-	places, err := h.PlaceService.ListPlaces(ctx)
+	queryParams := ParseQueryParams(c, "places")
+
+	places, err := h.PlaceService.ListPlacesWithQuery(ctx, &service.PlaceQueryParams{
+		Page:    queryParams.Page,
+		Size:    queryParams.Size,
+		SortBy:  queryParams.SortBy,
+		Order:   queryParams.Order,
+		Filters: queryParams.Filters,
+	})
 	if err != nil {
 		h.PlaceService.Log.Error("获取地点列表失败", "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
