@@ -47,9 +47,11 @@ interface ApproveWishResponse {
 export const wishApi = {
   // 获取愿望列表
   async getWishes(page: number, size: number, approved?: boolean) {
-    const params: { page: number; size: number; approved?: boolean } = {
+    const params: { page: number; size: number; approved?: boolean; sort_by: string; order: string } = {
       page,
       size,
+      sort_by: 'created_at',
+      order: 'desc',
     }
 
     // 前台必须传入 approved=true

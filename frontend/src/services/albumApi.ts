@@ -62,6 +62,8 @@ export const albumApi = {
       params: {
         page,
         size,
+        sort_by: 'created_at',
+        order: 'desc',
       },
     })
     return response.data

@@ -28,7 +28,10 @@ const placesStore = usePlacesStore()
 
 // 获取系统信息和地点数据
 const systemInfo = computed(() => systemStore.getSystemInfo)
-const places = computed(() => placesStore.getPlaces)
+const places = computed(() => {
+  const list = placesStore.getPlaces
+  return [...list].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+})
 
 /* ========== 状态 ========== */
 const mapRef = ref<HTMLDivElement | null>(null)
