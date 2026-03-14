@@ -14,7 +14,6 @@ func ProvideMigrate(db *gorm.DB, logger *log.Logger) error {
 		&model.Album{},
 		&model.Moment{},
 		&model.Place{},
-		&model.Wish{},
 		&model.EntityFile{},
 		&model.Anniversary{},
 		&model.Setting{},

@@ -3,7 +3,6 @@ package provider
 import (
 	"github.com/google/wire"
 
-	"github.com/bookandmusic/love-girl/internal/auth"
 	"github.com/bookandmusic/love-girl/internal/handler"
 	"github.com/bookandmusic/love-girl/internal/service"
 )
@@ -36,10 +35,6 @@ func ProvidePlaceHandler(svc *service.PlaceService) *handler.PlaceHandler {
 	return handler.NewPlaceHandler(svc)
 }
 
-func ProvideWishHandler(svc *service.WishService, jwt auth.JWT) *handler.WishHandler {
-	return handler.NewWishHandler(svc, jwt)
-}
-
 func ProvideAlbumHandler(svc *service.AlbumService) *handler.AlbumHandler {
 	return handler.NewAlbumHandler(svc)
 }
@@ -70,7 +65,6 @@ func ProvideHandlers(
 	momentHandler *handler.MomentHandler,
 	anniversaryHandler *handler.AnniversaryHandler,
 	placeHandler *handler.PlaceHandler,
-	wishHandler *handler.WishHandler,
 	albumHandler *handler.AlbumHandler,
 ) []handler.ApiHandler {
 	return []handler.ApiHandler{
@@ -81,7 +75,6 @@ func ProvideHandlers(
 		momentHandler,
 		anniversaryHandler,
 		placeHandler,
-		wishHandler,
 		albumHandler,
 	}
 }
@@ -94,7 +87,6 @@ var HandlerSet = wire.NewSet(
 	ProvideMomentHandler,
 	ProvideAnniversaryHandler,
 	ProvidePlaceHandler,
-	ProvideWishHandler,
 	ProvideAlbumHandler,
 	ProvideStaticHandler,
 	ProvideSwaggerHandler,

@@ -13,7 +13,6 @@ var RepoSet = wire.NewSet(
 	repo.NewAnniversaryRepo,
 	repo.NewMomentRepo,
 	repo.NewPlaceRepo,
-	repo.NewWishRepo,
 	repo.NewEntityFileRepo,
 	repo.NewSettingRepo,
 )

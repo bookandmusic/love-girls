@@ -15,7 +15,6 @@ type DashboardStats struct {
 	AlbumStats  AlbumStats  `json:"albumStats"`
 	PlaceStats  PlaceStats  `json:"placeStats"`
 	MomentStats MomentStats `json:"momentStats"`
-	WishStats   WishStats   `json:"wishStats"`
 }
 
 // AlbumStats 相册统计数据
@@ -32,10 +31,4 @@ type PlaceStats struct {
 // MomentStats 动态统计数据
 type MomentStats struct {
 	Total int `json:"total"`
-}
-
-// WishStats 愿望统计数据
-type WishStats struct {
-	Total   int `json:"total"`
-	Pending int `json:"pending"`
 }

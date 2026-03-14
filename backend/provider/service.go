@@ -26,12 +26,11 @@ func ProvideSystemService(
 	albumRepo *repo.AlbumRepo,
 	placeRepo *repo.PlaceRepo,
 	momentRepo *repo.MomentRepo,
-	wishRepo *repo.WishRepo,
 	fileService *service.FileService,
 	cfg *config.AppConfig,
 	jwt auth.JWT,
 ) *service.SystemService {
-	return service.NewSystemService(log, *userRepo, *settingRepo, *albumRepo, *placeRepo, *momentRepo, *wishRepo, fileService, cfg, jwt)
+	return service.NewSystemService(log, *userRepo, *settingRepo, *albumRepo, *placeRepo, *momentRepo, fileService, cfg, jwt)
 }
 
 func ProvideAnniversaryService(log *log.Logger, anniversaryRepo *repo.AnniversaryRepo) *service.AnniversaryService {
@@ -46,10 +45,6 @@ func ProvidePlaceService(log *log.Logger, placeRepo *repo.PlaceRepo, fileService
 	return service.NewPlaceService(log, placeRepo, fileService)
 }
 
-func ProvideWishService(log *log.Logger, wishRepo *repo.WishRepo) *service.WishService {
-	return service.NewWishService(log, wishRepo)
-}
-
 func ProvideAlbumService(log *log.Logger, albumRepo *repo.AlbumRepo, fileService *service.FileService) *service.AlbumService {
 	return service.NewAlbumService(log, albumRepo, fileService)
 }
@@ -61,6 +56,5 @@ var ServiceSet = wire.NewSet(
 	ProvideAnniversaryService,
 	ProvideMomentService,
 	ProvidePlaceService,
-	ProvideWishService,
 	ProvideAlbumService,
 )

@@ -40,8 +40,6 @@ definitions:
         $ref: '#/definitions/model.MomentStats'
       placeStats:
         $ref: '#/definitions/model.PlaceStats'
-      wishStats:
-        $ref: '#/definitions/model.WishStats'
     type: object
   model.MomentStats:
     properties:
@@ -50,13 +48,6 @@ definitions:
     type: object
   model.PlaceStats:
     properties:
-      total:
-        type: integer
-    type: object
-  model.WishStats:
-    properties:
-      pending:
-        type: integer
       total:
         type: integer
     type: object
@@ -492,53 +483,6 @@ definitions:
         type: number
       name:
         type: string
-    type: object
-  service.Wish:
-    properties:
-      approved:
-        type: boolean
-      authorName:
-        type: string
-      content:
-        type: string
-      createdAt:
-        type: string
-      email:
-        type: string
-      id:
-        type: integer
-    type: object
-  service.WishCreateRequest:
-    properties:
-      authorName:
-        maxLength: 100
-        type: string
-      content:
-        maxLength: 500
-        type: string
-      email:
-        maxLength: 150
-        type: string
-    required:
-    - authorName
-    - content
-    type: object
-  service.WishListResponse:
-    properties:
-      page:
-        type: integer
-      size:
-        type: integer
-      total:
-        type: integer
-      totalCount:
-        type: integer
-      totalPages:
-        type: integer
-      wishes:
-        items:
-          $ref: '#/definitions/service.Wish'
-        type: array
     type: object
 info:
   contact:
@@ -1129,139 +1073,6 @@ paths:
       summary: 更新地点
       tags:
       - places
-  /api/v1/wishes:
-    get:
-      consumes:
-      - application/json
-      description: 获取祝福列表，支持分页查询、排序和过滤。未认证用户只能查看已审核的祝福，已认证用户可以查看所有祝福。
-      parameters:
-      - default: 1
-        description: 页码，从 1 开始
-        in: query
-        name: page
-        type: integer
-      - default: 10
-        description: 每页数量
-        in: query
-        name: size
-        type: integer
-      - description: 排序字段 (created_at)
-        in: query
-        name: sort_by
-        type: string
-      - default: desc
-        description: 排序方向 (asc, desc)
-        in: query
-        name: order
-        type: string
-      - collectionFormat: csv
-        description: '过滤条件，格式: field:op:value (如: approved:eq:true)'
-        in: query
-        items:
-          type: string
-        name: filter
-        type: array
-      - description: 是否只获取已审核的祝福，仅对已认证用户有效
-        in: query
-        name: approved
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/service.WishListResponse'
-              type: object
-      summary: 获取祝福列表
-      tags:
-      - wishes
-    post:
-      consumes:
-      - application/json
-      description: 创建一个新的祝福
-      parameters:
-      - description: 祝福信息
-        in: body
-        name: blessing
-        required: true
-        schema:
-          $ref: '#/definitions/service.WishCreateRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/service.Wish'
-              type: object
-      summary: 创建祝福
-      tags:
-      - wishes
-  /api/v1/wishes/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: 删除指定的祝福
-      parameters:
-      - description: 祝福 ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  type: object
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 删除祝福
-      tags:
-      - wishes
-  /api/v1/wishes/{id}/approve:
-    put:
-      consumes:
-      - application/json
-      description: 批准指定的祝福，使其可以公开显示
-      parameters:
-      - description: 祝福 ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.Response'
-            - properties:
-                data:
-                  type: object
-              type: object
-      security:
-      - BearerAuth: []
-      summary: 批准祝福
-      tags:
-      - wishes
   /file/{id}:
     get:
       description: Returns the file content as a stream. The browser will either preview

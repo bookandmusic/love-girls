@@ -23,7 +23,6 @@ type SystemService struct {
 	AlbumRepo   repo.AlbumRepo
 	PlaceRepo   repo.PlaceRepo
 	MomentRepo  repo.MomentRepo
-	WishRepo    repo.WishRepo
 	FileService *FileService
 	config      *config.AppConfig
 	jwt         auth.JWT
@@ -36,7 +35,6 @@ func NewSystemService(
 	albumRepo repo.AlbumRepo,
 	placeRepo repo.PlaceRepo,
 	momentRepo repo.MomentRepo,
-	wishRepo repo.WishRepo,
 	fileService *FileService,
 	config *config.AppConfig,
 	jwt auth.JWT,
@@ -48,7 +46,6 @@ func NewSystemService(
 		AlbumRepo:   albumRepo,
 		PlaceRepo:   placeRepo,
 		MomentRepo:  momentRepo,
-		WishRepo:    wishRepo,
 		FileService: fileService,
 		config:      config,
 		jwt:         jwt,
@@ -324,24 +321,6 @@ func (s *SystemService) GetDashboardStats(ctx context.Context) (*model.Dashboard
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	// 获取愿望统计
-	wishCountVal, err := s.WishRepo.BaseRepo.Count(ctx)
-	if err != nil {
-		s.Log.Error("获取愿望数量失败", "error", err)
-		return nil, fmt.Errorf("系统内部错误")
-	}
-	wishCount := int(wishCountVal)
-
-	// 获取待审核愿望数量
-	pendingWishCountVal, err := s.WishRepo.BaseRepo.CountWithConditions(ctx,
-		repo.FilterCondition{Field: "approved", Operator: "eq", Value: false},
-	)
-	if err != nil {
-		s.Log.Error("获取待审核愿望数量失败", "error", err)
-		return nil, fmt.Errorf("系统内部错误")
-	}
-	pendingWishCount := int(pendingWishCountVal)
-
 	return &model.DashboardStats{
 		AlbumStats: model.AlbumStats{
 			Total:       albumCount,
@@ -352,10 +331,6 @@ func (s *SystemService) GetDashboardStats(ctx context.Context) (*model.Dashboard
 		},
 		MomentStats: model.MomentStats{
 			Total: int(momentCount),
-		},
-		WishStats: model.WishStats{
-			Total:   wishCount,
-			Pending: pendingWishCount,
 		},
 	}, nil
 }
