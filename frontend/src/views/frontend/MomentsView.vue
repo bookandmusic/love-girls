@@ -117,21 +117,21 @@ onMounted(async () => {
           @hide="onHide"
         ></vue-easy-lightbox>
 
-        <div class="flex flex-col h-full bg-[var(--fe-bg-gray)]/30">
+        <div class="flex flex-col h-full glass-regular">
           <!-- 动态列表 - 监听滚动事件 -->
           <div
-            class="flex-grow overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar"
+            class="flex-grow overflow-y-auto p-4 md:p-8 space-y-0 custom-scrollbar"
             @scroll="handleScroll"
           >
             <div
               v-for="moment in moments"
               :key="moment.id"
-              class="glass-thick rounded-[var(--fe-radius-card)] p-5 border border-white/40 shadow-sm ios-transition"
+              class="py-6 border-b border-black/5 last:border-0 ios-transition"
             >
               <div class="flex items-start">
                 <!-- 用户头像 -->
                 <div
-                  class="w-12 h-12 rounded-2xl overflow-hidden bg-white/50 border border-white/60 flex items-center justify-center text-[var(--fe-primary)] font-bold mr-4 flex-shrink-0 shadow-sm"
+                  class="w-12 h-12 rounded-lg overflow-hidden bg-white/50 border border-white/60 flex items-center justify-center text-[var(--fe-primary)] font-bold mr-4 flex-shrink-0"
                 >
                   <img
                     v-if="moment.author.avatar?.thumbnail || moment.author.avatar?.url"
@@ -144,35 +144,39 @@ onMounted(async () => {
 
                 <!-- 动态内容 -->
                 <div class="flex-grow min-w-0">
-                  <div class="flex justify-between items-center mb-1">
-                    <h3 class="font-bold text-[var(--fe-text-primary)] text-lg truncate">
+                  <div class="mb-1">
+                    <h3 class="font-bold text-[#576b95] text-base truncate">
                       {{ moment.author.name }}
                     </h3>
-                    <span class="text-xs font-medium text-[var(--fe-text-secondary)]">
-                      {{ moment.createdAt }}
-                    </span>
                   </div>
 
                   <p
-                    class="text-[var(--fe-text-primary)] leading-relaxed mb-4 text-sm md:text-base"
+                    class="text-[var(--fe-text-primary)] leading-relaxed mb-3 text-sm md:text-base"
                   >
                     {{ moment.content }}
                   </p>
 
                   <!-- 动态图片列表 -->
-                  <div v-if="moment.images && moment.images.length > 0" class="mb-4">
+                  <div v-if="moment.images && moment.images.length > 0" class="mb-3">
                     <div
-                      class="grid gap-2"
-                      :class="
-                        moment.images.length === 1
-                          ? 'grid-cols-1 max-w-sm'
-                          : 'grid-cols-3 md:grid-cols-4'
-                      "
+                      class="grid gap-1.5"
+                      :class="{
+                        'grid-cols-1 w-max': moment.images.length === 1,
+                        'grid-cols-2 w-full md:max-w-[280px]':
+                          moment.images.length === 2 || moment.images.length === 4,
+                        'grid-cols-3 w-full max-w-[320px] md:max-w-[420px]':
+                          moment.images.length === 3 || moment.images.length >= 5,
+                      }"
                     >
                       <div
                         v-for="(image, index) in moment.images"
                         :key="index"
-                        class="aspect-square overflow-hidden rounded-xl border border-white/20 cursor-pointer tap-feedback ios-transition"
+                        class="overflow-hidden cursor-pointer tap-feedback ios-transition"
+                        :class="[
+                          moment.images.length === 1
+                            ? 'rounded-lg max-w-[240px] max-h-[320px]'
+                            : 'w-full aspect-square rounded-md',
+                        ]"
                         @click="viewImage(image.file?.url || '')"
                       >
                         <img
@@ -185,14 +189,17 @@ onMounted(async () => {
                     </div>
                   </div>
 
-                  <!-- 交互栏 -->
-                  <div class="flex justify-end items-center pt-2 border-t border-black/5">
+                  <!-- 底部信息与交互栏 -->
+                  <div class="flex justify-between items-center mt-3">
+                    <span class="text-xs font-medium text-[var(--fe-text-secondary)] opacity-60">
+                      {{ moment.createdAt }}
+                    </span>
                     <button
                       @click="likeMoment(moment.id)"
-                      class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full glass-ultra-thin border border-white/40 tap-feedback ios-transition"
+                      class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
                     >
-                      <BaseIcon name="like" size="w-4 h-4" color="var(--fe-primary)" />
-                      <span class="text-sm font-bold text-[var(--fe-text-primary)]">
+                      <BaseIcon name="like" size="w-3.5 h-3.5" color="var(--fe-primary)" />
+                      <span class="text-xs font-bold text-[var(--fe-text-primary)]">
                         {{ moment.likes }}
                       </span>
                     </button>
