@@ -76,7 +76,7 @@ func NewLogger(cfg config.LogConfig) *Logger {
 func (l *Logger) Write(p []byte) (n int, err error) {
 	msg := strings.TrimSpace(string(p))
 	if msg != "" {
-		l.Debug(msg)
+		l.Info(msg)
 	}
 	return len(p), nil
 }
