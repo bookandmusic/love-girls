@@ -9,7 +9,6 @@ import places from './places'
 import systemInit from './system'
 import upload from './upload'
 import users from './users'
-import wishes from './wishes'
 
 export { default as albums } from './albums'
 export { default as anniversaries } from './anniversaries'
@@ -19,7 +18,6 @@ export { default as places } from './places'
 export { default as system } from './system'
 export { default as upload } from './upload'
 export { default as users } from './users'
-export { default as wishes } from './wishes'
 
 export default [
   ...systemInit,
@@ -28,7 +26,6 @@ export default [
   ...moments,
   ...albums,
   ...photos,
-  ...wishes,
   ...users,
   ...dashboard,
   ...upload,

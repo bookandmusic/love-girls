@@ -26,7 +26,6 @@
 
         <!-- PC端：保留原始位置的玻璃质感按钮 -->
         <button
-          v-if="currentTab !== 'wishes'"
           @click="handleAddClick"
           class="hidden sm:flex w-12 h-12 flex-shrink-0 items-center justify-center rounded-2xl bg-white/40 backdrop-blur-md border border-white/40 text-[var(--admin-accent-color)] shadow-sm hover:bg-white/60 active:scale-95 transition-all ml-4"
         >
@@ -35,15 +34,12 @@
       </div>
 
       <!-- 移动端：仅在手机端显示的悬浮动作按钮 (FAB) -->
-      <Transition name="fab">
-        <button
-          v-if="currentTab !== 'wishes'"
-          @click="handleAddClick"
-          class="sm:hidden fixed bottom-24 right-6 w-14 h-14 z-[60] flex items-center justify-center rounded-2xl bg-[var(--admin-accent-color)]/80 backdrop-blur-xl border border-white/20 text-white shadow-[0_8px_24px_rgba(240,173,160,0.35)] active:scale-90 active:bg-[var(--admin-accent-color)]/90 transition-all"
-        >
-          <BaseIcon name="add" size="w-7 h-7" />
-        </button>
-      </Transition>
+      <button
+        @click="handleAddClick"
+        class="sm:hidden fixed bottom-24 right-6 w-14 h-14 z-[60] flex items-center justify-center rounded-2xl bg-[var(--admin-accent-color)]/80 backdrop-blur-xl border border-white/20 text-white shadow-[0_8px_24px_rgba(240,173,160,0.35)] active:scale-90 active:bg-[var(--admin-accent-color)]/90 transition-all"
+      >
+        <BaseIcon name="add" size="w-7 h-7" />
+      </button>
 
       <div class="flex-1 min-h-0">
         <router-view v-slot="{ Component }">
@@ -75,14 +71,7 @@ const tabs = ref([
   },
   { name: 'places', label: '足迹', path: '/admin/content/places', icon: 'place' },
   { name: 'albums', label: '相册', path: '/admin/content/albums', icon: 'camera' },
-  { name: 'wishes', label: '留言', path: '/admin/content/wishes', icon: 'wish' },
 ])
-
-const currentTab = computed(() => {
-  const path = route.path
-  const currentTabInfo = tabs.value.find(tab => path.startsWith(tab.path))
-  return currentTabInfo?.name || 'moments'
-})
 
 const currentTabs = computed(() => {
   const path = route.path
@@ -93,9 +82,7 @@ const currentTabs = computed(() => {
 })
 
 const handleAddClick = () => {
-  if (currentTab.value !== 'wishes') {
-    router.push({ path: route.path, query: { action: 'add' } })
-  }
+  router.push({ path: route.path, query: { action: 'add' } })
 }
 </script>
 
@@ -108,18 +95,6 @@ const handleAddClick = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
-}
-
-/* FAB 动画 */
-.fab-enter-active,
-.fab-leave-active {
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.fab-enter-from,
-.fab-leave-to {
-  opacity: 0;
-  transform: scale(0.5) translateY(20px);
 }
 
 .no-scrollbar::-webkit-scrollbar {

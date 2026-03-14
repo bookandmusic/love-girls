@@ -11,7 +11,6 @@ import AnniversariesManagement from '@/views/admin/content/anniversaries/Anniver
 import ContentView from '@/views/admin/content/ContentView.vue'
 import MomentsManagement from '@/views/admin/content/moments/MomentsManagementView.vue'
 import PlacesManagement from '@/views/admin/content/places/PlacesManagementView.vue'
-import WishesManagement from '@/views/admin/content/wishes/WishesManagementView.vue'
 import DashboardView from '@/views/admin/DashboardView.vue'
 import SettingsView from '@/views/admin/SettingsView.vue'
 import UsersView from '@/views/admin/users/UsersView.vue'
@@ -21,7 +20,6 @@ import AnniversariesView from '@/views/frontend/AnniversariesView.vue'
 import HomeView from '@/views/frontend/HomeView.vue'
 import MomentsView from '@/views/frontend/MomentsView.vue'
 import PlacesView from '@/views/frontend/PlacesView.vue'
-import WishesView from '@/views/frontend/WishesView.vue'
 // 初始化页面
 import InitSystemView from '@/views/InitSystemView.vue'
 // 登录页面
@@ -61,11 +59,6 @@ const router = createRouter({
           path: 'anniversaries',
           component: AnniversariesView,
           name: 'anniversaries',
-        },
-        {
-          path: 'wishes',
-          component: WishesView,
-          name: 'wishes',
         },
         {
           path: 'init',
@@ -118,11 +111,6 @@ const router = createRouter({
                   path: 'albums',
                   name: 'admin-content-albums',
                   component: AlbumsManagement,
-                },
-                {
-                  path: 'wishes',
-                  name: 'admin-content-wishes',
-                  component: WishesManagement,
                 },
               ],
             },

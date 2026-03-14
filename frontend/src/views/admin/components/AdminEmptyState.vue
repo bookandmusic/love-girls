@@ -47,7 +47,6 @@ const iconEmoji = computed(() => {
     album: '📷',
     anniversary: '💕',
     place: '📍',
-    wish: '💌',
     user: '👥',
     box: '📦',
   }

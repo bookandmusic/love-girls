@@ -27,11 +27,6 @@ const dashboard: MockMethod[] = [
           anniversaryStats: {
             total: 7,
           },
-          // 祝福统计
-          wishStats: {
-            total: 8,
-            pending: 4,
-          },
           // 用户统计
           userStats: {
             total: 2,

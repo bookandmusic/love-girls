@@ -19,11 +19,6 @@ export interface AnniversaryStats {
   total: number
 }
 
-export interface WishStats {
-  total: number
-  pending: number
-}
-
 export interface UserStats {
   total: number
 }
@@ -33,7 +28,6 @@ export interface DashboardData {
   placeStats: PlaceStats
   momentStats: MomentStats
   anniversaryStats: AnniversaryStats
-  wishStats: WishStats
   userStats: UserStats
 }
 

@@ -82,24 +82,6 @@
         </div>
       </div>
 
-      <!-- 留言 -->
-      <div class="admin-card p-6 flex flex-col justify-between group">
-        <div class="flex items-center justify-between mb-4">
-          <div class="p-3 rounded-2xl bg-purple-500/10 text-purple-500 transition-transform">
-            <BaseIcon name="wish" size="w-6" color="currentColor" />
-          </div>
-          <span class="text-xs font-bold text-purple-500 bg-purple-500/10 px-2 py-1 rounded-full"
-            >留言</span
-          >
-        </div>
-        <div>
-          <p class="text-3xl font-bold admin-text-primary tracking-tight mb-1">
-            {{ wishStats.total }}
-          </p>
-          <p class="text-xs admin-text-secondary font-medium">{{ wishStats.pending }} 条待审核</p>
-        </div>
-      </div>
-
       <!-- 用户 -->
       <div class="admin-card p-6 flex flex-col justify-between group">
         <div class="flex items-center justify-between mb-4">
@@ -125,7 +107,7 @@
 import { onMounted, ref } from 'vue'
 
 import BaseIcon from '@/components/ui/BaseIcon.vue'
-import { dashboardApi, type DashboardData } from '@/services/dashboardApi'
+import { dashboardApi } from '@/services/dashboardApi'
 import { useUIStore } from '@/stores/ui'
 import { useToast } from '@/utils/toastUtils'
 
@@ -147,11 +129,6 @@ const anniversaryStats = ref({
   total: 0,
 })
 
-const wishStats = ref({
-  total: 0,
-  pending: 0,
-})
-
 const userStats = ref({
   total: 0,
 })
@@ -162,20 +139,23 @@ const showToast = useToast()
 const loadDashboardData = async () => {
   uiStore.setLoading(true)
   try {
-    const response = await dashboardApi.getDashboardStats()
-    if (response.code === 0) {
-      const data: DashboardData = response.data
+    const res = await dashboardApi.getDashboardStats()
+    console.log('Dashboard API raw response:', res)
+    if (res.code === 0 && res.data) {
+      const stats = res.data
+      console.log('Dashboard stats object:', stats)
 
-      albumStats.value = data.albumStats
-      placeStats.value = data.placeStats
-      momentStats.value = data.momentStats
-      anniversaryStats.value = data.anniversaryStats
-      wishStats.value = data.wishStats
-      userStats.value = data.userStats
+      if (stats.albumStats) albumStats.value = stats.albumStats
+      if (stats.placeStats) placeStats.value = stats.placeStats
+      if (stats.momentStats) momentStats.value = stats.momentStats
+      if (stats.anniversaryStats) anniversaryStats.value = stats.anniversaryStats
+      if (stats.userStats) userStats.value = stats.userStats
     } else {
+      console.warn('Dashboard API returned error code or missing data:', res)
       showToast('获取仪表盘数据失败', 'error')
     }
-  } catch {
+  } catch (error) {
+    console.error('Dashboard data load error:', error)
     showToast('获取仪表盘数据失败', 'error')
   } finally {
     uiStore.setLoading(false)

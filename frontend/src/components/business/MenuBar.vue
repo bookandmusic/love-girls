@@ -22,7 +22,6 @@ const menuItems: MenuItem[] = [
   { icon: 'photo-heart', label: '相册', path: '/albums' },
   { icon: 'place', label: '足迹', path: '/places' },
   { icon: 'anniversary', label: '纪念日', path: '/anniversaries' },
-  { icon: 'wish', label: '祝福', path: '/wishes' },
   { icon: 'setting-heart', label: '后台', path: '/admin' },
 ]
 
