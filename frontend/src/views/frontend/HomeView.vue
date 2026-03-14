@@ -61,7 +61,7 @@ const lunarDate = computed(() => {
 
           <!-- 故事开始于 - 极致压缩内边距 -->
           <div
-            class="glass-thick rounded-[var(--fe-radius-card)] p-4 md:p-6 mt-2 md:mt-4 border border-white/40 shadow-lg text-center ios-transition"
+            class="glass-regular rounded-[var(--fe-radius-card)] p-4 md:p-6 mt-2 md:mt-4 border border-white/40 shadow-lg text-center ios-transition"
           >
             <div
               class="text-[var(--fe-text-secondary)] font-bold mb-1 tracking-widest uppercase text-[10px] opacity-60"
