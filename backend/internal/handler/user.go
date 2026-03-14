@@ -157,8 +157,7 @@ func getEmailValue(email *string) string {
 // @Failure 500 {object} Response
 // @Router /users [get]
 func (h *UserHandler) GetUsers(c *gin.Context) {
-	ctx := c.Request.Context()
-	users, err := h.UserService.GetUsers(ctx)
+	users, err := h.UserService.GetUsers(c)
 	if err != nil {
 		h.UserService.Log.Error("获取用户列表失败", "error", err)
 		c.JSON(
@@ -196,8 +195,6 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /users/{id} [put]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	// 解析路径参数
 	var userID uint64
 	if _, err := fmt.Sscanf(c.Param("id"), "%d", &userID); err != nil {
@@ -236,7 +233,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	// 更新用户信息
-	user, err := h.UserService.UpdateUser(ctx, userID, req.Name, req.Email, req.AvatarID, req.NewPassword)
+	user, err := h.UserService.UpdateUser(c, userID, req.Name, req.Email, req.AvatarID, req.NewPassword)
 	if err != nil {
 		h.UserService.Log.Error("更新用户信息失败", "error", err, "userID", userID)
 		c.JSON(
@@ -274,8 +271,6 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /users/{id}/avatars [get]
 func (h *UserHandler) GetUserAvatarHistory(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	var userID uint64
 	if _, err := fmt.Sscanf(c.Param("id"), "%d", &userID); err != nil {
 		c.JSON(
@@ -301,7 +296,7 @@ func (h *UserHandler) GetUserAvatarHistory(c *gin.Context) {
 		}
 	}
 
-	result, err := h.UserService.GetAvatarHistory(ctx, userID, page, size)
+	result, err := h.UserService.GetAvatarHistory(c, userID, page, size)
 	if err != nil {
 		h.UserService.Log.Error("获取头像历史失败", "error", err, "userID", userID)
 		c.JSON(

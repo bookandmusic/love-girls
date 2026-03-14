@@ -57,11 +57,9 @@ func (h *AlbumHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server.
 // @Success 200 {object} Response{data=service.AlbumListResponse}
 // @Router /api/v1/albums [get]
 func (h *AlbumHandler) ListAlbums(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	queryParams := ParseQueryParams(c, "albums")
 
-	albums, err := h.AlbumService.ListAlbumsWithQuery(ctx, &service.AlbumQueryParams{
+	albums, err := h.AlbumService.ListAlbumsWithQuery(c, &service.AlbumQueryParams{
 		Page:    queryParams.Page,
 		Size:    queryParams.Size,
 		SortBy:  queryParams.SortBy,
@@ -97,8 +95,6 @@ func (h *AlbumHandler) ListAlbums(c *gin.Context) {
 // @Success 200 {object} Response{data=service.AlbumPhotoListResponse}
 // @Router /api/v1/albums/{id}/photos [get]
 func (h *AlbumHandler) ListAlbumPhotos(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	// 解析相册ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -117,7 +113,7 @@ func (h *AlbumHandler) ListAlbumPhotos(c *gin.Context) {
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
 
 	// 调用服务层获取相册照片列表
-	photos, err := h.AlbumService.ListAlbumPhotos(ctx, id, page, size)
+	photos, err := h.AlbumService.ListAlbumPhotos(c, id, page, size)
 	if err != nil {
 		h.AlbumService.Log.Error("获取相册照片列表失败", "albumId", id, "error", err, "page", page, "size", size)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -156,8 +152,6 @@ func (h *AlbumHandler) ListAlbumPhotos(c *gin.Context) {
 // @Success 200 {object} Response{data=service.Album}
 // @Router /api/v1/albums [post]
 func (h *AlbumHandler) CreateAlbum(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	// 解析请求参数
 	var req service.AlbumCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -171,7 +165,7 @@ func (h *AlbumHandler) CreateAlbum(c *gin.Context) {
 	}
 
 	// 调用服务层创建相册
-	album, err := h.AlbumService.CreateAlbum(ctx, &req)
+	album, err := h.AlbumService.CreateAlbum(c, &req)
 	if err != nil {
 		h.AlbumService.Log.Error("创建相册失败", "error", err, "request", req)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -201,8 +195,6 @@ func (h *AlbumHandler) CreateAlbum(c *gin.Context) {
 // @Success 200 {object} Response{data=service.Album}
 // @Router /api/v1/albums/{id} [put]
 func (h *AlbumHandler) UpdateAlbum(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	// 解析相册ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -229,7 +221,7 @@ func (h *AlbumHandler) UpdateAlbum(c *gin.Context) {
 	}
 
 	// 调用服务层更新相册
-	album, err := h.AlbumService.UpdateAlbum(ctx, id, &req)
+	album, err := h.AlbumService.UpdateAlbum(c, id, &req)
 	if err != nil {
 		h.AlbumService.Log.Error("更新相册失败", "id", id, "error", err, "request", req)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -324,8 +316,6 @@ func (h *AlbumHandler) DeleteAlbum(c *gin.Context) {
 // @Success 200 {object} Response{data=[]service.AlbumPhoto}
 // @Router /api/v1/albums/{id}/photos [post]
 func (h *AlbumHandler) AddPhotosToAlbum(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	// 解析相册ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -352,7 +342,7 @@ func (h *AlbumHandler) AddPhotosToAlbum(c *gin.Context) {
 	}
 
 	// 调用服务层添加照片到相册
-	photos, err := h.AlbumService.AddPhotosToAlbum(ctx, id, &req)
+	photos, err := h.AlbumService.AddPhotosToAlbum(c, id, &req)
 	if err != nil {
 		h.AlbumService.Log.Error("添加照片到相册失败", "albumId", id, "error", err, "request", req)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -392,8 +382,6 @@ func (h *AlbumHandler) AddPhotosToAlbum(c *gin.Context) {
 // @Success 200 {object} Response{data=service.Album}
 // @Router /api/v1/albums/{id}/cover [put]
 func (h *AlbumHandler) SetAlbumCover(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	// 解析相册ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -420,7 +408,7 @@ func (h *AlbumHandler) SetAlbumCover(c *gin.Context) {
 	}
 
 	// 调用服务层设置相册封面
-	album, err := h.AlbumService.SetAlbumCover(ctx, id, &req)
+	album, err := h.AlbumService.SetAlbumCover(c, id, &req)
 	if err != nil {
 		h.AlbumService.Log.Error("设置相册封面失败", "albumId", id, "error", err, "request", req)
 		c.JSON(http.StatusInternalServerError, Response{

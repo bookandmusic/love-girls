@@ -4,27 +4,22 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path/filepath"
-
-	"github.com/bookandmusic/love-girl/internal/config"
 )
 
 type LocalStorage struct {
-	Root   string
-	access *config.StorageAccessConfig
+	Root string
 }
 
-func NewLocalStorage(root string, access *config.StorageAccessConfig) (*LocalStorage, error) {
+func NewLocalStorage(root string) (*LocalStorage, error) {
 	// 初始化时创建根目录
 	if err := os.MkdirAll(root, 0755); err != nil {
 		return nil, fmt.Errorf("创建存储根目录失败: %w", err)
 	}
 
 	return &LocalStorage{
-		Root:   root,
-		access: access,
+		Root: root,
 	}, nil
 }
 
@@ -56,12 +51,7 @@ func (l *LocalStorage) Open(ctx context.Context, filePath string) (io.ReadCloser
 }
 
 func (l *LocalStorage) URL(ctx context.Context, fileID uint64, filePath string, width, height int, builder GinProxyURLBuilder) (string, error) {
-	imageUrl := builder(fileID)
-	if l.access.ImageProxy.Enabled {
-		imageUrl = url.QueryEscape(imageUrl)
-		return fmt.Sprintf("%s/%dx%d/%s", l.access.ImageProxy.BaseURL, width, height, imageUrl), nil
-	}
-	return imageUrl, nil
+	return builder(fileID), nil
 }
 
 func (l *LocalStorage) Delete(ctx context.Context, filePath string) error {

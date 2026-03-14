@@ -30,7 +30,6 @@ func ProvideRouter(
 
 	// 初始化Swagger文档
 	docs.SwaggerInfo.BasePath = "/api/v1"
-	docs.SwaggerInfo.Host = cfg.Server.HostName
 
 	// 循环注册静态路由（首页、Swagger UI 等）
 	for _, h := range staticHandlers {

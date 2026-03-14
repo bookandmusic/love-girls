@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"github.com/bookandmusic/love-girl/internal/auth"
@@ -189,7 +190,8 @@ func (s *SystemService) IsSystemInitialized(ctx context.Context) (bool, error) {
 }
 
 // GetSystemInfo 获取系统信息
-func (s *SystemService) GetSystemInfo(ctx context.Context) (*FrontendSystemInfo, error) {
+func (s *SystemService) GetSystemInfo(c *gin.Context) (*FrontendSystemInfo, error) {
+	ctx := c.Request.Context()
 	settings, err := s.getSystemSettings(ctx)
 	if err != nil {
 		return nil, err
@@ -200,7 +202,7 @@ func (s *SystemService) GetSystemInfo(ctx context.Context) (*FrontendSystemInfo,
 		return nil, err
 	}
 
-	return s.buildFrontendInfo(ctx, settings, users), nil
+	return s.buildFrontendInfo(c, settings, users), nil
 }
 
 func (s *SystemService) getSystemSettings(ctx context.Context) (map[string]*model.Setting, error) {
@@ -232,7 +234,7 @@ func (s *SystemService) getAllUsers(ctx context.Context) ([]model.User, error) {
 	return users, nil
 }
 
-func (s *SystemService) buildFrontendInfo(ctx context.Context, settings map[string]*model.Setting, users []model.User) *FrontendSystemInfo {
+func (s *SystemService) buildFrontendInfo(c *gin.Context, settings map[string]*model.Setting, users []model.User) *FrontendSystemInfo {
 	frontendInfo := &FrontendSystemInfo{}
 
 	frontendInfo.Site.Name = settings["siteTitle"].Value
@@ -244,10 +246,10 @@ func (s *SystemService) buildFrontendInfo(ctx context.Context, settings map[stri
 		switch user.Role {
 		case "boy":
 			frontendInfo.Couple.Boy.Name = user.Name
-			frontendInfo.Couple.Boy.Avatar = s.FileService.BuildFileResponse(ctx, user.Avatar)
+			frontendInfo.Couple.Boy.Avatar = s.FileService.BuildFileResponse(c, user.Avatar)
 		case "girl":
 			frontendInfo.Couple.Girl.Name = user.Name
-			frontendInfo.Couple.Girl.Avatar = s.FileService.BuildFileResponse(ctx, user.Avatar)
+			frontendInfo.Couple.Girl.Avatar = s.FileService.BuildFileResponse(c, user.Avatar)
 		}
 	}
 

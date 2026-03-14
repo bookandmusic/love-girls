@@ -133,9 +133,7 @@ func (h *SystemHandler) CheckSystemInitStatus(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /system/info [get]
 func (h *SystemHandler) GetSystemInfo(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	info, err := h.SystemService.GetSystemInfo(ctx)
+	info, err := h.SystemService.GetSystemInfo(c)
 	if err != nil {
 		h.SystemService.Log.Error("获取系统信息失败", "error", err)
 		if err.Error() == "系统未初始化" {

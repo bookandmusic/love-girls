@@ -82,8 +82,6 @@ docker run -d \
   -p 8181:8181 \
   -v $(pwd)/data:/app/data \
   -e TZ=Asia/Shanghai \
-  -e SERVER_SCHEMA=https \
-  -e SERVER_HOST_NAME=example.com:8181 \
   -e DATASOURCE_DATABASE_DRIVER=sqlite \
   -e DATASOURCE_DATABASE_DSN=file:./data/love-girl.db?_fk=1 \
   -e STORAGE_BACKEND=local \
@@ -106,8 +104,6 @@ services:
     restart: unless-stopped
     environment:
       - TZ=Asia/Shanghai
-      - SERVER_SCHEMA=https
-      - SERVER_HOST_NAME=example.com:8181
       - DATASOURCE_DATABASE_DRIVER=sqlite
       - DATASOURCE_DATABASE_DSN=file:./data/love-girl.db?_fk=1
       - STORAGE_BACKEND=local
@@ -119,7 +115,6 @@ services:
 完整配置项请参考：[配置文档](docs/config.md)
 
 ### 核心配置
-
 
 | 配置项                       | 说明             | 默认值                |
 | ---------------------------- | ---------------- | --------------------- |

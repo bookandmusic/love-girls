@@ -10,21 +10,21 @@ func ProvideStorageLocal(
 	cfg *config.AppConfig,
 	logger *log.Logger,
 ) (*storage.LocalStorage, error) {
-	return storage.NewLocalStorage(cfg.Storage.Local.Root, &cfg.Storage.Access)
+	return storage.NewLocalStorage(cfg.Storage.Local.Root)
 }
 
 func ProvideStorageS3(
 	cfg *config.AppConfig,
 	logger *log.Logger,
 ) (*storage.S3Storage, error) {
-	return storage.NewS3Storage(cfg.Storage.S3, &cfg.Storage.Access)
+	return storage.NewS3Storage(cfg.Storage.S3)
 }
 
 func ProvideStorageWebDAV(
 	cfg *config.AppConfig,
 	logger *log.Logger,
 ) (*storage.WebDAVStorage, error) {
-	return storage.NewWebDAVStorage(cfg.Storage.WebDAV, &cfg.Storage.Access)
+	return storage.NewWebDAVStorage(cfg.Storage.WebDAV)
 }
 
 func ProvideStorage(

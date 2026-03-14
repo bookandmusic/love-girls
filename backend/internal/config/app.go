@@ -8,6 +8,7 @@ type AppConfig struct {
 	DataSource DataSourceConfig `mapstructure:"datasource" validate:"required"`
 	JWT        JWTConfig        `mapstructure:"jwt" validate:"required"`
 	Storage    StorageConfig    `mapstructure:"storage" validate:"required"`
+	ImageProxy ImageProxyConfig `mapstructure:"image_proxy"`
 }
 
 // AppConfigApp 应用基本信息
@@ -18,10 +19,9 @@ type AppConfigApp struct {
 
 // ServerConfig HTTP 服务配置
 type ServerConfig struct {
-	Addr     string `mapstructure:"addr" validate:"required"`
-	Schema   string `mapstructure:"schema" validate:"required,oneof=http https"`
-	HostName string `mapstructure:"host_name" validate:"required"`
-	Mode     string `mapstructure:"mode" validate:"required,oneof=debug release test"`
+	Addr        string `mapstructure:"addr" validate:"required"`
+	Mode        string `mapstructure:"mode" validate:"required,oneof=debug release test"`
+	InternalURL string `mapstructure:"internal_url"` // 内网地址，ImageProxy 访问 Gin 用（可选）
 }
 
 // LogConfig 日志配置
@@ -50,28 +50,15 @@ type JWTConfig struct {
 // StorageConfig 存储配置
 type StorageConfig struct {
 	Backend string              `mapstructure:"backend" validate:"required,oneof=local s3 webdav"`
-	Access  StorageAccessConfig `mapstructure:"access" validate:"required"`
-
-	Local  *LocalStorageConfig  `mapstructure:"local" validate:"required_if=Backend local"`
-	S3     *S3StorageConfig     `mapstructure:"s3" validate:"required_if=Backend s3"`
-	WebDAV *WebDAVStorageConfig `mapstructure:"webdav" validate:"required_if=Backend webdav"`
-}
-
-// StorageAccessConfig 访问策略
-type StorageAccessConfig struct {
-	GinProxy   GinProxyConfig    `mapstructure:"gin_proxy"`
-	ImageProxy *ImageProxyConfig `mapstructure:"image_proxy"`
-}
-
-// GinProxyConfig 本地 HTTP 代理访问
-type GinProxyConfig struct {
-	Enabled bool `mapstructure:"enabled"`
+	Local   *LocalStorageConfig `mapstructure:"local" validate:"required_if=Backend local"`
+	S3      *S3StorageConfig    `mapstructure:"s3" validate:"required_if=Backend s3"`
+	WebDAV  *WebDAVStorageConfig `mapstructure:"webdav" validate:"required_if=Backend webdav"`
 }
 
 // ImageProxyConfig 图片代理（如 imgproxy / thumbor）
 type ImageProxyConfig struct {
-	Enabled bool   `mapstructure:"enabled"`
-	BaseURL string `mapstructure:"base_url" validate:"required_if=Enabled true,url"`
+	InternalURL string `mapstructure:"internal_url"` // 内网地址，Gin 转发时使用
+	PublicURL   string `mapstructure:"public_url"`   // 公开地址，前端直接访问（可选）
 }
 
 // LocalStorageConfig 本地存储
@@ -91,16 +78,16 @@ type S3StorageConfig struct {
 		SecretAccessKey string `mapstructure:"secret_access_key" validate:"required"`
 	} `mapstructure:"credentials" validate:"required"`
 
-	PublicBaseURL  string `mapstructure:"public_base_url" validate:"required,url"`
-	PresignEnabled bool   `mapstructure:"presign_enabled"`
-	PresignExpire  int64  `mapstructure:"presign_expire" validate:"omitempty,min=1"`
+	PublicURL     string `mapstructure:"public_url"`     // 公开访问地址（可选）
+	PresignEnable bool   `mapstructure:"presign_enable"` // 是否启用预签名
+	PresignExpire int64  `mapstructure:"presign_expire" validate:"omitempty,min=1"`
 }
 
 // WebDAVStorageConfig WebDAV 存储
 type WebDAVStorageConfig struct {
-	Endpoint      string `mapstructure:"endpoint" validate:"required,url"`
-	BasePath      string `mapstructure:"base_path" validate:"required"`
-	PublicBaseURL string `mapstructure:"public_base_url" validate:"required,url"`
+	Endpoint  string `mapstructure:"endpoint" validate:"required,url"`
+	BasePath  string `mapstructure:"base_path" validate:"required"`
+	PublicURL string `mapstructure:"public_url"` // 公开访问地址（可选）
 
 	Auth struct {
 		Username string `mapstructure:"username"`

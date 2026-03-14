@@ -16,7 +16,7 @@ func ProvideUserService(log *log.Logger, userRepo *repo.UserRepo, fileRepo *repo
 }
 
 func ProvideFileService(log *log.Logger, storage storage.Storage, fileRepo *repo.FileRepo, cfg *config.AppConfig) *service.FileService {
-	return service.NewFileService(log, storage, *fileRepo, &cfg.Server)
+	return service.NewFileService(log, storage, *fileRepo, &cfg.Server, &cfg.Storage, &cfg.ImageProxy)
 }
 
 func ProvideSystemService(

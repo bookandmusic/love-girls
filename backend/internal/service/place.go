@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"github.com/bookandmusic/love-girl/internal/log"
@@ -85,7 +86,7 @@ func NewPlaceService(log *log.Logger, placeRepo *repo.PlaceRepo, fileService *Fi
 }
 
 // 将model.Place转换为前端响应格式
-func (s *PlaceService) convertToResponse(ctx context.Context, place *model.Place) *PlaceResponse {
+func (s *PlaceService) convertToResponse(c *gin.Context, place *model.Place) *PlaceResponse {
 	if place == nil {
 		return nil
 	}
@@ -104,7 +105,7 @@ func (s *PlaceService) convertToResponse(ctx context.Context, place *model.Place
 		response.Image = &PlaceImage{
 			ID:      place.Image.ID,
 			PlaceID: place.ID,
-			File:    s.FileService.BuildFileResponse(ctx, place.Image),
+			File:    s.FileService.BuildFileResponse(c, place.Image),
 		}
 	}
 
@@ -112,7 +113,8 @@ func (s *PlaceService) convertToResponse(ctx context.Context, place *model.Place
 }
 
 // ListPlaces 获取所有地点（保持分页结构）
-func (s *PlaceService) ListPlaces(ctx context.Context) (*PlaceListResponse, error) {
+func (s *PlaceService) ListPlaces(c *gin.Context) (*PlaceListResponse, error) {
+	ctx := c.Request.Context()
 	places, total, err := s.PlaceRepo.ListPlaces(ctx, 1, 10000)
 	if err != nil {
 		s.Log.Error("获取地点列表失败", "error", err)
@@ -122,7 +124,7 @@ func (s *PlaceService) ListPlaces(ctx context.Context) (*PlaceListResponse, erro
 	responsePlaces := make([]*PlaceResponse, len(places))
 	for i, place := range places {
 		placePtr := &place
-		responsePlaces[i] = s.convertToResponse(ctx, placePtr)
+		responsePlaces[i] = s.convertToResponse(c, placePtr)
 	}
 
 	return &PlaceListResponse{
@@ -136,7 +138,8 @@ func (s *PlaceService) ListPlaces(ctx context.Context) (*PlaceListResponse, erro
 }
 
 // ListPlacesWithQuery 根据查询参数获取地点列表
-func (s *PlaceService) ListPlacesWithQuery(ctx context.Context, params *PlaceQueryParams) (*PlaceListResponse, error) {
+func (s *PlaceService) ListPlacesWithQuery(c *gin.Context, params *PlaceQueryParams) (*PlaceListResponse, error) {
+	ctx := c.Request.Context()
 	if params.Page < 1 {
 		params.Page = 1
 	}
@@ -165,7 +168,7 @@ func (s *PlaceService) ListPlacesWithQuery(ctx context.Context, params *PlaceQue
 	responsePlaces := make([]*PlaceResponse, len(places))
 	for i, place := range places {
 		placePtr := &place
-		responsePlaces[i] = s.convertToResponse(ctx, placePtr)
+		responsePlaces[i] = s.convertToResponse(c, placePtr)
 	}
 
 	return &PlaceListResponse{
@@ -179,7 +182,8 @@ func (s *PlaceService) ListPlacesWithQuery(ctx context.Context, params *PlaceQue
 }
 
 // CreatePlace 创建地点
-func (s *PlaceService) CreatePlace(ctx context.Context, req *PlaceCreateRequest) (*PlaceResponse, error) {
+func (s *PlaceService) CreatePlace(c *gin.Context, req *PlaceCreateRequest) (*PlaceResponse, error) {
+	ctx := c.Request.Context()
 	// 创建地点模型
 	place := &model.Place{
 		Name:        req.Name,
@@ -208,11 +212,12 @@ func (s *PlaceService) CreatePlace(ctx context.Context, req *PlaceCreateRequest)
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToResponse(ctx, createdPlace), nil
+	return s.convertToResponse(c, createdPlace), nil
 }
 
 // UpdatePlace 更新地点
-func (s *PlaceService) UpdatePlace(ctx context.Context, id uint64, req *PlaceUpdateRequest) (*PlaceResponse, error) {
+func (s *PlaceService) UpdatePlace(c *gin.Context, id uint64, req *PlaceUpdateRequest) (*PlaceResponse, error) {
+	ctx := c.Request.Context()
 	// 获取现有地点
 	place, err := s.PlaceRepo.FindByID(ctx, id)
 	if err != nil {
@@ -263,7 +268,7 @@ func (s *PlaceService) UpdatePlace(ctx context.Context, id uint64, req *PlaceUpd
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToResponse(ctx, updatedPlace), nil
+	return s.convertToResponse(c, updatedPlace), nil
 }
 
 // DeletePlace 删除地点

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"github.com/bookandmusic/love-girl/internal/config"
@@ -19,17 +20,21 @@ import (
 
 type FileService struct {
 	*BaseService
-	Storage   storage.Storage
-	FileRepo  repo.FileRepo
-	serverCfg *config.ServerConfig
+	Storage       storage.Storage
+	FileRepo      repo.FileRepo
+	serverCfg     *config.ServerConfig
+	storageCfg    *config.StorageConfig
+	imageProxyCfg *config.ImageProxyConfig
 }
 
-func NewFileService(log *log.Logger, storage storage.Storage, fileRepo repo.FileRepo, serverCfg *config.ServerConfig) *FileService {
+func NewFileService(log *log.Logger, storage storage.Storage, fileRepo repo.FileRepo, serverCfg *config.ServerConfig, storageCfg *config.StorageConfig, imageProxyCfg *config.ImageProxyConfig) *FileService {
 	return &FileService{
-		BaseService: &BaseService{Log: log},
-		Storage:     storage,
-		FileRepo:    fileRepo,
-		serverCfg:   serverCfg,
+		BaseService:   &BaseService{Log: log},
+		Storage:       storage,
+		FileRepo:      fileRepo,
+		serverCfg:     serverCfg,
+		storageCfg:    storageCfg,
+		imageProxyCfg: imageProxyCfg,
 	}
 }
 
@@ -44,7 +49,7 @@ func (s *FileService) SaveFile(ctx context.Context, filename, path, mimeType, ha
 
 	// 不存在相同 hash 的文件，继续执行保存逻辑
 	ext := getFileExtByMimeType(mimeType)
-	uniqueFileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext) // 使用时间戳纳秒值作为唯一文件名
+	uniqueFileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	fullPath := uniqueFileName
 	if path != "" {
 		fullPath = fmt.Sprintf("%s/%s", path, uniqueFileName)
@@ -142,16 +147,94 @@ func (s *FileService) DeleteFile(ctx context.Context, id uint64) error {
 	return s.FileRepo.BaseRepo.DeleteByID(ctx, id)
 }
 
-func (s *FileService) JoinFileURL(id uint64) string {
-	return fmt.Sprintf("%s://%s/api/v1/file/%d", s.serverCfg.Schema, s.serverCfg.HostName, id)
+// HasImageProxyInternal 判断 ImageProxy 内网地址是否可用
+func (s *FileService) HasImageProxyInternal() bool {
+	return s.imageProxyCfg != nil && s.imageProxyCfg.InternalURL != ""
 }
 
-func (s *FileService) OriginalImageURL(ctx context.Context, file *model.File) (string, error) {
-	return s.Storage.URL(ctx, file.ID, file.Path, 0, 0, s.JoinFileURL)
+// GetImageProxyURL 获取 ImageProxy 代理 URL（用于 Gin 转发缩略图请求）
+func (s *FileService) GetImageProxyURL(c *gin.Context, fileID uint64, width int) string {
+	if !s.HasImageProxyInternal() {
+		return ""
+	}
+	ginInternalURL := s.buildGinURL(c, fileID, true)
+	return s.buildImageProxyURL(s.imageProxyCfg.InternalURL, ginInternalURL, width)
 }
 
-func (s *FileService) ThumbnailImageURL(ctx context.Context, file *model.File, width, height int) (string, error) {
-	return s.Storage.URL(ctx, file.ID, file.Path, width, height, s.JoinFileURL)
+// getDynamicBaseURL 从请求中获取动态域名（协议+主机）
+func (s *FileService) getDynamicBaseURL(c *gin.Context) string {
+	proto := c.GetHeader("X-Forwarded-Proto")
+	if proto == "" {
+		if c.Request.TLS != nil {
+			proto = "https"
+		} else {
+			proto = "http"
+		}
+	}
+	host := c.GetHeader("X-Forwarded-Host")
+	if host == "" {
+		host = c.Request.Host
+	}
+	return fmt.Sprintf("%s://%s", proto, host)
+}
+
+// buildGinURL 构建 Gin URL
+// useInternal: true 使用配置的内网地址（给 ImageProxy 用），false 使用动态域名（给前端用）
+func (s *FileService) buildGinURL(c *gin.Context, fileID uint64, useInternal bool) string {
+	var baseURL string
+	if useInternal && s.serverCfg.InternalURL != "" {
+		baseURL = s.serverCfg.InternalURL
+	} else {
+		baseURL = s.getDynamicBaseURL(c)
+	}
+	return fmt.Sprintf("%s/api/v1/file/%d", baseURL, fileID)
+}
+
+// buildImageProxyURL 构建 ImageProxy URL（imgproxy 格式）
+func (s *FileService) buildImageProxyURL(baseURL, sourceURL string, width int) string {
+	if baseURL == "" {
+		return sourceURL
+	}
+	if width == 0 {
+		return fmt.Sprintf("%s/insecure/plain/%s", baseURL, sourceURL)
+	}
+	return fmt.Sprintf("%s/insecure/size:%dx0/plain/%s", baseURL, width, sourceURL)
+}
+
+// GetImageURL 获取图片 URL（核心逻辑）
+func (s *FileService) GetImageURL(c *gin.Context, file *model.File, width int) string {
+	// 1. 存储有公开链接 -> 直接返回存储公开链接
+	if publicURL := s.getStoragePublicURL(file); publicURL != "" {
+		return publicURL
+	}
+
+	// 2. ImageProxy 公开 -> 原图和缩略图都走 ImageProxy
+	if s.imageProxyCfg != nil && s.imageProxyCfg.PublicURL != "" {
+		ginInternalURL := s.buildGinURL(c, file.ID, true)
+		return s.buildImageProxyURL(s.imageProxyCfg.PublicURL, ginInternalURL, width)
+	}
+
+	// 3. 都不公开 -> Gin 代理
+	ginURL := s.buildGinURL(c, file.ID, false)
+	if width == 0 {
+		return ginURL
+	}
+	return fmt.Sprintf("%s?w=%d&h=%d", ginURL, width, width)
+}
+
+// getStoragePublicURL 获取存储公开链接
+func (s *FileService) getStoragePublicURL(file *model.File) string {
+	switch s.storageCfg.Backend {
+	case "s3":
+		if s.storageCfg.S3 != nil && s.storageCfg.S3.PublicURL != "" {
+			return fmt.Sprintf("%s/%s", s.storageCfg.S3.PublicURL, file.Path)
+		}
+	case "webdav":
+		if s.storageCfg.WebDAV != nil && s.storageCfg.WebDAV.PublicURL != "" {
+			return fmt.Sprintf("%s/%s", s.storageCfg.WebDAV.PublicURL, file.Path)
+		}
+	}
+	return ""
 }
 
 // FileResponse 文件URL响应模型
@@ -164,43 +247,15 @@ type FileResponse struct {
 	MimeType  string `json:"mime_type,omitempty"`
 }
 
-// FileURLs 文件URL结构体
-type FileURLs struct {
-	URL       string `json:"url"`
-	Thumbnail string `json:"thumbnail"`
-}
-
-// GetFileURLs 获取文件URL和缩略图URL
-func (s *FileService) GetFileURLs(ctx context.Context, file *model.File) FileURLs {
-	urls := FileURLs{}
-
-	if file != nil {
-		// 获取原图URL，失败时使用空字符串
-		if originalURL, err := s.OriginalImageURL(ctx, file); err == nil && originalURL != "" {
-			urls.URL = originalURL
-		}
-
-		// 获取缩略图URL，失败时使用空字符串
-		if thumbnailURL, err := s.ThumbnailImageURL(ctx, file, 200, 200); err == nil && thumbnailURL != "" {
-			urls.Thumbnail = thumbnailURL
-		}
-	}
-
-	return urls
-}
-
 // BuildFileResponse 构建文件响应对象
-func (s *FileService) BuildFileResponse(ctx context.Context, file *model.File) *FileResponse {
+func (s *FileService) BuildFileResponse(c *gin.Context, file *model.File) *FileResponse {
 	if file == nil {
 		return nil
 	}
-
-	urls := s.GetFileURLs(ctx, file)
-
 	return &FileResponse{
 		ID:        file.ID,
-		URL:       urls.URL,
-		Thumbnail: urls.Thumbnail,
+		URL:       s.GetImageURL(c, file, 0),
+		Thumbnail: s.GetImageURL(c, file, 200),
 		Name:      file.OriginalName,
 		Size:      file.Size,
 		MimeType:  file.MimeType,

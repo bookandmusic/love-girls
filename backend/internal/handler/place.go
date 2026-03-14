@@ -53,11 +53,9 @@ func (h *PlaceHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server.
 // @Success 200 {object} Response{data=service.PlaceListResponse}
 // @Router /api/v1/places [get]
 func (h *PlaceHandler) ListPlaces(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	queryParams := ParseQueryParams(c, "places")
 
-	places, err := h.PlaceService.ListPlacesWithQuery(ctx, &service.PlaceQueryParams{
+	places, err := h.PlaceService.ListPlacesWithQuery(c, &service.PlaceQueryParams{
 		Page:    queryParams.Page,
 		Size:    queryParams.Size,
 		SortBy:  queryParams.SortBy,
@@ -92,8 +90,6 @@ func (h *PlaceHandler) ListPlaces(c *gin.Context) {
 // @Success 200 {object} Response{data=service.PlaceResponse}
 // @Router /api/v1/places [post]
 func (h *PlaceHandler) CreatePlace(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	// 解析请求参数
 	var req service.PlaceCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -107,7 +103,7 @@ func (h *PlaceHandler) CreatePlace(c *gin.Context) {
 	}
 
 	// 调用服务层创建地点
-	place, err := h.PlaceService.CreatePlace(ctx, &req)
+	place, err := h.PlaceService.CreatePlace(c, &req)
 	if err != nil {
 		h.PlaceService.Log.Error("创建地点失败", "error", err, "request", req)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -137,8 +133,6 @@ func (h *PlaceHandler) CreatePlace(c *gin.Context) {
 // @Success 200 {object} Response{data=service.PlaceResponse}
 // @Router /api/v1/places/{id} [put]
 func (h *PlaceHandler) UpdatePlace(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	// 解析地点ID
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -165,7 +159,7 @@ func (h *PlaceHandler) UpdatePlace(c *gin.Context) {
 	}
 
 	// 调用服务层更新地点
-	place, err := h.PlaceService.UpdatePlace(ctx, id, &req)
+	place, err := h.PlaceService.UpdatePlace(c, id, &req)
 	if err != nil {
 		h.PlaceService.Log.Error("更新地点失败", "id", id, "error", err, "request", req)
 		c.JSON(http.StatusInternalServerError, Response{

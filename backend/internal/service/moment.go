@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"github.com/bookandmusic/love-girl/internal/log"
@@ -45,7 +46,7 @@ type FrontendAuthor struct {
 }
 
 // 将model.Moment转换为前端期望的格式
-func (s *MomentService) convertToFrontendFormat(ctx context.Context, moment *model.Moment) *FrontendMoment {
+func (s *MomentService) convertToFrontendFormat(c *gin.Context, moment *model.Moment) *FrontendMoment {
 	if moment == nil {
 		return nil
 	}
@@ -59,7 +60,7 @@ func (s *MomentService) convertToFrontendFormat(ctx context.Context, moment *mod
 		photos = append(photos, FrontendPhoto{
 			ID:       ef.File.ID,
 			MomentID: ef.EntityID,
-			File:     s.FileService.BuildFileResponse(ctx, ef.File),
+			File:     s.FileService.BuildFileResponse(c, ef.File),
 		})
 	}
 
@@ -67,7 +68,7 @@ func (s *MomentService) convertToFrontendFormat(ctx context.Context, moment *mod
 	author := FrontendAuthor{}
 	if moment.User != nil {
 		author.Name = moment.User.Name
-		author.Avatar = s.FileService.BuildFileResponse(ctx, moment.User.Avatar)
+		author.Avatar = s.FileService.BuildFileResponse(c, moment.User.Avatar)
 	}
 
 	return &FrontendMoment{
@@ -130,7 +131,8 @@ type MomentListResponse struct {
 }
 
 // CreateMoment 创建动态
-func (s *MomentService) CreateMoment(ctx context.Context, req *MomentCreateRequest) (*FrontendMoment, error) {
+func (s *MomentService) CreateMoment(c *gin.Context, req *MomentCreateRequest) (*FrontendMoment, error) {
+	ctx := c.Request.Context()
 	moment := &model.Moment{
 		Content:  req.Content,
 		IsPublic: req.IsPublic,
@@ -150,11 +152,12 @@ func (s *MomentService) CreateMoment(ctx context.Context, req *MomentCreateReque
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToFrontendFormat(ctx, createdMoment), nil
+	return s.convertToFrontendFormat(c, createdMoment), nil
 }
 
 // ListMoments 获取动态列表（仅返回公开的动态）
-func (s *MomentService) ListMoments(ctx context.Context, page, size int) (*MomentListResponse, error) {
+func (s *MomentService) ListMoments(c *gin.Context, page, size int) (*MomentListResponse, error) {
+	ctx := c.Request.Context()
 	moments, total, err := s.MomentRepo.ListMoments(ctx, page, size,
 		repo.FilterCondition{Field: "is_public", Operator: "eq", Value: true},
 	)
@@ -169,7 +172,7 @@ func (s *MomentService) ListMoments(ctx context.Context, page, size int) (*Momen
 	frontendMoments := make([]*FrontendMoment, len(moments))
 	for i, moment := range moments {
 		momentPtr := &moment
-		frontendMoments[i] = s.convertToFrontendFormat(ctx, momentPtr)
+		frontendMoments[i] = s.convertToFrontendFormat(c, momentPtr)
 	}
 
 	return &MomentListResponse{
@@ -183,7 +186,8 @@ func (s *MomentService) ListMoments(ctx context.Context, page, size int) (*Momen
 
 // ListMomentsByAuthStatus 根据认证状态获取动态列表
 // 如果用户已登录，返回当前用户的所有动态；否则，只返回公开的动态
-func (s *MomentService) ListMomentsByAuthStatus(ctx context.Context, page, size int, isLoggedIn bool, userID uint64) (*MomentListResponse, error) {
+func (s *MomentService) ListMomentsByAuthStatus(c *gin.Context, page, size int, isLoggedIn bool, userID uint64) (*MomentListResponse, error) {
+	ctx := c.Request.Context()
 	var (
 		moments []model.Moment
 		total   int64
@@ -213,7 +217,7 @@ func (s *MomentService) ListMomentsByAuthStatus(ctx context.Context, page, size 
 	frontendMoments := make([]*FrontendMoment, len(moments))
 	for i, moment := range moments {
 		momentPtr := &moment
-		frontendMoments[i] = s.convertToFrontendFormat(ctx, momentPtr)
+		frontendMoments[i] = s.convertToFrontendFormat(c, momentPtr)
 	}
 
 	return &MomentListResponse{
@@ -226,7 +230,8 @@ func (s *MomentService) ListMomentsByAuthStatus(ctx context.Context, page, size 
 }
 
 // ListMomentsWithQuery 根据查询参数获取动态列表
-func (s *MomentService) ListMomentsWithQuery(ctx context.Context, params *MomentQueryParams, isLoggedIn bool, userID uint64) (*MomentListResponse, error) {
+func (s *MomentService) ListMomentsWithQuery(c *gin.Context, params *MomentQueryParams, isLoggedIn bool, userID uint64) (*MomentListResponse, error) {
+	ctx := c.Request.Context()
 	var (
 		moments []model.Moment
 		total   int64
@@ -259,7 +264,7 @@ func (s *MomentService) ListMomentsWithQuery(ctx context.Context, params *Moment
 	frontendMoments := make([]*FrontendMoment, len(moments))
 	for i, moment := range moments {
 		momentPtr := &moment
-		frontendMoments[i] = s.convertToFrontendFormat(ctx, momentPtr)
+		frontendMoments[i] = s.convertToFrontendFormat(c, momentPtr)
 	}
 
 	return &MomentListResponse{
@@ -272,7 +277,8 @@ func (s *MomentService) ListMomentsWithQuery(ctx context.Context, params *Moment
 }
 
 // UpdateMoment 更新动态
-func (s *MomentService) UpdateMoment(ctx context.Context, id uint64, req *MomentUpdateRequest) (*FrontendMoment, error) {
+func (s *MomentService) UpdateMoment(c *gin.Context, id uint64, req *MomentUpdateRequest) (*FrontendMoment, error) {
+	ctx := c.Request.Context()
 	moment, err := s.MomentRepo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -303,7 +309,7 @@ func (s *MomentService) UpdateMoment(ctx context.Context, id uint64, req *Moment
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToFrontendFormat(ctx, updatedMoment), nil
+	return s.convertToFrontendFormat(c, updatedMoment), nil
 }
 
 // DeleteMoment 删除动态
@@ -327,7 +333,8 @@ func (s *MomentService) DeleteMoment(ctx context.Context, id uint64) (bool, erro
 }
 
 // UpdatePublicStatus 更新动态公开状态
-func (s *MomentService) UpdatePublicStatus(ctx context.Context, id uint64, status bool) (*FrontendMoment, error) {
+func (s *MomentService) UpdatePublicStatus(c *gin.Context, id uint64, status bool) (*FrontendMoment, error) {
+	ctx := c.Request.Context()
 	_, err := s.MomentRepo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -349,11 +356,12 @@ func (s *MomentService) UpdatePublicStatus(ctx context.Context, id uint64, statu
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToFrontendFormat(ctx, updatedMoment), nil
+	return s.convertToFrontendFormat(c, updatedMoment), nil
 }
 
 // LikeMoment 点赞动态
-func (s *MomentService) LikeMoment(ctx context.Context, id uint64) (*FrontendMoment, error) {
+func (s *MomentService) LikeMoment(c *gin.Context, id uint64) (*FrontendMoment, error) {
+	ctx := c.Request.Context()
 	_, err := s.MomentRepo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -375,5 +383,5 @@ func (s *MomentService) LikeMoment(ctx context.Context, id uint64) (*FrontendMom
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToFrontendFormat(ctx, likedMoment), nil
+	return s.convertToFrontendFormat(c, likedMoment), nil
 }

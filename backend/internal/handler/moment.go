@@ -51,8 +51,6 @@ func (h *MomentHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server
 // @Failure 500 {object} Response
 // @Router /moments [post]
 func (h *MomentHandler) CreateMoment(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	var req service.MomentCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.MomentService.Log.Error("参数校验失败", "error", err)
@@ -64,7 +62,7 @@ func (h *MomentHandler) CreateMoment(c *gin.Context) {
 		return
 	}
 
-	moment, err := h.MomentService.CreateMoment(ctx, &req)
+	moment, err := h.MomentService.CreateMoment(c, &req)
 	if err != nil {
 		h.MomentService.Log.Error("创建动态失败", "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -97,8 +95,6 @@ func (h *MomentHandler) CreateMoment(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /moments [get]
 func (h *MomentHandler) ListMoments(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	queryParams := ParseQueryParams(c, "moments")
 
 	claims, isLoggedIn := auth.GetAuthClaims(c)
@@ -108,7 +104,7 @@ func (h *MomentHandler) ListMoments(c *gin.Context) {
 		userID = claims.UserID
 	}
 
-	listResp, err := h.MomentService.ListMomentsWithQuery(ctx, &service.MomentQueryParams{
+	listResp, err := h.MomentService.ListMomentsWithQuery(c, &service.MomentQueryParams{
 		Page:    queryParams.Page,
 		Size:    queryParams.Size,
 		SortBy:  queryParams.SortBy,
@@ -147,8 +143,6 @@ func (h *MomentHandler) ListMoments(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /moments/{id} [put]
 func (h *MomentHandler) UpdateMoment(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
@@ -172,7 +166,7 @@ func (h *MomentHandler) UpdateMoment(c *gin.Context) {
 		return
 	}
 
-	moment, err := h.MomentService.UpdateMoment(ctx, id, &req)
+	moment, err := h.MomentService.UpdateMoment(c, id, &req)
 	if err != nil {
 		h.MomentService.Log.Error("更新动态失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -268,8 +262,6 @@ func (h *MomentHandler) DeleteMoment(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /moments/{id}/public [put]
 func (h *MomentHandler) UpdatePublic(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
@@ -293,7 +285,7 @@ func (h *MomentHandler) UpdatePublic(c *gin.Context) {
 		return
 	}
 
-	moment, err := h.MomentService.UpdatePublicStatus(ctx, id, req.IsPublic)
+	moment, err := h.MomentService.UpdatePublicStatus(c, id, req.IsPublic)
 	if err != nil {
 		h.MomentService.Log.Error("更新动态公开状态失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -333,8 +325,6 @@ func (h *MomentHandler) UpdatePublic(c *gin.Context) {
 // @Failure 500 {object} Response
 // @Router /moments/{id}/like [post]
 func (h *MomentHandler) LikeMoment(c *gin.Context) {
-	ctx := c.Request.Context()
-
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
@@ -347,7 +337,7 @@ func (h *MomentHandler) LikeMoment(c *gin.Context) {
 		return
 	}
 
-	liked, err := h.MomentService.LikeMoment(ctx, id)
+	liked, err := h.MomentService.LikeMoment(c, id)
 	if err != nil {
 		h.MomentService.Log.Error("点赞动态失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, Response{

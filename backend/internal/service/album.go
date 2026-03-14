@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"github.com/bookandmusic/love-girl/internal/log"
@@ -105,7 +106,7 @@ func NewAlbumService(log *log.Logger, albumRepo *repo.AlbumRepo, fileService *Fi
 }
 
 // 将model.Album转换为前端响应格式
-func (s *AlbumService) convertToAlbum(ctx context.Context, album *model.Album) *Album {
+func (s *AlbumService) convertToAlbum(c *gin.Context, album *model.Album) *Album {
 	if album == nil {
 		return nil
 	}
@@ -123,7 +124,7 @@ func (s *AlbumService) convertToAlbum(ctx context.Context, album *model.Album) *
 		response.CoverImage = &AlbumCoverImage{
 			ID:      album.CoverImage.ID,
 			AlbumID: album.ID,
-			File:    s.FileService.BuildFileResponse(ctx, album.CoverImage),
+			File:    s.FileService.BuildFileResponse(c, album.CoverImage),
 		}
 	}
 
@@ -131,7 +132,7 @@ func (s *AlbumService) convertToAlbum(ctx context.Context, album *model.Album) *
 }
 
 // 将model.File转换为AlbumPhoto格式
-func (s *AlbumService) convertToAlbumPhoto(ctx context.Context, file *model.File, albumID uint64) *AlbumPhoto {
+func (s *AlbumService) convertToAlbumPhoto(c *gin.Context, file *model.File, albumID uint64) *AlbumPhoto {
 	if file == nil {
 		return nil
 	}
@@ -139,14 +140,15 @@ func (s *AlbumService) convertToAlbumPhoto(ctx context.Context, file *model.File
 	return &AlbumPhoto{
 		ID:        file.ID,
 		AlbumID:   albumID,
-		File:      s.FileService.BuildFileResponse(ctx, file),
+		File:      s.FileService.BuildFileResponse(c, file),
 		Alt:       file.OriginalName,
 		CreatedAt: file.CreatedAt.Format("2006-01-02 15:04:05"),
 	}
 }
 
 // ListAlbums 获取相册列表
-func (s *AlbumService) ListAlbums(ctx context.Context, page, size int) (*AlbumListResponse, error) {
+func (s *AlbumService) ListAlbums(c *gin.Context, page, size int) (*AlbumListResponse, error) {
+	ctx := c.Request.Context()
 	if page < 1 {
 		page = 1
 	}
@@ -167,7 +169,7 @@ func (s *AlbumService) ListAlbums(ctx context.Context, page, size int) (*AlbumLi
 	responseAlbums := make([]*Album, len(albums))
 	for i, album := range albums {
 		albumPtr := &album
-		responseAlbums[i] = s.convertToAlbum(ctx, albumPtr)
+		responseAlbums[i] = s.convertToAlbum(c, albumPtr)
 	}
 
 	return &AlbumListResponse{
@@ -181,7 +183,8 @@ func (s *AlbumService) ListAlbums(ctx context.Context, page, size int) (*AlbumLi
 }
 
 // ListAlbumsWithQuery 根据查询参数获取相册列表
-func (s *AlbumService) ListAlbumsWithQuery(ctx context.Context, params *AlbumQueryParams) (*AlbumListResponse, error) {
+func (s *AlbumService) ListAlbumsWithQuery(c *gin.Context, params *AlbumQueryParams) (*AlbumListResponse, error) {
+	ctx := c.Request.Context()
 	if params.Page < 1 {
 		params.Page = 1
 	}
@@ -210,7 +213,7 @@ func (s *AlbumService) ListAlbumsWithQuery(ctx context.Context, params *AlbumQue
 	responseAlbums := make([]*Album, len(albums))
 	for i, album := range albums {
 		albumPtr := &album
-		responseAlbums[i] = s.convertToAlbum(ctx, albumPtr)
+		responseAlbums[i] = s.convertToAlbum(c, albumPtr)
 	}
 
 	return &AlbumListResponse{
@@ -224,7 +227,8 @@ func (s *AlbumService) ListAlbumsWithQuery(ctx context.Context, params *AlbumQue
 }
 
 // CreateAlbum 创建相册
-func (s *AlbumService) CreateAlbum(ctx context.Context, req *AlbumCreateRequest) (*Album, error) {
+func (s *AlbumService) CreateAlbum(c *gin.Context, req *AlbumCreateRequest) (*Album, error) {
+	ctx := c.Request.Context()
 	// 创建相册模型
 	album := &model.Album{
 		Name:        req.Name,
@@ -238,11 +242,12 @@ func (s *AlbumService) CreateAlbum(ctx context.Context, req *AlbumCreateRequest)
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToAlbum(ctx, album), nil
+	return s.convertToAlbum(c, album), nil
 }
 
 // UpdateAlbum 更新相册
-func (s *AlbumService) UpdateAlbum(ctx context.Context, id uint64, req *AlbumUpdateRequest) (*Album, error) {
+func (s *AlbumService) UpdateAlbum(c *gin.Context, id uint64, req *AlbumUpdateRequest) (*Album, error) {
+	ctx := c.Request.Context()
 	// 检查相册是否存在
 	album, err := s.AlbumRepo.FindByID(ctx, id)
 	if err != nil {
@@ -268,7 +273,7 @@ func (s *AlbumService) UpdateAlbum(ctx context.Context, id uint64, req *AlbumUpd
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToAlbum(ctx, album), nil
+	return s.convertToAlbum(c, album), nil
 }
 
 // DeleteAlbum 删除相册
@@ -300,7 +305,8 @@ func (s *AlbumService) DeleteAlbum(ctx context.Context, id uint64) (bool, error)
 }
 
 // ListAlbumPhotos 获取相册照片列表
-func (s *AlbumService) ListAlbumPhotos(ctx context.Context, albumID uint64, page, size int) (*AlbumPhotoListResponse, error) {
+func (s *AlbumService) ListAlbumPhotos(c *gin.Context, albumID uint64, page, size int) (*AlbumPhotoListResponse, error) {
+	ctx := c.Request.Context()
 	// 检查相册是否存在
 	_, err := s.AlbumRepo.FindByID(ctx, albumID)
 	if err != nil {
@@ -335,7 +341,7 @@ func (s *AlbumService) ListAlbumPhotos(ctx context.Context, albumID uint64, page
 	responsePhotos := make([]*AlbumPhoto, len(photos))
 	for i, photo := range photos {
 		photoPtr := &photo
-		responsePhotos[i] = s.convertToAlbumPhoto(ctx, photoPtr, albumID)
+		responsePhotos[i] = s.convertToAlbumPhoto(c, photoPtr, albumID)
 	}
 
 	return &AlbumPhotoListResponse{
@@ -349,7 +355,8 @@ func (s *AlbumService) ListAlbumPhotos(ctx context.Context, albumID uint64, page
 }
 
 // AddPhotosToAlbum 添加照片到相册
-func (s *AlbumService) AddPhotosToAlbum(ctx context.Context, albumID uint64, req *AlbumAddPhotosRequest) ([]*AlbumPhoto, error) {
+func (s *AlbumService) AddPhotosToAlbum(c *gin.Context, albumID uint64, req *AlbumAddPhotosRequest) ([]*AlbumPhoto, error) {
+	ctx := c.Request.Context()
 	// 检查相册是否存在
 	_, err := s.AlbumRepo.FindByID(ctx, albumID)
 	if err != nil {
@@ -382,14 +389,15 @@ func (s *AlbumService) AddPhotosToAlbum(ctx context.Context, albumID uint64, req
 	responsePhotos := make([]*AlbumPhoto, len(files))
 	for i, photo := range files {
 		photoPtr := &photo
-		responsePhotos[i] = s.convertToAlbumPhoto(ctx, photoPtr, albumID)
+		responsePhotos[i] = s.convertToAlbumPhoto(c, photoPtr, albumID)
 	}
 
 	return responsePhotos, nil
 }
 
 // SetAlbumCover 设置相册封面
-func (s *AlbumService) SetAlbumCover(ctx context.Context, albumID uint64, req *AlbumSetCoverRequest) (*Album, error) {
+func (s *AlbumService) SetAlbumCover(c *gin.Context, albumID uint64, req *AlbumSetCoverRequest) (*Album, error) {
+	ctx := c.Request.Context()
 	// 检查相册是否存在
 	_, err := s.AlbumRepo.FindByID(ctx, albumID)
 	if err != nil {
@@ -414,7 +422,7 @@ func (s *AlbumService) SetAlbumCover(ctx context.Context, albumID uint64, req *A
 		return nil, fmt.Errorf("系统内部错误")
 	}
 
-	return s.convertToAlbum(ctx, updatedAlbum), nil
+	return s.convertToAlbum(c, updatedAlbum), nil
 }
 
 // RemovePhotoFromAlbum 从相册删除照片

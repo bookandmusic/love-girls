@@ -117,8 +117,6 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("app.env", "prod")
 
 	v.SetDefault("server.addr", ":8182")
-	v.SetDefault("server.schema", "http")
-	v.SetDefault("server.host_name", "localhost:8182")
 	v.SetDefault("server.mode", "debug")
 
 	v.SetDefault("log.level", "debug")
@@ -131,10 +129,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("datasource.database.dsn", "./data/love-girl.db")
 
 	v.SetDefault("storage.backend", "local")
-	v.SetDefault("storage.access.gin_proxy.enabled", true)
-	v.SetDefault("storage.access.image_proxy.enabled", false)
-	v.SetDefault("storage.access.image_proxy.base_url", "http://localhost:8080")
 	v.SetDefault("storage.local.root", "./data/uploads")
+	v.SetDefault("image_proxy.internal_url", "")
+	v.SetDefault("image_proxy.public_url", "")
 
 	// S3 存储：仅注册 key（不设默认值，避免创建空结构体触发内部 required 校验）
 	_ = v.BindEnv("storage.s3.use_ssl")
@@ -143,16 +140,20 @@ func setDefaults(v *viper.Viper) {
 	_ = v.BindEnv("storage.s3.bucket")
 	_ = v.BindEnv("storage.s3.credentials.access_key_id")
 	_ = v.BindEnv("storage.s3.credentials.secret_access_key")
-	_ = v.BindEnv("storage.s3.public_base_url")
-	_ = v.BindEnv("storage.s3.presign_enabled")
+	_ = v.BindEnv("storage.s3.public_url")
+	_ = v.BindEnv("storage.s3.presign_enable")
 	_ = v.BindEnv("storage.s3.presign_expire")
 
 	// WebDAV 存储：仅注册 key
 	_ = v.BindEnv("storage.webdav.endpoint")
 	_ = v.BindEnv("storage.webdav.base_path")
-	_ = v.BindEnv("storage.webdav.public_base_url")
+	_ = v.BindEnv("storage.webdav.public_url")
 	_ = v.BindEnv("storage.webdav.auth.username")
 	_ = v.BindEnv("storage.webdav.auth.password")
+
+	// ImageProxy：仅注册 key
+	_ = v.BindEnv("image_proxy.internal_url")
+	_ = v.BindEnv("image_proxy.public_url")
 }
 
 // ApplyEnvPolicy 根据环境设置运行策略

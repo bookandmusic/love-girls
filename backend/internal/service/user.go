@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
 	"github.com/bookandmusic/love-girl/internal/auth"
@@ -88,8 +89,8 @@ type UserResponse struct {
 }
 
 // GetUsers 获取所有用户列表
-func (s *UserService) GetUsers(ctx context.Context) ([]UserResponse, error) {
-	users, _, err := s.UserRepo.ListUsers(ctx, 1, 100) // 暂时使用固定分页参数
+func (s *UserService) GetUsers(c *gin.Context) ([]UserResponse, error) {
+	users, _, err := s.UserRepo.ListUsers(c.Request.Context(), 1, 100) // 暂时使用固定分页参数
 	if err != nil {
 		s.Log.Error("获取用户列表失败", "error", err)
 		return nil, fmt.Errorf("系统内部错误")
@@ -110,7 +111,7 @@ func (s *UserService) GetUsers(ctx context.Context) ([]UserResponse, error) {
 			Email:    email,
 			Role:     user.Role,
 			JoinDate: user.CreatedAt.Format("2006-01-02"),
-			Avatar:   s.FileService.BuildFileResponse(ctx, user.Avatar),
+			Avatar:   s.FileService.BuildFileResponse(c, user.Avatar),
 		}
 		userResponses = append(userResponses, userResponse)
 	}
@@ -118,33 +119,9 @@ func (s *UserService) GetUsers(ctx context.Context) ([]UserResponse, error) {
 	return userResponses, nil
 }
 
-// JoinFileURL 生成文件URL
-func (s *UserService) JoinFileURL(id uint64) string {
-	return fmt.Sprintf("%s://%s/api/v1/file/%d", s.serverCfg.Schema, s.serverCfg.HostName, id)
-}
-
-// GetAvatarURL 获取用户头像URL
-func (s *UserService) GetAvatarURL(ctx context.Context, user *model.User) (string, error) {
-	if user.AvatarID == nil {
-		return "", nil
-	}
-
-	filePath := ""
-	if user.Avatar != nil {
-		filePath = user.Avatar.Path
-	} else {
-		// 如果Avatar关联未加载，通过FileRepo查询文件路径
-		file, err := s.FileRepo.FindByID(ctx, *user.AvatarID)
-		if err == nil && file != nil {
-			filePath = file.Path
-		}
-	}
-
-	return s.Storage.URL(ctx, *user.AvatarID, filePath, 32, 32, s.JoinFileURL)
-}
-
 // UpdateUser 更新用户信息
-func (s *UserService) UpdateUser(ctx context.Context, userID uint64, name, email string, avatarID *uint64, newPassword string) (*UserResponse, error) {
+func (s *UserService) UpdateUser(c *gin.Context, userID uint64, name, email string, avatarID *uint64, newPassword string) (*UserResponse, error) {
+	ctx := c.Request.Context()
 	// 先查询用户信息
 	user, err := s.UserRepo.FindByID(ctx, userID)
 	if err != nil {
@@ -193,7 +170,7 @@ func (s *UserService) UpdateUser(ctx context.Context, userID uint64, name, email
 		Email:    userEmail,
 		Role:     user.Role,
 		JoinDate: user.CreatedAt.Format("2006-01-02"),
-		Avatar:   s.FileService.BuildFileResponse(ctx, user.Avatar),
+		Avatar:   s.FileService.BuildFileResponse(c, user.Avatar),
 	}
 
 	return userResponse, nil
@@ -217,7 +194,8 @@ type AvatarHistoryResponse struct {
 }
 
 // GetAvatarHistory 获取用户头像历史
-func (s *UserService) GetAvatarHistory(ctx context.Context, userID uint64, page, size int) (*AvatarHistoryResponse, error) {
+func (s *UserService) GetAvatarHistory(c *gin.Context, userID uint64, page, size int) (*AvatarHistoryResponse, error) {
+	ctx := c.Request.Context()
 	files, total, err := s.UserRepo.GetAvatarHistoryWithPagination(ctx, userID, page, size)
 	if err != nil {
 		s.Log.Error("获取头像历史失败", "error", err, "userID", userID)
@@ -226,11 +204,10 @@ func (s *UserService) GetAvatarHistory(ctx context.Context, userID uint64, page,
 
 	avatars := make([]AvatarHistoryItem, 0, len(files))
 	for _, file := range files {
-		urls := s.FileService.GetFileURLs(ctx, &file)
 		avatars = append(avatars, AvatarHistoryItem{
 			ID:           file.ID,
-			URL:          urls.URL,
-			ThumbnailURL: urls.Thumbnail,
+			URL:          s.FileService.GetImageURL(c, &file, 0),
+			ThumbnailURL: s.FileService.GetImageURL(c, &file, 200),
 			CreatedAt:    file.CreatedAt.Format("2006-01-02 15:04:05"),
 		})
 	}

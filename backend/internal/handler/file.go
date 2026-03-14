@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -61,9 +62,7 @@ type SaveFileRequest struct {
 // @Failure 400 {object} Response "Missing or invalid file"
 // @Failure 500 {object} Response "Internal server error during file saving or URL generation"
 // @Router /file/upload [post]
-// FileUploadResponse represents the response data for a successful file upload.
 func (h *FileHandler) SaveFile(c *gin.Context) {
-
 	// 手动解析multipart表单，设置更大的内存限制
 	const maxMemory = 200 << 20 // 200 MB
 	if err := c.Request.ParseMultipartForm(maxMemory); err != nil {
@@ -89,11 +88,6 @@ func (h *FileHandler) SaveFile(c *gin.Context) {
 
 	// 获取其他表单字段
 	hash := c.Request.FormValue("hash")
-	path := c.Request.FormValue("path")
-	thumbnailWidth := 0
-	thumbnailHeight := 0
-
-	// 验证必填字段
 	if hash == "" {
 		c.JSON(http.StatusBadRequest, Response{
 			Code:    1,
@@ -102,34 +96,13 @@ func (h *FileHandler) SaveFile(c *gin.Context) {
 		return
 	}
 
-	// ---------- 2. 默认值补齐 ----------
+	path := c.Request.FormValue("path")
 	filename := header.Filename
 	size := header.Size
-
-	// ---------- 3. 缩略图参数校验 ----------
-	if thumbnailWidth < 0 || thumbnailWidth > 4096 ||
-		thumbnailHeight < 0 || thumbnailHeight > 4096 {
-		h.Service.Log.Error("缩略图尺寸参数非法", "width", thumbnailWidth, "height", thumbnailHeight)
-		c.JSON(http.StatusBadRequest, Response{
-			Code:    1,
-			Message: "缩略图尺寸参数非法",
-		})
-		return
-	}
-
-	// ---------- 5. Optional string 指针 ----------
 	mimeType := header.Header.Get("Content-Type")
 
-	// ---------- 6. 调用 Service ----------
-	savedFile, err := h.Service.SaveFile(
-		c,
-		filename,
-		path,
-		mimeType,
-		hash,
-		size,
-		file,
-	)
+	// 调用 Service
+	savedFile, err := h.Service.SaveFile(c, filename, path, mimeType, hash, size, file)
 	if err != nil {
 		h.Service.Log.Error("文件保存失败", "filename", filename, "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
@@ -139,18 +112,14 @@ func (h *FileHandler) SaveFile(c *gin.Context) {
 		return
 	}
 
-	// ---------- 7. URL ----------
-
-	// ---------- 8. 返回 ----------
-	resp := FileUploadResponse{
-		FileID: savedFile.ID,
-		File:   h.Service.BuildFileResponse(c, savedFile),
-	}
-
+	// 返回
 	c.JSON(http.StatusOK, Response{
 		Code:    0,
 		Message: "文件保存成功",
-		Data:    resp,
+		Data: FileUploadResponse{
+			FileID: savedFile.ID,
+			File:   h.Service.BuildFileResponse(c, savedFile),
+		},
 	})
 }
 
@@ -167,7 +136,6 @@ func (h *FileHandler) SaveFile(c *gin.Context) {
 func (h *FileHandler) GetFile(c *gin.Context) {
 	idStr := c.Param("id")
 
-	// 将字符串ID转换为uint类型
 	var id uint64
 	_, err := fmt.Sscanf(idStr, "%d", &id)
 	if err != nil {
@@ -175,31 +143,68 @@ func (h *FileHandler) GetFile(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, Response{
 			Code:    1,
 			Message: "无效的文件ID格式",
-			Data:    nil,
 		})
 		return
 	}
 
+	width, _ := strconv.Atoi(c.Query("w"))
+
+	// 需要缩略图且有 ImageProxy 内网地址 -> 代理到 ImageProxy
+	if width > 0 && h.Service.HasImageProxyInternal() {
+		h.proxyToImageProxy(c, id, width)
+		return
+	}
+
+	// 直接返回文件
 	fileReader, file, err := h.Service.ReadFile(c, id)
 	if err != nil {
 		h.Service.Log.Error("文件读取失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
 			Code:    1,
 			Message: "系统内部错误",
-			Data:    nil,
 		})
 		return
 	}
 	defer fileReader.Close()
 
-	// 手动设置 Header（不设 Content-Length）
 	c.Header("Content-Type", file.MimeType)
 	c.Header("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, url.QueryEscape(file.OriginalName)))
 
-	// 直接流式写入，不依赖 Content-Length
 	_, err = io.Copy(c.Writer, fileReader)
 	if err != nil {
 		h.Service.Log.Error("文件流复制失败", "id", id, "error", err)
+		return
+	}
+}
+
+// proxyToImageProxy 代理请求到 ImageProxy
+func (h *FileHandler) proxyToImageProxy(c *gin.Context, fileID uint64, width int) {
+	proxyURL := h.Service.GetImageProxyURL(c, fileID, width)
+	if proxyURL == "" {
+		c.JSON(http.StatusInternalServerError, Response{
+			Code:    1,
+			Message: "系统内部错误",
+		})
+		return
+	}
+
+	resp, err := http.Get(proxyURL)
+	if err != nil {
+		h.Service.Log.Error("ImageProxy 请求失败", "url", proxyURL, "error", err)
+		c.JSON(http.StatusInternalServerError, Response{
+			Code:    1,
+			Message: "系统内部错误",
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	c.Header("Content-Type", resp.Header.Get("Content-Type"))
+	c.Header("Content-Disposition", resp.Header.Get("Content-Disposition"))
+
+	_, err = io.Copy(c.Writer, resp.Body)
+	if err != nil {
+		h.Service.Log.Error("ImageProxy 响应流复制失败", "error", err)
 		return
 	}
 }
