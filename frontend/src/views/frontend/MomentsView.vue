@@ -68,9 +68,13 @@ const likeMoment = async (momentId: number) => {
         moment.likes = response.data.likes
       }
       showToast('点赞成功', 'success')
+    } else {
+      showToast(response.msg || '点赞失败', 'error')
     }
-  } catch {
-    showToast('点赞失败', 'error')
+  } catch (error: unknown) {
+    const axiosError = error as { response?: { data?: { message?: string } } }
+    const message = axiosError.response?.data?.message || '点赞失败'
+    showToast(message, 'error')
   }
 }
 

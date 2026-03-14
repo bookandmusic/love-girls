@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -25,6 +26,15 @@ func NewMomentHandler(momentService *service.MomentService) *MomentHandler {
 // RegisterRoutes 注册动态相关的路由
 func (h *MomentHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server.GinEngine, authMiddleware *middle.AuthMiddleware) {
 	apiGroup.GET("/moments", h.ListMoments) // 获取动态列表（公开的）
+
+	// 公开但有限流的路由：每个IP对同一动态每5分钟只能点赞1次
+	apiGroup.POST("/moments/:id/like", middle.RateLimitByKey(
+		func(c *gin.Context) string {
+			return c.ClientIP() + ":" + c.Param("id")
+		},
+		1, 5*time.Minute,
+	), h.LikeMoment)
+
 	// 需要认证的路由
 	authGroup := apiGroup.Group("")
 	authGroup.Use(authMiddleware.Handle())
@@ -33,7 +43,6 @@ func (h *MomentHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server
 		authGroup.PUT("/moments/:id", h.UpdateMoment)        // 更新动态
 		authGroup.DELETE("/moments/:id", h.DeleteMoment)     // 删除动态
 		authGroup.PUT("/moments/:id/public", h.UpdatePublic) // 更新动态公开状态
-		authGroup.POST("/moments/:id/like", h.LikeMoment)    // 点赞动态
 	}
 
 }
