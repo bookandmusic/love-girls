@@ -3,6 +3,7 @@
 package log
 
 import (
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -17,7 +18,7 @@ type Logger struct {
 	*slog.Logger
 }
 
-// Init 初始化 slog 日志（始终使用彩色文本）
+// Init 初始化 slog 日志（支持 JSON 和 Text 格式）
 func getLoggerLevel(level string) slog.Level {
 	// 设置日志级别
 	var logLevel slog.Level
@@ -39,11 +40,29 @@ func getLoggerLevel(level string) slog.Level {
 
 func NewLogger(cfg config.LogConfig) *Logger {
 	level := getLoggerLevel(cfg.Level)
-	handler := tint.NewHandler(os.Stdout, &tint.Options{
-		Level:      level,
-		AddSource:  true,
-		TimeFormat: "2006-01-02 15:04:05",
-	})
+	opts := &slog.HandlerOptions{Level: level, AddSource: true}
+
+	var handler slog.Handler
+
+	// 根据配置选择格式
+	if cfg.Format == "json" {
+		// JSON 格式 - 用于日志收集
+		var writer io.Writer = os.Stdout
+		if cfg.Output != "" && cfg.Output != "stdout" {
+			file, err := os.OpenFile(cfg.Output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+			if err == nil {
+				writer = file
+			}
+		}
+		handler = slog.NewJSONHandler(writer, opts)
+	} else {
+		// 彩色文本格式 - 默认行为
+		handler = tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      level,
+			AddSource:  true,
+			TimeFormat: "2006-01-02 15:04:05",
+		})
+	}
 
 	logger := slog.New(handler)
 

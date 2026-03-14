@@ -10,7 +10,9 @@ func ProvideStorageLocal(
 	cfg *config.AppConfig,
 	logger *log.Logger,
 ) (*storage.LocalStorage, error) {
-	return storage.NewLocalStorage(cfg.Storage.Local.Root)
+	// Local 存储路径由 data_dir 自动计算
+	uploadDir := cfg.GetDataPaths().UploadDir
+	return storage.NewLocalStorage(uploadDir)
 }
 
 func ProvideStorageS3(

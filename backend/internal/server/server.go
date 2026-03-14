@@ -5,6 +5,7 @@ import (
 
 	"github.com/bookandmusic/love-girl/internal/config"
 	"github.com/bookandmusic/love-girl/internal/log"
+	"github.com/bookandmusic/love-girl/internal/middleware"
 )
 
 // GinEngine 封装 Gin 引擎和日志
@@ -23,9 +24,10 @@ func NewGinEngine(cfg *config.AppConfig, logger *log.Logger) *GinEngine {
 	// 设置文件上传大小限制为200MB
 	engine.MaxMultipartMemory = 200 << 20 // 200 MB
 
-	// 使用自定义的日志中间件
-	engine.Use(gin.LoggerWithWriter(logger)) // 通过自定义的 Logger 输出日志
-	engine.Use(gin.Recovery())
+	// 注册中间件（按顺序）
+	engine.Use(middleware.RequestID())       // RequestID 追踪
+	engine.Use(gin.LoggerWithWriter(logger)) // Gin 日志
+	engine.Use(middleware.Recovery())        // Panic 恢复（增强版）
 
 	// 创建 GinEngine 实例
 	return &GinEngine{

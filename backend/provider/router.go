@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 
@@ -37,6 +39,15 @@ func ProvideRouter(
 	}
 
 	apiGroup := engine.Group("/api/v1")
+
+	// 注册 API 级别中间件
+	apiGroup.Use(middleware.Logging()) // 请求日志
+
+	// 注册超时中间件（如果配置了）
+	if cfg.Server.RequestTimeout > 0 {
+		apiGroup.Use(middleware.Timeout(time.Duration(cfg.Server.RequestTimeout) * time.Second))
+	}
+
 	// 循环注册 API 路由
 	for _, h := range handlers {
 		h.RegisterRoutes(apiGroup, ginEngine, authMiddleware)
