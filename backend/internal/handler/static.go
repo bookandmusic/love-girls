@@ -4,6 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -46,8 +47,20 @@ func (h *StaticHandler) RegisterRoutes(ginEngine *server.GinEngine) {
 	fileServer := http.FileServer(http.FS(subFS))
 
 	engine.NoRoute(func(c *gin.Context) {
-		c.Header("Cache-Control", "public, max-age=31536000")
-		fileServer.ServeHTTP(c.Writer, c.Request)
+		path := c.Request.URL.Path
+		// 去掉路径开头的 /
+		relPath := strings.TrimPrefix(path, "/")
+		// 尝试打开静态文件
+		file, err := subFS.Open(relPath)
+		if err == nil {
+			file.Close()
+			// 文件存在，作为静态资源服务
+			c.Header("Cache-Control", "public, max-age=31536000")
+			fileServer.ServeHTTP(c.Writer, c.Request)
+			return
+		}
+		// 文件不存在，返回 index.html 让前端路由处理
+		c.Data(http.StatusOK, "text/html; charset=utf-8", indexData)
 	})
 }
 
