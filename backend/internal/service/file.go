@@ -196,9 +196,9 @@ func (s *FileService) buildImageProxyURL(baseURL, sourceURL string, width int) s
 		return sourceURL
 	}
 	if width == 0 {
-		return fmt.Sprintf("%s/insecure/plain/%s", baseURL, sourceURL)
+		return fmt.Sprintf("%s/%s", baseURL, sourceURL)
 	}
-	return fmt.Sprintf("%s/insecure/size:%dx0/plain/%s", baseURL, width, sourceURL)
+	return fmt.Sprintf("%s/%dx0/%s", baseURL, width, sourceURL)
 }
 
 // GetImageURL 获取图片 URL（核心逻辑）
