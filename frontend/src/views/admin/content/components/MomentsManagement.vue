@@ -272,6 +272,7 @@ const saveMoment = async (momentData: Moment) => {
         isPublic: momentData.isPublic,
         imageIds: imageIds,
         likes: momentData.likes,
+        createdAt: momentData.createdAt,
       })
 
       // 更新本地数据
@@ -293,7 +294,7 @@ const saveMoment = async (momentData: Moment) => {
         imageIds: imageIds, // 发送图片 ID 数组
         likes: 0,
         author: { name: '系统用户' },
-        createdAt: new Date().toISOString(),
+        createdAt: momentData.createdAt,
         userId: authStore.userInfo?.userId || 1, // 使用当前登录用户 ID，默认为 1
       })
 

@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -62,9 +63,18 @@ func (r *MomentRepo) DeleteWithFiles(ctx context.Context, id uint64) error {
 
 // UpdateWithFiles 修改动态，支持同时修改关联图片（事务）
 //
+// 参数：
+//   - moment: 动态实体
+//   - fileIDs: 关联的文件ID列表
+//   - newCreatedAt: 可选，新的创建时间，nil 表示不更新创建时间
+//
 // 返回：如果更新成功返回nil，否则返回错误
-func (r *MomentRepo) UpdateWithFiles(ctx context.Context, moment *model.Moment, fileIDs []uint64) error {
+func (r *MomentRepo) UpdateWithFiles(ctx context.Context, moment *model.Moment, fileIDs []uint64, newCreatedAt *time.Time) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// 如果指定了新的创建时间，更新它
+		if newCreatedAt != nil {
+			moment.CreatedAt = *newCreatedAt
+		}
 		// 更新动态信息
 		if err := tx.Save(moment).Error; err != nil {
 			return err

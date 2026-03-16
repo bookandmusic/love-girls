@@ -44,6 +44,17 @@
           ></textarea>
         </div>
 
+        <!-- 创建时间 -->
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-700 mb-1">创建时间</label>
+          <input
+            type="datetime-local"
+            v-model="localCreatedAt"
+            class="w-full win11-input"
+            :disabled="loading"
+          />
+        </div>
+
         <!-- 图片上传区域 -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1"
@@ -136,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
 import GenericDialog from '@/components/ui/GenericDialog.vue'
 import { type Moment } from '@/services/momentApi'
@@ -186,12 +197,46 @@ const DEFAULT_MOMENT = {
 // 创建本地响应式副本
 const localMoment = reactive({ ...(props.moment || { ...DEFAULT_MOMENT }) })
 
+// 将 ISO 时间转换为 datetime-local 格式 (YYYY-MM-DDTHH:mm)
+const isoToDatetimeLocal = (isoString: string): string => {
+  if (!isoString) return ''
+  const date = new Date(isoString)
+  // 使用本地时间
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+// 将 datetime-local 格式转换为后端期望的格式 (YYYY-MM-DD HH:mm:ss)
+const datetimeLocalToBackend = (datetimeLocal: string): string => {
+  if (!datetimeLocal) return ''
+  // datetime-local 格式: YYYY-MM-DDTHH:mm
+  // 后端期望格式: YYYY-MM-DD HH:mm:ss
+  return datetimeLocal.replace('T', ' ') + ':00'
+}
+
+// 创建时间的双向绑定（datetime-local 格式）
+const localCreatedAt = computed({
+  get: () => isoToDatetimeLocal(localMoment.createdAt),
+  set: (value: string) => {
+    localMoment.createdAt = datetimeLocalToBackend(value)
+  },
+})
+
 // 监听对话框打开状态，只在打开时同步数据
 watch(
   () => props.open,
   isOpen => {
     if (isOpen) {
-      Object.assign(localMoment, props.moment || { ...DEFAULT_MOMENT })
+      const sourceMoment = props.moment || { ...DEFAULT_MOMENT }
+      Object.assign(localMoment, sourceMoment)
+      // 确保创建时间被正确设置
+      if (!localMoment.createdAt) {
+        localMoment.createdAt = new Date().toISOString()
+      }
     }
   }
 )

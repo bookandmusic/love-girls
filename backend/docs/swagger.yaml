@@ -350,6 +350,9 @@ definitions:
     properties:
       content:
         type: string
+      createdAt:
+        description: '可选，格式: "2006-01-02 15:04:05"'
+        type: string
       imageIds:
         items:
           type: integer
@@ -390,6 +393,9 @@ definitions:
   service.MomentUpdateRequest:
     properties:
       content:
+        type: string
+      createdAt:
+        description: '可选，格式: "2006-01-02 15:04:05"'
         type: string
       imageIds:
         items:

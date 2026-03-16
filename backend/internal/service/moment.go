@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -98,17 +99,19 @@ func NewMomentService(log *log.Logger, momentRepo *repo.MomentRepo, fileService 
 
 // MomentCreateRequest 创建动态请求
 type MomentCreateRequest struct {
-	Content  string   `json:"content" binding:"required"`
-	ImageIds []uint64 `json:"imageIds"`
-	IsPublic bool     `json:"isPublic"`
-	UserID   uint64   `json:"userId" binding:"required,gt=0"`
+	Content   string   `json:"content" binding:"required"`
+	ImageIds  []uint64 `json:"imageIds"`
+	IsPublic  bool     `json:"isPublic"`
+	UserID    uint64   `json:"userId" binding:"required,gt=0"`
+	CreatedAt *string  `json:"createdAt"` // 可选，格式: "2006-01-02 15:04:05"
 }
 
 // MomentUpdateRequest 更新动态请求
 type MomentUpdateRequest struct {
-	Content  *string  `json:"content"`
-	ImageIds []uint64 `json:"imageIds"`
-	IsPublic *bool    `json:"isPublic"`
+	Content   *string  `json:"content"`
+	ImageIds  []uint64 `json:"imageIds"`
+	IsPublic  *bool    `json:"isPublic"`
+	CreatedAt *string  `json:"createdAt"` // 可选，格式: "2006-01-02 15:04:05"
 }
 
 // MomentPublicRequest 动态公开状态请求
@@ -137,6 +140,16 @@ func (s *MomentService) CreateMoment(c *gin.Context, req *MomentCreateRequest) (
 		Content:  req.Content,
 		IsPublic: req.IsPublic,
 		UserID:   req.UserID,
+	}
+
+	// 如果指定了创建时间，则使用指定的时间
+	if req.CreatedAt != nil && *req.CreatedAt != "" {
+		parsedTime, err := time.ParseInLocation("2006-01-02 15:04:05", *req.CreatedAt, time.Local)
+		if err != nil {
+			s.Log.Error("解析创建时间失败", "error", err, "createdAt", *req.CreatedAt)
+			return nil, fmt.Errorf("创建时间格式错误，应为: 2006-01-02 15:04:05")
+		}
+		moment.CreatedAt = parsedTime
 	}
 
 	// 使用事务创建动态和文件关联
@@ -297,8 +310,19 @@ func (s *MomentService) UpdateMoment(c *gin.Context, id uint64, req *MomentUpdat
 		moment.IsPublic = *req.IsPublic
 	}
 
+	// 如果指定了创建时间，则更新
+	var newCreatedAt *time.Time
+	if req.CreatedAt != nil && *req.CreatedAt != "" {
+		parsedTime, err := time.ParseInLocation("2006-01-02 15:04:05", *req.CreatedAt, time.Local)
+		if err != nil {
+			s.Log.Error("解析创建时间失败", "error", err, "createdAt", *req.CreatedAt)
+			return nil, fmt.Errorf("创建时间格式错误，应为: 2006-01-02 15:04:05")
+		}
+		newCreatedAt = &parsedTime
+	}
+
 	// 更新动态信息
-	if err := s.MomentRepo.UpdateWithFiles(ctx, moment, req.ImageIds); err != nil {
+	if err := s.MomentRepo.UpdateWithFiles(ctx, moment, req.ImageIds, newCreatedAt); err != nil {
 		s.Log.Error("更新动态失败", "error", err, "id", id)
 		return nil, fmt.Errorf("系统内部错误")
 	}
