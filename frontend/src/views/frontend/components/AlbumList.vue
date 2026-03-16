@@ -1,5 +1,6 @@
 <template>
   <div
+    ref="scrollContainer"
     class="flex-grow overflow-y-auto custom-scrollbar bg-[var(--fe-bg-gray)]/30"
     @scroll="handleScroll"
   >
@@ -65,6 +66,8 @@
 </template>
 
 <script setup lang="ts">
+import { nextTick, ref, watch } from 'vue'
+
 import BaseIcon from '@/components/ui/BaseIcon.vue'
 import type { Album } from '@/services/albumApi'
 
@@ -84,6 +87,9 @@ const emit = defineEmits<{
 const onSelectAlbum = (album: Album) => {
   emit('select-album', album)
 }
+
+// 滚动容器引用
+const scrollContainer = ref<HTMLElement | null>(null)
 
 // 预设的一组精致渐变色 (iOS 风格)
 const gradients = [
@@ -111,4 +117,27 @@ const handleScroll = (e: Event) => {
     emit('load-more')
   }
 }
+
+// 自动填充页面逻辑
+const checkAndAutoLoadMore = async () => {
+  await nextTick()
+
+  if (props.loading || !props.hasMore) return
+
+  const container = scrollContainer.value
+  if (container) {
+    const isNotFilled = container.scrollHeight <= container.clientHeight + 10
+    if (isNotFilled) {
+      emit('load-more')
+    }
+  }
+}
+
+// 监听数据变化，检查是否需要自动加载
+watch(
+  () => props.albums,
+  () => {
+    checkAndAutoLoadMore()
+  }
+)
 </script>

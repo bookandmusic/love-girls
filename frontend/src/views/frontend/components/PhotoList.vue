@@ -12,7 +12,11 @@
     </div>
 
     <!-- 照片网格 -->
-    <div class="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar" @scroll="handleScroll">
+    <div
+      ref="scrollContainer"
+      class="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar"
+      @scroll="handleScroll"
+    >
       <vue-easy-lightbox
         :visible="visibleRef"
         :imgs="imgsRef"
@@ -69,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import VueEasyLightbox from 'vue-easy-lightbox'
 
 import BaseIcon from '@/components/ui/BaseIcon.vue'
@@ -92,6 +96,9 @@ const onBack = () => {
   emit('back')
 }
 
+// 滚动容器引用
+const scrollContainer = ref<HTMLElement | null>(null)
+
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement
   if (!target || props.loading || !props.hasMore) return
@@ -101,6 +108,30 @@ const handleScroll = (e: Event) => {
     emit('load-more')
   }
 }
+
+// 自动填充页面逻辑
+const checkAndAutoLoadMore = async () => {
+  await nextTick()
+
+  if (props.loading || !props.hasMore) return
+
+  const container = scrollContainer.value
+  if (container) {
+    const isNotFilled = container.scrollHeight <= container.clientHeight + 10
+    if (isNotFilled) {
+      emit('load-more')
+    }
+  }
+}
+
+// 监听数据变化，检查是否需要自动加载
+watch(
+  () => props.photos,
+  () => {
+    checkAndAutoLoadMore()
+  }
+)
+
 const visibleRef = ref(false)
 const indexRef = ref(0) // default 0
 const imgsRef = ref('')

@@ -1,7 +1,7 @@
 <template>
   <div class="w-full h-full flex flex-col overflow-hidden">
     <!-- 纪念日列表 -->
-    <ul class="flex-1 min-h-0 overflow-y-auto pr-2">
+    <ul ref="scrollContainer" class="flex-1 min-h-0 overflow-y-auto pr-2">
       <AnniversaryItem
         v-for="anniversary in anniversaries"
         :key="anniversary.id"
@@ -70,6 +70,7 @@ import GenericDialog from '@/components/ui/GenericDialog.vue'
 import { type Anniversary, anniversaryApi } from '@/services/anniversaryApi'
 import { useUIStore } from '@/stores/ui'
 import { useToast } from '@/utils/toastUtils'
+import { useAutoFillPage } from '@/utils/useAutoFillPage'
 
 import AnniversaryEditDialog from './AnniversariesManagement/AnniversaryEditDialog.vue'
 import AnniversaryItem from './AnniversariesManagement/AnniversaryItem.vue'
@@ -102,6 +103,9 @@ const pageSize = ref(5)
 // 计算总页数
 const totalPages = computed(() => Math.ceil(totalAnniversaries.value / pageSize.value) || 1)
 const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// 滚动容器引用
+const scrollContainer = ref<HTMLElement | null>(null)
 
 // 观测点相关
 const loadMoreTrigger = ref<HTMLElement | null>(null)
@@ -144,15 +148,32 @@ const loadAnniversaries = async (append = false) => {
     showToast('加载纪念日失败', 'error')
   } finally {
     uiStore.setLoading(false)
+    // 检查是否需要自动加载更多以填充页面
+    checkAndAutoLoadMore()
   }
 }
+
+// 加载下一页
+const handleNextPage = () => {
+  if (hasMore.value) {
+    currentPage.value++
+    loadAnniversaries(true)
+  }
+}
+
+// 自动填充页面逻辑
+const { checkAndAutoLoadMore } = useAutoFillPage(
+  scrollContainer,
+  hasMore,
+  computed(() => uiStore.loading),
+  handleNextPage
+)
 
 // 处理交叉观测
 const handleIntersect = (entries: IntersectionObserverEntry[]) => {
   const entry = entries[0]
   if (entry && entry.isIntersecting && hasMore.value && !uiStore.loading) {
-    currentPage.value++
-    loadAnniversaries(true)
+    handleNextPage()
   }
 }
 

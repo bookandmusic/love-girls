@@ -8,6 +8,7 @@ import { type Moment, momentApi } from '@/services/momentApi'
 import { useSystemStore } from '@/stores/system'
 import { useUIStore } from '@/stores/ui'
 import { useToast } from '@/utils/toastUtils'
+import { useAutoFillPage } from '@/utils/useAutoFillPage'
 
 const uiStore = useUIStore()
 const systemStore = useSystemStore()
@@ -24,6 +25,9 @@ const totalPages = ref(0)
 const pageSize = ref(8)
 const loadingMore = ref(false)
 const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// 滚动容器引用
+const scrollContainer = ref<HTMLElement | null>(null)
 
 // 获取动态列表
 const fetchMoments = async (page: number, append = false) => {
@@ -44,8 +48,25 @@ const fetchMoments = async (page: number, append = false) => {
   } finally {
     loadingMore.value = false
     uiStore.setLoading(false)
+    // 检查是否需要自动加载更多以填充页面
+    checkAndAutoLoadMore()
   }
 }
+
+// 加载下一页
+const loadNextPage = () => {
+  if (hasMore.value && !loadingMore.value) {
+    fetchMoments(currentPage.value + 1, true)
+  }
+}
+
+// 自动填充页面逻辑
+const { checkAndAutoLoadMore } = useAutoFillPage(
+  scrollContainer,
+  hasMore,
+  loadingMore,
+  loadNextPage
+)
 
 // 滚动加载
 const handleScroll = (e: Event) => {
@@ -54,7 +75,7 @@ const handleScroll = (e: Event) => {
 
   const bottomDistance = target.scrollHeight - target.scrollTop - target.clientHeight
   if (bottomDistance < 100) {
-    fetchMoments(currentPage.value + 1, true)
+    loadNextPage()
   }
 }
 
@@ -124,6 +145,7 @@ onMounted(async () => {
         <div class="flex flex-col h-full glass-regular">
           <!-- 动态列表 - 监听滚动事件 -->
           <div
+            ref="scrollContainer"
             class="flex-grow overflow-y-auto p-4 md:p-8 space-y-0 custom-scrollbar"
             @scroll="handleScroll"
           >

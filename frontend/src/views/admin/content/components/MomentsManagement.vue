@@ -1,7 +1,7 @@
 <template>
   <div class="w-full h-full flex flex-col overflow-hidden">
     <!-- 主体内容区域：包含列表，允许内部滚动 -->
-    <div class="flex-1 min-h-0 overflow-y-auto pr-2">
+    <div ref="scrollContainer" class="flex-1 min-h-0 overflow-y-auto pr-2">
       <ul class="space-y-4 pb-4">
         <MomentItem
           v-for="moment in moments"
@@ -108,6 +108,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useUIStore } from '@/stores/ui'
 import { calculateFileHash } from '@/utils/fileUtils'
 import { useToast } from '@/utils/toastUtils'
+import { useAutoFillPage } from '@/utils/useAutoFillPage'
 
 import MomentEditDialog from './MomentsManagement/MomentEditDialog.vue'
 import MomentItem from './MomentsManagement/MomentItem.vue'
@@ -140,6 +141,10 @@ const totalMoments = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(5)
 const totalPages = computed(() => Math.ceil(totalMoments.value / pageSize.value) || 1)
+const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// 滚动容器引用
+const scrollContainer = ref<HTMLElement | null>(null)
 
 // 无限滚动逻辑
 const loadMoreTrigger = ref<HTMLElement | null>(null)
@@ -189,8 +194,25 @@ const loadMoments = async (append = false) => {
     showToast('加载动态失败', 'error')
   } finally {
     uiStore.setLoading(false)
+    // 检查是否需要自动加载更多以填充页面
+    checkAndAutoLoadMore()
   }
 }
+
+const handleNextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+    loadMoments(true)
+  }
+}
+
+// 自动填充页面逻辑
+const { checkAndAutoLoadMore } = useAutoFillPage(
+  scrollContainer,
+  hasMore,
+  computed(() => uiStore.loading),
+  handleNextPage
+)
 
 onMounted(async () => {
   await loadMoments()
@@ -200,13 +222,6 @@ onMounted(async () => {
 onUnmounted(() => {
   if (observer) observer.disconnect()
 })
-
-const handleNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    loadMoments(true)
-  }
-}
 
 const refreshList = async () => {
   currentPage.value = 1

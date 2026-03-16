@@ -1,7 +1,7 @@
 <template>
   <div class="w-full h-full flex flex-col overflow-hidden">
     <!-- 地点列表 -->
-    <div class="flex-1 min-h-0 overflow-y-auto pr-2">
+    <div ref="scrollContainer" class="flex-1 min-h-0 overflow-y-auto pr-2">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <PlaceItem
           v-for="place in places"
@@ -76,6 +76,7 @@ import { uploadApi } from '@/services/upload'
 import { useUIStore } from '@/stores/ui'
 import { calculateFileHash } from '@/utils/fileUtils'
 import { useToast } from '@/utils/toastUtils'
+import { useAutoFillPage } from '@/utils/useAutoFillPage'
 
 import PlaceEditDialog from './PlacesManagement/PlaceEditDialog.vue'
 import PlaceItem from './PlacesManagement/PlaceItem.vue'
@@ -108,6 +109,9 @@ const currentPage = ref(1)
 const pageSize = ref(5)
 const totalPages = computed(() => Math.ceil(totalPlaces.value / pageSize.value) || 1)
 const hasMore = computed(() => currentPage.value < totalPages.value)
+
+// 滚动容器引用
+const scrollContainer = ref<HTMLElement | null>(null)
 
 // 观测点相关
 const loadMoreTrigger = ref<HTMLElement | null>(null)
@@ -196,15 +200,32 @@ const loadPlaces = async (append = false) => {
     showToast('加载地点失败', 'error')
   } finally {
     uiStore.setLoading(false)
+    // 检查是否需要自动加载更多以填充页面
+    checkAndAutoLoadMore()
   }
 }
+
+// 加载下一页
+const handleNextPage = () => {
+  if (hasMore.value) {
+    currentPage.value++
+    loadPlaces(true)
+  }
+}
+
+// 自动填充页面逻辑
+const { checkAndAutoLoadMore } = useAutoFillPage(
+  scrollContainer,
+  hasMore,
+  computed(() => uiStore.loading),
+  handleNextPage
+)
 
 // 处理交叉观测
 const handleIntersect = (entries: IntersectionObserverEntry[]) => {
   const entry = entries[0]
   if (entry && entry.isIntersecting && hasMore.value && !uiStore.loading) {
-    currentPage.value++
-    loadPlaces(true)
+    handleNextPage()
   }
 }
 
