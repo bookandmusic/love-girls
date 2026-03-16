@@ -73,37 +73,27 @@ const isActive = (path: string) => {
   <!-- 手机端底部 Tab Bar -->
   <div
     v-else
-    class="md:hidden glass-thick border-t border-white/20 px-2 pt-2 pb-[calc(0.5rem+var(--fe-safe-area-bottom))] z-50"
+    class="md:hidden glass-thick border-t border-white/20 px-2 pt-1.5 pb-[calc(0.375rem+var(--fe-safe-area-bottom))] z-50"
   >
     <div class="flex justify-around items-center max-w-lg mx-auto">
       <RouterLink
         v-for="(item, index) in menuItems"
         :key="index"
         :to="item.path"
-        class="flex flex-col items-center justify-center flex-1 py-1 tap-feedback ios-transition"
+        class="flex items-center justify-center flex-1 py-1 tap-feedback ios-transition"
       >
         <div
-          class="p-2 rounded-xl ios-transition flex items-center justify-center"
+          class="p-1.5 rounded-xl ios-transition flex items-center justify-center"
           :class="isActive(item.path) ? 'bg-white/40' : ''"
         >
           <BaseIcon
             :name="item.icon"
-            size="w-6 h-6"
+            size="w-7 h-7"
             :color="
               isActive(item.path) ? 'text-[var(--fe-primary)]' : 'text-[var(--fe-text-secondary)]'
             "
           />
         </div>
-        <span
-          class="text-[10px] mt-1 font-bold ios-transition"
-          :class="
-            isActive(item.path)
-              ? 'text-[var(--fe-text-primary)] scale-110'
-              : 'text-[var(--fe-text-secondary)]'
-          "
-        >
-          {{ item.label }}
-        </span>
       </RouterLink>
     </div>
   </div>
