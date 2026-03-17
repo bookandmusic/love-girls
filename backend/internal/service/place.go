@@ -206,7 +206,7 @@ func (s *PlaceService) CreatePlace(c *gin.Context, req *PlaceCreateRequest) (*Pl
 	}
 
 	// 获取完整信息
-	createdPlace, err := s.PlaceRepo.FindByID(ctx, place.ID)
+	createdPlace, err := s.PlaceRepo.FindByID(ctx, place.ID, repo.WithPreloads("Image"))
 	if err != nil {
 		s.Log.Error("查询创建的地点失败", "error", err, "id", place.ID)
 		return nil, fmt.Errorf("系统内部错误")
@@ -262,7 +262,7 @@ func (s *PlaceService) UpdatePlace(c *gin.Context, id uint64, req *PlaceUpdateRe
 	}
 
 	// 获取更新后的信息
-	updatedPlace, err := s.PlaceRepo.FindByID(ctx, id)
+	updatedPlace, err := s.PlaceRepo.FindByID(ctx, id, repo.WithPreloads("Image"))
 	if err != nil {
 		s.Log.Error("查询更新后的地点失败", "error", err, "id", id)
 		return nil, fmt.Errorf("系统内部错误")
