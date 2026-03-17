@@ -5,20 +5,75 @@
     :title="props.place?.id ? '编辑地点' : '添加地点'"
     @cancel="closeDialog"
     :loading="loading"
+    size-class="max-w-3xl h-screen"
   >
     <template #content>
-      <div class="space-y-4 px-2 overflow-y-auto h-full">
+      <div class="space-y-4 px-2 overflow-y-auto pr-4" style="max-height: calc(100vh - 180px)">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1"
             >地点名称 <span class="text-red-500">*</span></label
           >
-          <input
-            v-model="form.name"
-            type="text"
-            class="w-full win11-input"
-            placeholder="请输入地点名称"
-            :disabled="loading"
-          />
+          <div class="flex gap-2">
+            <input
+              v-model="form.name"
+              type="text"
+              class="flex-1 win11-input"
+              placeholder="请输入地点名称"
+              :disabled="loading"
+              @keyup.enter="searchAddress"
+            />
+            <button
+              type="button"
+              @click="searchAddress"
+              :disabled="loading || geocodingLoading || !form.name.trim()"
+              class="w-10 h-10 flex items-center justify-center rounded-lg transition-colors"
+              :class="
+                loading || geocodingLoading || !form.name.trim()
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-[var(--primary-color)] text-white hover:opacity-90'
+              "
+            >
+              <span
+                v-if="geocodingLoading"
+                class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"
+              ></span>
+              <svg
+                v-else
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="geocodingResults.length > 0">
+          <label class="block text-sm font-medium text-gray-700 mb-1">搜索结果</label>
+          <div class="border border-gray-200 rounded-lg overflow-hidden">
+            <div
+              v-for="(result, index) in geocodingResults"
+              :key="index"
+              @click="selectGeocodingResult(result)"
+              class="p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+              :class="{ 'bg-[var(--primary-color)]/10': selectedResult === result }"
+            >
+              <div class="text-sm text-gray-800 line-clamp-2">{{ result.displayName }}</div>
+              <div class="text-xs text-gray-500 mt-1">
+                纬度: {{ parseFloat(result.lat).toFixed(6) }} | 经度:
+                {{ parseFloat(result.lon).toFixed(6) }}
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">点击选择地址，或在下方手动输入经纬度</p>
         </div>
 
         <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
@@ -34,6 +89,7 @@
               class="w-full win11-input"
               placeholder="纬度"
               :disabled="loading"
+              @input="onCoordinatesChange"
             />
           </div>
 
@@ -49,7 +105,15 @@
               class="w-full win11-input"
               placeholder="经度"
               :disabled="loading"
+              @input="onCoordinatesChange"
             />
+          </div>
+        </div>
+
+        <div v-if="showMapPreview">
+          <label class="block text-sm font-medium text-gray-700 mb-1">地图预览</label>
+          <div class="h-48 rounded-lg overflow-hidden border border-gray-200">
+            <div ref="mapRef" class="w-full h-full"></div>
           </div>
         </div>
 
@@ -60,11 +124,9 @@
           <input v-model="form.date" type="date" class="w-full win11-input" :disabled="loading" />
         </div>
 
-        <!-- 图片上传区域 -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">图片</label>
           <div class="mt-1">
-            <!-- 显示已上传图片 -->
             <div v-if="form.image" class="relative aspect-w-16 aspect-h-9 mb-2">
               <img
                 :src="form.image?.file?.url || ''"
@@ -81,7 +143,6 @@
               </button>
             </div>
 
-            <!-- 上传按钮 -->
             <div
               v-if="!form.image"
               @click="triggerImageUpload"
@@ -94,7 +155,6 @@
               </div>
             </div>
 
-            <!-- 隐藏的文件输入框 -->
             <input
               ref="imageInputRef"
               type="file"
@@ -131,7 +191,6 @@
     </template>
   </GenericDialog>
 
-  <!-- 确认对话框 -->
   <GenericDialog
     variant="admin"
     :open="showConfirmDialog"
@@ -160,11 +219,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import 'leaflet/dist/leaflet.css'
+
+import L from 'leaflet'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 import GenericDialog from '@/components/ui/GenericDialog.vue'
+import type { GeocodingResult } from '@/services/geocodingApi'
+import { geocodingApi } from '@/services/geocodingApi'
 import type { Place } from '@/services/placeApi'
 import { useToast } from '@/utils/toastUtils'
+
+delete (L.Icon.Default.prototype as unknown as { [key: string]: unknown })._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+})
 
 const showToast = useToast()
 
@@ -191,6 +262,7 @@ const emit = defineEmits<Emits>()
 const closeDialog = () => {
   emit('update:open', false)
   emit('cancel')
+  cleanupMap()
 }
 
 const DEFAULT_PLACE: Place = {
@@ -208,14 +280,131 @@ const form = ref<Place>({ ...DEFAULT_PLACE })
 const imageInputRef = ref<HTMLInputElement>()
 const showConfirmDialog = ref(false)
 
-// 监听编辑地点的变更
+const geocodingResults = ref<GeocodingResult[]>([])
+const selectedResult = ref<GeocodingResult | null>(null)
+const geocodingLoading = ref(false)
+
+const mapRef = ref<HTMLDivElement | null>(null)
+let map: L.Map | null = null
+let marker: L.Marker | null = null
+
+const showMapPreview = computed(() => {
+  return form.value.latitude !== 0 || form.value.longitude !== 0
+})
+
+watch(
+  () => props.open,
+  isOpen => {
+    if (!isOpen) {
+      cleanupMap()
+      geocodingResults.value = []
+      selectedResult.value = null
+    }
+  }
+)
+
 watch(
   () => props.place,
   newPlace => {
     form.value = newPlace ? { ...newPlace } : { ...DEFAULT_PLACE }
+    if (newPlace && (newPlace.latitude || newPlace.longitude)) {
+      nextTick(() => {
+        initMap()
+      })
+    }
   },
   { deep: true, immediate: true }
 )
+
+watch(showMapPreview, shouldShow => {
+  if (shouldShow) {
+    nextTick(() => {
+      initMap()
+    })
+  }
+})
+
+function cleanupMap() {
+  if (map) {
+    map.remove()
+    map = null
+    marker = null
+  }
+}
+
+function initMap() {
+  if (!mapRef.value || map) return
+
+  const lat = form.value.latitude || 35
+  const lon = form.value.longitude || 105
+
+  map = L.map(mapRef.value, {
+    zoomControl: true,
+    attributionControl: false,
+  }).setView([lat, lon], form.value.latitude ? 12 : 4)
+
+  L.tileLayer('https://map.lw1314.site/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+  }).addTo(map)
+
+  if (form.value.latitude && form.value.longitude) {
+    marker = L.marker([form.value.latitude, form.value.longitude]).addTo(map)
+  }
+
+  requestAnimationFrame(() => {
+    map?.invalidateSize()
+  })
+}
+
+function updateMapMarker() {
+  if (!map) return
+
+  if (marker) {
+    map.removeLayer(marker)
+  }
+
+  if (form.value.latitude && form.value.longitude) {
+    marker = L.marker([form.value.latitude, form.value.longitude]).addTo(map)
+    map.setView([form.value.latitude, form.value.longitude], 12)
+  }
+}
+
+function onCoordinatesChange() {
+  selectedResult.value = null
+  updateMapMarker()
+}
+
+async function searchAddress() {
+  if (!form.value.name.trim()) return
+
+  geocodingLoading.value = true
+  selectedResult.value = null
+
+  try {
+    const results = await geocodingApi.search(form.value.name)
+    geocodingResults.value = results
+
+    if (results.length === 0) {
+      showToast('未找到匹配的地址', 'info')
+    }
+  } catch {
+    showToast('地址搜索失败，请稍后重试', 'error')
+    geocodingResults.value = []
+  } finally {
+    geocodingLoading.value = false
+  }
+}
+
+function selectGeocodingResult(result: GeocodingResult) {
+  selectedResult.value = result
+  form.value.latitude = parseFloat(result.lat)
+  form.value.longitude = parseFloat(result.lon)
+
+  nextTick(() => {
+    initMap()
+    updateMapMarker()
+  })
+}
 
 const triggerImageUpload = () => {
   if (imageInputRef.value) {
@@ -232,7 +421,6 @@ const removeImage = () => {
 }
 
 const handleSave = async () => {
-  // 校验必填项
   if (!form.value.name.trim()) {
     showToast('请输入地点名称', 'error')
     return
@@ -264,4 +452,21 @@ const confirmSave = async () => {
   showConfirmDialog.value = false
   emit('confirm', form.value)
 }
+
+onBeforeUnmount(() => {
+  cleanupMap()
+})
 </script>
+
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:deep(.leaflet-container) {
+  font-family: inherit;
+}
+</style>
