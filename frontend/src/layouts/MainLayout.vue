@@ -12,18 +12,20 @@
 
     <!-- 标题区域 -->
     <div class="w-full max-w-6xl mx-auto p-4 px-6 flex-shrink-0 relative z-10 pt-8">
-      <h1
-        v-if="title"
-        class="text-4xl md:text-5xl text-left font-bold font-(family-name:--font-signature) text-[var(--fe-text-primary)]"
-      >
-        {{ title }}
-      </h1>
-      <p
-        v-if="subtitle"
-        class="text-md text-left mt-2 font-(family-name:--font-decor) text-[var(--fe-text-secondary)]"
-      >
-        {{ subtitle }}
-      </p>
+      <div>
+        <h1
+          v-if="title"
+          class="text-4xl md:text-5xl text-left font-bold font-(family-name:--font-signature) text-[var(--fe-text-primary)]"
+        >
+          {{ title }}
+        </h1>
+        <p
+          v-if="subtitle"
+          class="text-md text-left mt-2 font-(family-name:--font-decor) text-[var(--fe-text-secondary)]"
+        >
+          {{ subtitle }}
+        </p>
+      </div>
     </div>
 
     <!-- 主内容区域 -->
@@ -68,6 +70,13 @@
       </div>
     </div>
   </div>
+
+  <!-- 服务切换按钮 - Teleport 到 body 避免 overflow-hidden 影响 -->
+  <Teleport to="body">
+    <div v-if="isDesktop" class="fixed top-8 right-6 z-[9999]">
+      <DesktopMenu />
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -78,7 +87,11 @@ import { computed, ref } from 'vue'
 import bgSrc from '@/assets/images/bg.png'
 import MenuBar from '@/components/business/MenuBar.vue'
 import BaseIcon from '@/components/ui/BaseIcon.vue'
+import DesktopMenu from '@/components/ui/DesktopMenu.vue'
 import { useSystemStore } from '@/stores/system'
+import { isDesktopMode } from '@/utils/platform'
+
+const isDesktop = isDesktopMode()
 
 // 定义组件属性
 interface Props {

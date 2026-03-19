@@ -1,11 +1,24 @@
 import axios from 'axios'
 
 import { useAuthStore } from '@/stores/auth'
+import { getServerUrl, isDesktopMode } from '@/utils/platform'
 
-// 创建一个标准的axios实例
+const getBaseURL = (): string => {
+  if (!isDesktopMode()) {
+    return '/api/v1'
+  }
+
+  const serverUrl = getServerUrl()
+  if (serverUrl) {
+    return `${serverUrl}/api/v1`
+  }
+
+  return '/api/v1'
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE || '/api/v1', // 基础URL
-  timeout: 10000, // 请求超时时间
+  baseURL: getBaseURL(),
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -51,5 +64,9 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+export const refreshApiBaseURL = (): void => {
+  api.defaults.baseURL = getBaseURL()
+}
 
 export default api

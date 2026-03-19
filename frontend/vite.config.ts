@@ -8,12 +8,16 @@ import { VitePWA } from 'vite-plugin-pwa'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import svgLoader from 'vite-svg-loader'
 
-// 读取环境变量
-const ENV = process.env.VITE_ENV || 'dev'
-const TARGET_SERVER = process.env.VITE_TARGET_SERVER || ''
-
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const isDesktop = mode === 'desktop'
+  const ENV = process.env.VITE_ENV || 'dev'
+  const TARGET_SERVER = process.env.VITE_TARGET_SERVER || ''
+
+  return {
+    define: {
+      __DESKTOP_MODE__: JSON.stringify(isDesktop)
+    },
   plugins: [
     vue(),
     svgLoader(),
@@ -90,15 +94,16 @@ export default defineConfig({
     }
   },
   server: {
-    allowedHosts: ['test.lw1314.site', 'free-pine-fa8b.tunnl.gg'],
-    host: true, // 监听 0.0.0.0
-    port: 5173, // 可选，指定端口
-    proxy: ENV === 'dev' ? {
-      '/api': {
-        target: TARGET_SERVER,
-        changeOrigin: true,
-        rewrite: path => path, // 保持 /api/xxx
-      }
-    } : undefined
-  },
+      allowedHosts: ['test.lw1314.site', 'free-pine-fa8b.tunnl.gg'],
+      host: true,
+      port: 5173,
+      proxy: ENV === 'dev' ? {
+        '/api': {
+          target: TARGET_SERVER,
+          changeOrigin: true,
+          rewrite: path => path,
+        }
+      } : undefined
+    }
+  }
 })
