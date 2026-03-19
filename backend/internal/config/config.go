@@ -142,6 +142,16 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.addr", ":8182")
 	v.SetDefault("server.mode", "debug")
 
+	// CORS 配置：默认允许所有来源，常用方法和请求头
+	v.SetDefault("server.cors.allow_all_origins", true)
+	v.SetDefault("server.cors.allow_origins", []string{})
+	v.SetDefault("server.cors.allow_methods", []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"})
+	v.SetDefault("server.cors.allow_headers", []string{"Origin", "Content-Length", "Content-Type", "Authorization", "Accept", "X-Requested-With"})
+
+	// CORS 环境变量绑定
+	_ = v.BindEnv("server.cors.allow_all_origins", "CORS_ALLOW_ALL_ORIGINS")
+	_ = v.BindEnv("server.cors.allow_origins", "CORS_ALLOW_ORIGINS")
+
 	v.SetDefault("log.level", "debug")
 	v.SetDefault("log.format", "text")
 	v.SetDefault("log.output", "stdout")

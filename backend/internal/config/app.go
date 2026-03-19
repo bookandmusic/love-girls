@@ -41,10 +41,19 @@ type AppConfigApp struct {
 
 // ServerConfig HTTP 服务配置
 type ServerConfig struct {
-	Addr           string `mapstructure:"addr" validate:"required"`
-	Mode           string `mapstructure:"mode" validate:"required,oneof=debug release test"`
-	InternalURL    string `mapstructure:"internal_url"`    // 内网地址，ImageProxy 访问 Gin 用（可选）
-	RequestTimeout int    `mapstructure:"request_timeout"` // 请求处理超时（秒），0 表示不限制
+	Addr           string     `mapstructure:"addr" validate:"required"`
+	Mode           string     `mapstructure:"mode" validate:"required,oneof=debug release test"`
+	InternalURL    string     `mapstructure:"internal_url"`    // 内网地址，ImageProxy 访问 Gin 用（可选）
+	RequestTimeout int        `mapstructure:"request_timeout"` // 请求处理超时（秒），0 表示不限制
+	CORS           CORSConfig `mapstructure:"cors"`
+}
+
+// CORSConfig CORS 配置
+type CORSConfig struct {
+	AllowAllOrigins bool     `mapstructure:"allow_all_origins"` // 是否允许所有来源，默认 true
+	AllowOrigins    []string `mapstructure:"allow_origins"`     // 允许的来源列表（AllowAllOrigins=false 时生效）
+	AllowMethods    []string `mapstructure:"allow_methods"`     // 允许的 HTTP 方法
+	AllowHeaders    []string `mapstructure:"allow_headers"`     // 允许的请求头
 }
 
 // LogConfig 日志配置

@@ -26,13 +26,13 @@ func (h *PlaceHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server.
 	placeGroup := apiGroup.Group("/places")
 	{
 		// 不需要认证的路由
-		placeGroup.GET("/", h.ListPlaces) // 获取所有地点
+		placeGroup.GET("", h.ListPlaces) // 获取所有地点
 
 		// 需要认证的路由
 		authGroup := placeGroup.Group("")
 		authGroup.Use(authMiddleware.Handle())
 		{
-			authGroup.POST("/", h.CreatePlace)      // 创建地点
+			authGroup.POST("", h.CreatePlace)       // 创建地点
 			authGroup.PUT("/:id", h.UpdatePlace)    // 更新地点
 			authGroup.DELETE("/:id", h.DeletePlace) // 删除地点
 		}

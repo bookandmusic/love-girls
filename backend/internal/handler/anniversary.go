@@ -26,13 +26,13 @@ func (h *AnniversaryHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *s
 	anniversaryGroup := apiGroup.Group("/anniversaries")
 	{
 		// 不需要认证的路由
-		anniversaryGroup.GET("/", h.ListAnniversaries) // 获取纪念日列表
+		anniversaryGroup.GET("", h.ListAnniversaries) // 获取纪念日列表
 
 		// 需要认证的路由
 		authGroup := anniversaryGroup.Group("")
 		authGroup.Use(authMiddleware.Handle())
 		{
-			authGroup.POST("/", h.CreateAnniversary)      // 创建纪念日
+			authGroup.POST("", h.CreateAnniversary)       // 创建纪念日
 			authGroup.PUT("/:id", h.UpdateAnniversary)    // 更新纪念日
 			authGroup.DELETE("/:id", h.DeleteAnniversary) // 删除纪念日
 		}

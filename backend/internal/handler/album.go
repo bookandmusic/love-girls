@@ -26,14 +26,14 @@ func (h *AlbumHandler) RegisterRoutes(apiGroup *gin.RouterGroup, server *server.
 	albumGroup := apiGroup.Group("/albums")
 	{
 		// 不需要认证的路由
-		albumGroup.GET("/", h.ListAlbums)                // 获取相册列表
+		albumGroup.GET("", h.ListAlbums)                 // 获取相册列表
 		albumGroup.GET("/:id/photos", h.ListAlbumPhotos) // 获取相册照片列表
 
 		// 需要认证的路由
 		authGroup := albumGroup.Group("")
 		authGroup.Use(authMiddleware.Handle())
 		{
-			authGroup.POST("/", h.CreateAlbum)                               // 创建相册
+			authGroup.POST("", h.CreateAlbum)                                // 创建相册
 			authGroup.PUT("/:id", h.UpdateAlbum)                             // 更新相册
 			authGroup.DELETE("/:id", h.DeleteAlbum)                          // 删除相册
 			authGroup.POST("/:id/photos", h.AddPhotosToAlbum)                // 添加照片到相册

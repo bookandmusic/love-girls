@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/bookandmusic/love-girl/internal/config"
@@ -28,6 +29,26 @@ func NewGinEngine(cfg *config.AppConfig, logger *log.Logger) *GinEngine {
 	engine.Use(middleware.RequestID())       // RequestID 追踪
 	engine.Use(gin.LoggerWithWriter(logger)) // Gin 日志
 	engine.Use(middleware.Recovery())        // Panic 恢复（增强版）
+
+	// CORS 配置
+	corsConfig := cors.DefaultConfig()
+
+	// AllowAllOrigins=true 或 AllowOrigins 为空时，允许所有来源
+	if cfg.Server.CORS.AllowAllOrigins || len(cfg.Server.CORS.AllowOrigins) == 0 {
+		corsConfig.AllowAllOrigins = true
+	} else {
+		corsConfig.AllowOrigins = cfg.Server.CORS.AllowOrigins
+		corsConfig.AllowCredentials = true
+	}
+
+	corsConfig.AllowMethods = cfg.Server.CORS.AllowMethods
+	corsConfig.AllowHeaders = cfg.Server.CORS.AllowHeaders
+
+	// 支持 Tauri 桌面应用和浏览器扩展
+	corsConfig.AllowBrowserExtensions = true
+	corsConfig.CustomSchemas = []string{"tauri"}
+
+	engine.Use(cors.New(corsConfig))
 
 	// 创建 GinEngine 实例
 	return &GinEngine{
