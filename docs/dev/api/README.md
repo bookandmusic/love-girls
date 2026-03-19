@@ -7,9 +7,7 @@
 ### 核心功能
 
 - **[System API](./system.md)** - 系统初始化、配置和站点设置
-- **[Auth API](./auth.md)** - 用户认证
 - **[User API](./user.md)** - 用户管理
-- **[Dashboard API](./dashboard.md)** - 仪表盘统计
 
 ### 内容管理
 
@@ -17,7 +15,7 @@
 - **[Anniversary API](./anniversary.md)** - 纪念日管理
 - **[Moment API](./moment.md)** - 动态管理
 - **[Place API](./place.md)** - 地点管理
-- **[Wish API](./wish.md)** - 愿望管理
+- **[File API](./file.md)** - 文件上传与管理
 
 ## 公共约定
 

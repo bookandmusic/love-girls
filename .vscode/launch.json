@@ -16,6 +16,13 @@
             }
         },
         {
+            "type": "node-terminal",
+            "name": "ui:desktop",
+            "request": "launch",
+            "command": "pnpm run dev --host=0.0.0.0 --mode desktop",
+            "cwd": "${workspaceFolder}/frontend",
+        },
+        {
             "command": "imageproxy -cache memory:200:4h -cache /tmp/imageproxy -addr :6060 -passRequestHeaders \"Authorization\"",
             "name": "imageproxy",
             "request": "launch",
