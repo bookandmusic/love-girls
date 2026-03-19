@@ -15,7 +15,7 @@
             :class="[
               'w-full transform transition-all flex flex-col overflow-hidden',
               variant === 'admin'
-                ? 'admin-dialog p-6'
+                ? 'admin-dialog p-6 max-h-[80vh]'
                 : 'glass-thick rounded-[var(--fe-radius-card)] shadow-2xl border border-white/40',
               sizeClass,
             ]"
@@ -42,8 +42,7 @@
 
             <!-- 后台原有布局保持不变 -->
             <template v-else>
-              <!-- 对话框标题和关闭按钮 -->
-              <div class="flex justify-between items-start mb-4">
+              <div class="flex justify-between items-start mb-4 flex-shrink-0">
                 <slot name="header">
                   <h3 class="font-medium text-xl">
                     {{ title }}
@@ -58,11 +57,11 @@
                 </button>
               </div>
 
-              <div class="space-y-4 flex-1 overflow-y-auto">
+              <div class="space-y-4 flex-1 overflow-y-auto min-h-0">
                 <slot name="content"></slot>
               </div>
 
-              <div class="mt-6 flex flex-wrap gap-3 justify-end">
+              <div class="mt-6 flex flex-wrap gap-3 justify-end flex-shrink-0">
                 <slot name="actions"></slot>
               </div>
             </template>

@@ -7,60 +7,57 @@
     :loading="loading"
   >
     <template #content>
-      <div class="space-y-4 h-full">
-        <div class="flex flex-col h-full">
-          <p class="text-sm text-gray-500 mb-4">照片列表</p>
-          <!-- 照片列表 -->
-          <div class="mt-1 mb-4 flex-1 overflow-y-auto" @scroll="handleScroll">
-            <div class="px-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 py-1">
-              <div
-                v-for="photo in photos"
-                :key="photo.id"
-                class="relative aspect-square group"
-                @click="selectPhoto(photo.id)"
+      <div class="flex flex-col min-h-0">
+        <p class="text-sm text-gray-500 mb-4 flex-shrink-0">照片列表</p>
+        <div class="flex-1 overflow-y-auto min-h-0" @scroll="handleScroll">
+          <div class="px-2 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 py-1">
+            <div
+              v-for="photo in photos"
+              :key="photo.id"
+              class="relative aspect-square group"
+              @click="selectPhoto(photo.id)"
+            >
+              <img
+                :src="photo.file?.thumbnail || photo.file?.url || ''"
+                :alt="photo.alt || '照片'"
+                class="w-full h-full object-cover rounded border border-gray-300"
+                :class="{ 'ring-2 ring-indigo-500': selectedCoverId === photo.id }"
+              />
+              <!-- 删除按钮 -->
+              <button
+                @click.stop="confirmDeletePhoto(photo)"
+                class="absolute top-1 right-1 p-1 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-50"
+                title="删除照片"
               >
-                <img
-                  :src="photo.file?.thumbnail || photo.file?.url || ''"
-                  :alt="photo.alt || '照片'"
-                  class="w-full h-full object-cover rounded border border-gray-300"
-                  :class="{ 'ring-2 ring-indigo-500': selectedCoverId === photo.id }"
-                />
-                <!-- 删除按钮 -->
-                <button
-                  @click.stop="confirmDeletePhoto(photo)"
-                  class="absolute top-1 right-1 p-1 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-50"
-                  title="删除照片"
-                >
-                  <BaseIcon name="delete" size="w-4" color="text-red-500" />
-                </button>
-              </div>
-              <!-- 添加图片按钮 -->
-              <div
-                @click="triggerImageUpload"
-                class="relative aspect-square border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-[var(--primary-color)] hover:bg-gray-50"
-                :disabled="loading"
-              >
-                <span class="text-2xl text-gray-500">+</span>
-              </div>
+                <BaseIcon name="delete" size="w-4" color="text-red-500" />
+              </button>
             </div>
-
-            <!-- 加载更多指示器 -->
-            <div v-if="loadingPhotos" class="mt-4 text-center py-2">
-              <span
-                class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"
-              ></span>
+            <!-- 添加图片按钮 -->
+            <div
+              @click="triggerImageUpload"
+              class="relative aspect-square border-2 border-dashed border-gray-300 rounded flex items-center justify-center cursor-pointer hover:border-[var(--primary-color)] hover:bg-gray-50"
+              :disabled="loading"
+            >
+              <span class="text-2xl text-gray-500">+</span>
             </div>
-
-            <!-- 隐藏的文件输入框 -->
-            <input
-              ref="imageInputRef"
-              type="file"
-              accept="image/*"
-              @change="handleSelectedImageUpload"
-              class="hidden"
-              multiple
-            />
           </div>
+
+          <!-- 加载更多指示器 -->
+          <div v-if="loadingPhotos" class="mt-4 text-center py-2">
+            <span
+              class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-primary"
+            ></span>
+          </div>
+
+          <!-- 隐藏的文件输入框 -->
+          <input
+            ref="imageInputRef"
+            type="file"
+            accept="image/*"
+            @change="handleSelectedImageUpload"
+            class="hidden"
+            multiple
+          />
         </div>
       </div>
     </template>
