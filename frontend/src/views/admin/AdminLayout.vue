@@ -188,7 +188,6 @@
               <div class="flex-1">
                 <div class="text-sm font-bold admin-text-primary">返回前台首页</div>
               </div>
-              <BaseIcon name="menu-right" size="w-5 h-5" color="var(--admin-text-secondary)" />
             </router-link>
           </div>
         </div>
