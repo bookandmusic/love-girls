@@ -144,7 +144,7 @@ jobs:
 
       - name: Build Android APK
         working-directory: frontend
-        run: pnpm tauri android build -- --apk
+        run: pnpm tauri android build --apk
 
       - name: Sign APKs
         run: |
