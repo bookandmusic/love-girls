@@ -28,13 +28,8 @@ if [ -f "$KEYSTORE_FILE" ]; then
     rm -f "$KEYSTORE_FILE"
 fi
 
-# 生成随机密码
-generate_password() {
-    openssl rand -base64 32 | tr -d '/+=' | head -c $PASSWORD_LENGTH
-}
-
-KEYSTORE_PASS=$(generate_password)
-KEY_PASS=$(generate_password)
+KEYSTORE_PASS=$(openssl rand -base64 18 | tr -dc 'a-zA-Z0-9' | head -c 20)
+KEY_PASS=$KEYSTORE_PASS
 
 echo "正在生成 keystore..."
 echo ""
@@ -51,7 +46,7 @@ keytool -genkey -v \
     2>/dev/null
 
 if [ $? -eq 0 ]; then
-    KEYSTORE_BASE64=$(cat "$KEYSTORE_FILE" | base64 | tr -d '\n')
+    KEYSTORE_BASE64=$(base64 -w 0 "$KEYSTORE_FILE")
     
     echo ""
     echo "=========================================="
