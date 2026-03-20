@@ -13,7 +13,39 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF_NAME" == v* ]]; then
+            VERSION=${GITHUB_REF_NAME#v}
+            echo "Tag triggered, version: $VERSION"
+          else
+            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            BUILD_NUM=$(git rev-list --count HEAD 2>/dev/null || echo "1")
+            BUILD_NUM=$((BUILD_NUM % 65536))
+            if [ -n "$LAST_TAG" ]; then
+              BASE_VERSION=${LAST_TAG#v}
+              VERSION="${BASE_VERSION}+${BUILD_NUM}"
+              echo "Manual trigger with last tag $LAST_TAG, version: $VERSION"
+            else
+              VERSION="1.0.0+${BUILD_NUM}"
+              echo "Manual trigger without tag, version: $VERSION"
+            fi
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
   build-desktop:
+    needs: get-version
     strategy:
       fail-fast: false
       matrix:
@@ -75,6 +107,18 @@ jobs:
         working-directory: frontend
         run: pnpm install
 
+      - name: Update version
+        shell: bash
+        run: |
+          VERSION=${{ needs.get-version.outputs.version }}
+          echo "Setting version to $VERSION"
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/src-tauri/tauri.conf.json
+          else
+            sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/src-tauri/tauri.conf.json
+          fi
+          cat frontend/src-tauri/tauri.conf.json | grep version
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -90,6 +134,7 @@ jobs:
           path: frontend/src-tauri/target/${{ matrix.target }}/release/bundle
 
   build-android:
+    needs: get-version
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -138,9 +183,81 @@ jobs:
       - name: Restore Keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > $HOME/lovegirl.keystore
 
+      - name: Update version
+        run: |
+          VERSION=${{ needs.get-version.outputs.version }}
+          echo "Setting version to $VERSION"
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/src-tauri/tauri.conf.json
+          cat frontend/src-tauri/tauri.conf.json | grep version
+
       - name: Initialize Android
         working-directory: frontend
         run: pnpm tauri android init || true
+
+      - name: Copy Android icons
+        run: |
+          SRC_DIR="frontend/src-tauri/icons/android"
+          DEST_DIR="frontend/src-tauri/gen/android/app/src/main/res"
+          
+          if [ -d "$SRC_DIR" ]; then
+            for dir in "$SRC_DIR"/mipmap-*; do
+              dirname=$(basename "$dir")
+              mkdir -p "$DEST_DIR/$dirname"
+              cp -r "$dir"/* "$DEST_DIR/$dirname/"
+            done
+            if [ -d "$SRC_DIR/values" ]; then
+              mkdir -p "$DEST_DIR/values"
+              cp -r "$SRC_DIR/values"/* "$DEST_DIR/values/"
+            fi
+            echo "Android icons copied successfully"
+            ls -laR "$DEST_DIR"/mipmap-* | head -30
+          else
+            echo "Source icon directory not found: $SRC_DIR"
+          fi
+
+      - name: Configure Android network security
+        run: |
+          ANDROID_DIR="frontend/src-tauri/gen/android/app/src/main"
+          mkdir -p "$ANDROID_DIR/res/xml"
+          
+          cat > "$ANDROID_DIR/res/xml/network_security_config.xml" << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+            <base-config cleartextTrafficPermitted="true">
+              <trust-anchors>
+                <certificates src="system" />
+              </trust-anchors>
+            </base-config>
+          </network-security-config>
+          EOF
+          
+          MANIFEST="$ANDROID_DIR/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            python3 << 'PYTHON'
+          import xml.etree.ElementTree as ET
+
+          ET.register_namespace('android', 'http://schemas.android.com/apk/res/android')
+          tree = ET.parse('frontend/src-tauri/gen/android/app/src/main/AndroidManifest.xml')
+          root = tree.getroot()
+          
+          manifest_ns = {'android': 'http://schemas.android.com/apk/res/android'}
+          
+          existing_perms = root.findall(".//uses-permission[@android:name='android.permission.INTERNET']", manifest_ns)
+          if not existing_perms:
+              perm = ET.Element('uses-permission')
+              perm.set('{http://schemas.android.com/apk/res/android}name', 'android.permission.INTERNET')
+              root.insert(0, perm)
+          
+          app = root.find('application')
+          if app is not None:
+              if '{http://schemas.android.com/apk/res/android}networkSecurityConfig' not in app.attrib:
+                  app.set('{http://schemas.android.com/apk/res/android}networkSecurityConfig', '@xml/network_security_config')
+          
+          tree.write('frontend/src-tauri/gen/android/app/src/main/AndroidManifest.xml', encoding='utf-8', xml_declaration=True)
+          PYTHON
+            echo "AndroidManifest.xml updated:"
+            cat "$MANIFEST"
+          fi
 
       - name: Build Android APK
         working-directory: frontend
@@ -148,29 +265,37 @@ jobs:
 
       - name: Sign APKs
         run: |
+          VERSION=${{ needs.get-version.outputs.version }}
           BUILD_TOOLS=$(ls -d $ANDROID_SDK_ROOT/build-tools/* | sort -V | tail -n 1)
+          mkdir -p signed-apk
           for apk in $(find frontend/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -type f); do
-            echo "Signing $apk"
+            filename=$(basename "$apk")
+            if [[ "$filename" == *"universal"* ]]; then
+              final_name="LoveGirl_${VERSION}_android-universal.apk"
+            else
+              arch=$(echo "$filename" | sed 's/app-\(.*\)-release.*/\1/')
+              final_name="LoveGirl_${VERSION}_android-${arch}.apk"
+            fi
+            echo "Signing $filename -> $final_name"
             $BUILD_TOOLS/zipalign -v 4 "$apk" "${apk%.apk}-aligned.apk"
             $BUILD_TOOLS/apksigner sign \
               --ks $HOME/lovegirl.keystore \
               --ks-pass pass:${{ secrets.KEYSTORE_PASS }} \
               --ks-key-alias ${{ secrets.KEY_ALIAS }} \
               --key-pass pass:${{ secrets.KEY_PASS }} \
-              --out "${apk%.apk}-signed.apk" \
+              --out "signed-apk/$final_name" \
               "${apk%.apk}-aligned.apk"
             rm "${apk%.apk}-aligned.apk"
-            mv "${apk%.apk}-signed.apk" "$apk"
           done
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: frontend/src-tauri/gen/android/app/build/outputs/apk
+          path: signed-apk
 
   finalize-release:
-    needs: [build-desktop, build-android]
+    needs: [get-version, build-desktop, build-android]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -178,11 +303,26 @@ jobs:
         with:
           path: artifacts
 
+      - name: Filter release files
+        run: |
+          VERSION=${{ needs.get-version.outputs.version }}
+          echo "Filtering release files for version $VERSION"
+          cd artifacts
+          find . -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.dmg" -o -name "*.apk" \) | while read file; do
+            filename=$(basename "$file")
+            if [[ "$filename" != *"$VERSION"* ]]; then
+              echo "Removing old version file: $filename"
+              rm "$file"
+            fi
+          done
+          echo "Remaining files:"
+          find . -type f
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: "LoveGirl ${{ github.ref_name }}"
+          tag_name: v${{ needs.get-version.outputs.version }}
+          name: "LoveGirl v${{ needs.get-version.outputs.version }}"
           body: |
             ## Downloads
 
