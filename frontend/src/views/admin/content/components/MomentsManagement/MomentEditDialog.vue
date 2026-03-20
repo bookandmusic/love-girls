@@ -184,6 +184,17 @@ const closeDialog = () => {
 }
 
 // 定义默认动态对象
+const formatLocalDateTime = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 const DEFAULT_MOMENT = {
   id: 0,
   content: '',
@@ -191,7 +202,7 @@ const DEFAULT_MOMENT = {
   images: [],
   likes: 0,
   author: { name: '系统用户', avatar: '' },
-  createdAt: new Date().toISOString(),
+  createdAt: '',
 }
 
 // 创建本地响应式副本
@@ -231,11 +242,10 @@ watch(
   () => props.open,
   isOpen => {
     if (isOpen) {
-      const sourceMoment = props.moment || { ...DEFAULT_MOMENT }
-      Object.assign(localMoment, sourceMoment)
-      // 确保创建时间被正确设置
-      if (!localMoment.createdAt) {
-        localMoment.createdAt = new Date().toISOString()
+      if (props.moment && props.moment.id) {
+        Object.assign(localMoment, props.moment)
+      } else {
+        Object.assign(localMoment, { ...DEFAULT_MOMENT, createdAt: formatLocalDateTime() })
       }
     }
   }

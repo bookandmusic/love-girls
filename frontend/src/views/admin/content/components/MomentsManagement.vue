@@ -114,6 +114,17 @@ import MomentEditDialog from './MomentsManagement/MomentEditDialog.vue'
 import MomentItem from './MomentsManagement/MomentItem.vue'
 
 // 提取默认的moment对象为常量
+const formatLocalDateTime = () => {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 const DEFAULT_MOMENT: Moment = {
   id: 0,
   content: '',
@@ -121,7 +132,7 @@ const DEFAULT_MOMENT: Moment = {
   images: [],
   likes: 0,
   author: { name: '系统用户' },
-  createdAt: new Date().toISOString(),
+  createdAt: '',
 }
 
 const props = defineProps<{ triggerAdd: boolean }>()
@@ -328,7 +339,7 @@ const saveMoment = async (momentData: Moment) => {
 
 // 添加新动态
 const addNewMoment = () => {
-  editingMoment.value = { ...DEFAULT_MOMENT }
+  editingMoment.value = { ...DEFAULT_MOMENT, createdAt: formatLocalDateTime() }
   showEditDialog.value = true
 }
 
