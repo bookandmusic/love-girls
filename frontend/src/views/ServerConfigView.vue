@@ -238,20 +238,11 @@
               :disabled="connecting || !newServerUrl.trim()"
               class="flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all bg-gradient-to-r from-[var(--fe-primary)] to-[var(--fe-primary-dark)] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {{ connecting ? '保存中...' : '添加并使用' }}
+              {{ connecting ? '连接中...' : '进入应用' }}
             </button>
           </div>
         </div>
       </div>
-
-      <!-- 使用当前选中服务器进入 -->
-      <button
-        v-if="activeServerUrl"
-        @click="enterApp"
-        class="w-full mt-4 py-3 px-4 rounded-xl font-semibold text-sm transition-all bg-gradient-to-r from-[var(--fe-primary)] to-[var(--fe-primary-dark)] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
-      >
-        进入应用
-      </button>
 
       <p class="text-center text-xs text-[var(--fe-text-secondary)] mt-6">
         请输入后端服务地址，如 http://192.168.1.100:8182
@@ -265,6 +256,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { refreshApiBaseURL } from '@/services/api'
+import { useSystemStore } from '@/stores/system'
 import {
   addServerUrl,
   getActiveServerUrl,
@@ -276,6 +268,7 @@ import {
 } from '@/utils/platform'
 
 const router = useRouter()
+const systemStore = useSystemStore()
 
 const savedServers = ref<ServerConfig[]>([])
 const activeServerUrl = ref<string | null>(null)
@@ -388,6 +381,7 @@ const handleAddServer = async () => {
   activeServerUrl.value = newServerUrl.value
   setActiveServerUrl(newServerUrl.value)
   refreshApiBaseURL()
+  systemStore.clearCache()
 
   newServerName.value = ''
   newServerUrl.value = ''
@@ -398,11 +392,7 @@ const handleAddServer = async () => {
 }
 
 const selectServer = (url: string) => {
-  activeServerUrl.value = url
-  setActiveServerUrl(url)
-  refreshApiBaseURL()
   showServerList.value = false
-
   const server = savedServers.value.find(s => s.url === url)
   if (server) {
     newServerName.value = server.name
@@ -415,13 +405,6 @@ const deleteServer = (url: string) => {
   activeServerUrl.value = getActiveServerUrl()
   if (savedServers.value.length === 0) {
     showServerList.value = false
-  }
-}
-
-const enterApp = () => {
-  if (activeServerUrl.value) {
-    refreshApiBaseURL()
-    router.push('/')
   }
 }
 </script>

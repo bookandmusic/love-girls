@@ -8,12 +8,14 @@ import { systemApi, type SystemInfo } from '@/services/system'
 interface SystemState {
   systemInfo: SystemInfo | null
   initialized: boolean | null // 修改为nullable，与路由中的实现保持一致
+  networkError: boolean // 网络错误标志，用于区分请求失败和未初始化
 }
 
 export const useSystemStore = defineStore('system', {
   state: (): SystemState => ({
     systemInfo: null,
     initialized: null, // 初始值改为null
+    networkError: false,
   }),
 
   getters: {
@@ -39,10 +41,12 @@ export const useSystemStore = defineStore('system', {
       try {
         const response = await systemApi.checkInitialized()
         this.initialized = response.data.data.initialized
+        this.networkError = false
         return this.isInitialized
       } catch (error) {
         console.error('检查初始化状态失败:', error)
-        // 出错时返回false，确保用户能够访问初始化页面
+        // 标记网络错误，让路由守卫决定跳转目标
+        this.networkError = true
         this.initialized = false
         return this.isInitialized
       }
@@ -84,6 +88,7 @@ export const useSystemStore = defineStore('system', {
     clearCache() {
       this.systemInfo = null
       this.initialized = null
+      this.networkError = false
     },
   },
 })

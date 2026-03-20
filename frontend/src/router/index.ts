@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import { refreshApiBaseURL } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { useSystemStore } from '@/stores/system'
 // 后台页面
@@ -150,6 +151,8 @@ router.beforeEach(async (to, from, next) => {
     if (to.path === '/server-config') {
       return next()
     }
+    // 确保 axios 的 baseURL 已更新
+    refreshApiBaseURL()
   }
 
   const systemStore = useSystemStore()
@@ -163,6 +166,11 @@ router.beforeEach(async (to, from, next) => {
     if (isInitialized) {
       return next('/')
     }
+  }
+
+  // 客户端模式下，如果发生网络错误，跳转到服务配置页面
+  if (!isInitialized && systemStore.networkError && isDesktopMode()) {
+    return next('/server-config')
   }
 
   if (!isInitialized && to.path !== '/init') {
