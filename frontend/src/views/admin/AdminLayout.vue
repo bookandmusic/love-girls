@@ -2,7 +2,9 @@
   <div class="admin-layout flex flex-col h-screen overflow-hidden">
     <!-- 顶部导航栏 - Ultra-thin 材质 -->
     <header class="admin-header flex-shrink-0 z-50">
-      <div class="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div
+        class="admin-header-inner w-full px-4 sm:px-6 lg:px-8 min-h-16 flex items-center justify-between pt-10 sm:pt-0"
+      >
         <div class="flex items-center gap-3">
           <span class="text-2xl transition-transform cursor-default"> 💕 </span>
           <h1

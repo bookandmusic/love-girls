@@ -2,10 +2,10 @@
   <div class="relative inline-block" ref="menuRef">
     <button
       @click="toggleMenu"
-      class="menu-button p-1.5 md:p-2.5 rounded-lg glass-regular border border-white/30 ios-transition active:scale-95"
+      class="menu-button p-3 md:p-2.5 rounded-lg glass-regular border border-white/30 ios-transition active:scale-95"
       :class="{ 'border-[var(--fe-primary)]/50': showMenu }"
     >
-      <BaseIcon name="menu-dots" size="w-3.5 h-3.5 md:w-5 md:h-5" color="var(--fe-text-primary)" />
+      <BaseIcon name="menu-dots" size="w-5 h-5 md:w-5 md:h-5" color="var(--fe-text-primary)" />
     </button>
 
     <Teleport to="body">
@@ -13,17 +13,16 @@
         <div
           v-if="showMenu"
           class="dropdown-menu rounded-lg md:rounded-xl border border-white/20 shadow-xl overflow-hidden"
-          :style="{ top: menuPosition.top + 'px', left: menuPosition.left + 'px' }"
           ref="dropdownRef"
         >
           <div class="p-0.5 md:p-1.5">
             <div class="dropdown-info">
               <BaseIcon
                 name="server"
-                size="w-3 h-3 md:w-4 md:h-4"
+                size="w-4 h-4 md:w-4 md:h-4"
                 color="var(--fe-text-secondary)"
               />
-              <span class="text-[10px] md:text-sm text-[var(--fe-text-primary)] truncate">{{
+              <span class="text-sm md:text-sm text-[var(--fe-text-primary)] truncate">{{
                 currentServerUrl
               }}</span>
             </div>
@@ -33,10 +32,10 @@
             >
               <BaseIcon
                 name="logout"
-                size="w-3 h-3 md:w-4 md:h-4"
+                size="w-4 h-4 md:w-4 md:h-4"
                 color="var(--fe-text-secondary)"
               />
-              <span class="text-[10px] md:text-sm font-medium text-[var(--fe-text-primary)]"
+              <span class="text-sm md:text-sm font-medium text-[var(--fe-text-primary)]"
                 >切换服务器</span
               >
             </button>
@@ -48,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import BaseIcon from '@/components/ui/BaseIcon.vue'
@@ -60,25 +59,6 @@ const menuRef = ref<HTMLElement | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
 
 const currentServerUrl = computed(() => getActiveServerUrl() || '未配置')
-
-const menuPosition = ref({ top: 0, left: 0 })
-
-const updatePosition = () => {
-  if (menuRef.value) {
-    const rect = menuRef.value.getBoundingClientRect()
-    const menuWidth = window.innerWidth >= 768 ? 200 : 140
-    menuPosition.value = {
-      top: rect.bottom + 8,
-      left: rect.right - menuWidth,
-    }
-  }
-}
-
-watch(showMenu, val => {
-  if (val) {
-    updatePosition()
-  }
-})
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
@@ -107,12 +87,10 @@ const handleClickOutside = (event: MouseEvent) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  window.addEventListener('resize', updatePosition)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
-  window.removeEventListener('resize', updatePosition)
 })
 </script>
 
@@ -125,7 +103,9 @@ onUnmounted(() => {
 
 .dropdown-menu {
   position: fixed;
-  min-width: 140px;
+  top: 72px;
+  right: 24px;
+  min-width: 180px;
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
@@ -134,6 +114,7 @@ onUnmounted(() => {
 
 @media (min-width: 768px) {
   .dropdown-menu {
+    top: 76px;
     min-width: 200px;
   }
 }
@@ -141,8 +122,8 @@ onUnmounted(() => {
 .dropdown-info {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 10px;
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -156,8 +137,8 @@ onUnmounted(() => {
 .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 10px;
+  padding: 12px 14px;
   transition: all 0.15s ease;
   cursor: pointer;
 }

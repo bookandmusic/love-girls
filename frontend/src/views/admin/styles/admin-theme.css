@@ -127,6 +127,37 @@
   z-index: 50;
 }
 
+.admin-header-inner {
+  position: relative;
+}
+
+.admin-header-inner::before {
+  content: '';
+  position: absolute;
+  top: 40px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(240, 173, 160, 0.5) 50%, transparent);
+  background-size: 200% 100%;
+  animation: header-divider-flow 2s linear infinite;
+}
+
+@keyframes header-divider-flow {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+@media (min-width: 640px) {
+  .admin-header-inner::before {
+    display: none;
+  }
+}
+
 .admin-sidebar {
   background: var(--admin-glass-ultra-thin);
   backdrop-filter: var(--admin-blur-regular);

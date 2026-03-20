@@ -11,7 +11,7 @@
     <div class="absolute inset-0 bg-white/10 pointer-events-none"></div>
 
     <!-- 标题区域 -->
-    <div class="w-full max-w-6xl mx-auto p-4 px-6 flex-shrink-0 relative z-10 pt-8">
+    <div class="w-full max-w-6xl mx-auto px-6 pt-10 sm:pt-8 pb-4 flex-shrink-0 relative z-10">
       <div>
         <h1
           v-if="title"
