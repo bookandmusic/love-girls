@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      semver: ${{ steps.version.outputs.semver }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,21 +29,27 @@ jobs:
         run: |
           if [[ "$GITHUB_REF_NAME" == v* ]]; then
             VERSION=${GITHUB_REF_NAME#v}
+            SEMVER=$VERSION
             echo "Tag triggered, version: $VERSION"
           else
-            LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-            BUILD_NUM=$(git rev-list --count HEAD 2>/dev/null || echo "1")
-            BUILD_NUM=$((BUILD_NUM % 65536))
+            LAST_TAG=$(git for-each-ref --sort=-creatordate --format='%(refname:short)' refs/tags | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
             if [ -n "$LAST_TAG" ]; then
               BASE_VERSION=${LAST_TAG#v}
-              VERSION="${BASE_VERSION}+${BUILD_NUM}"
-              echo "Manual trigger with last tag $LAST_TAG, version: $VERSION"
+              BUILD_NUM=$(git rev-list --count "${LAST_TAG}..HEAD" 2>/dev/null || echo "0")
+              BUILD_NUM=$((BUILD_NUM % 65536))
+              VERSION="${BASE_VERSION}.${BUILD_NUM}"
+              SEMVER="${BASE_VERSION}+${BUILD_NUM}"
+              echo "Manual trigger with last semver tag $LAST_TAG, version: $VERSION, semver: $SEMVER (commits since tag: $BUILD_NUM)"
             else
-              VERSION="1.0.0+${BUILD_NUM}"
-              echo "Manual trigger without tag, version: $VERSION"
+              BUILD_NUM=$(git rev-list --count HEAD 2>/dev/null || echo "1")
+              BUILD_NUM=$((BUILD_NUM % 65536))
+              VERSION="1.0.0.${BUILD_NUM}"
+              SEMVER="1.0.0+${BUILD_NUM}"
+              echo "Manual trigger without tag, version: $VERSION, semver: $SEMVER"
             fi
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "semver=$SEMVER" >> $GITHUB_OUTPUT
 
   build-desktop:
     needs: get-version
@@ -110,14 +117,14 @@ jobs:
       - name: Update version
         shell: bash
         run: |
-          VERSION=${{ needs.get-version.outputs.version }}
-          echo "Setting version to $VERSION"
+          SEMVER=${{ needs.get-version.outputs.semver }}
+          echo "Setting version to $SEMVER"
           if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/src-tauri/tauri.conf.json
+            sed -i '' "s/\"version\": \".*\"/\"version\": \"$SEMVER\"/" frontend/client/src-tauri/tauri.conf.json
           else
-            sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/src-tauri/tauri.conf.json
+            sed -i "s/\"version\": \".*\"/\"version\": \"$SEMVER\"/" frontend/client/src-tauri/tauri.conf.json
           fi
-          cat frontend/src-tauri/tauri.conf.json | grep version
+          cat frontend/client/src-tauri/tauri.conf.json | grep version
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -126,6 +133,23 @@ jobs:
         with:
           projectPath: frontend
           args: ${{ matrix.platform == 'macos' && '--target universal-apple-darwin' || format('--target {0}', matrix.target) }}
+
+      - name: Rename desktop artifacts
+        shell: bash
+        run: |
+          VERSION=${{ needs.get-version.outputs.version }}
+          SEMVER=${{ needs.get-version.outputs.semver }}
+          echo "Renaming artifacts from $SEMVER to $VERSION format"
+          
+          find frontend/client/src-tauri/target -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.exe" -o -name "*.dmg" \) | while read file; do
+            dir=$(dirname "$file")
+            filename=$(basename "$file")
+            new_name="${filename//$SEMVER/$VERSION}"
+            if [[ "$filename" != "$new_name" ]]; then
+              mv "$file" "$dir/$new_name"
+              echo "Renamed: $filename -> $new_name"
+            fi
+          done
 
       - name: Upload desktop artifacts
         uses: actions/upload-artifact@v4
@@ -185,14 +209,14 @@ jobs:
 
       - name: Update version
         run: |
-          VERSION=${{ needs.get-version.outputs.version }}
-          echo "Setting version to $VERSION"
-          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/client/src-tauri/tauri.conf.json
+          SEMVER=${{ needs.get-version.outputs.semver }}
+          echo "Setting version to $SEMVER"
+          sed -i "s/\"version\": \".*\"/\"version\": \"$SEMVER\"/" frontend/client/src-tauri/tauri.conf.json
           cat frontend/client/src-tauri/tauri.conf.json | grep version
 
       - name: Initialize Android
         working-directory: frontend
-        run: pnpm tauri android init || true
+        run: pnpm --filter client tauri android init || true
 
       - name: Copy Android icons
         run: |
@@ -261,7 +285,7 @@ jobs:
 
       - name: Build Android APK
         working-directory: frontend
-        run: pnpm tauri android build --apk
+        run: pnpm --filter client tauri android build --apk
 
       - name: Sign APKs
         run: |
