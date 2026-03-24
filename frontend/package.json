@@ -9,7 +9,7 @@
     "dev:client": "pnpm --filter client dev",
     "build:frontend": "pnpm --filter web-frontend build",
     "build:admin": "pnpm --filter web-admin build",
-    "build:client": "pnpm --filter client build:desktop",
+    "build:client": "pnpm --filter client build:client",
     "build:all": "pnpm -r build",
     "lint": "pnpm -r lint",
     "type-check": "pnpm -r type-check"
