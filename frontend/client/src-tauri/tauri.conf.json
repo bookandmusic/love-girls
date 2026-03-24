@@ -2,12 +2,12 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "LoveGirl",
   "version": "1.0.0",
-  "identifier": "com.lovegirl.app",
+  "identifier": "com.lovegirl.client",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5175",
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build:desktop"
+    "beforeBuildCommand": "pnpm build:client"
   },
   "app": {
     "windows": [
