@@ -4,8 +4,8 @@
       <div
         v-if="open"
         :class="[
-          'fixed inset-0 z-50 flex items-center justify-center p-4',
-          variant === 'admin' ? '' : 'bg-black/40 backdrop-blur-sm',
+          'fixed inset-0 z-[200]',
+          variant === 'admin' ? '' : 'bg-white',
         ]"
         @click="handleCancel"
       >
@@ -13,11 +13,10 @@
           <div
             v-if="open"
             :class="[
-              'w-full transform transition-all flex flex-col overflow-hidden',
+              'w-full h-full transform transition-all flex flex-col overflow-hidden',
               variant === 'admin'
                 ? 'admin-dialog p-6 max-h-[80vh]'
-                : 'bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl',
-              sizeClass,
+                : 'md:m-4 md:h-[calc(100vh-2rem)] md:max-w-lg md:mx-auto md:rounded-2xl md:shadow-2xl md:border md:border-gray-200',
             ]"
             @click.stop
           >
@@ -29,7 +28,7 @@
                 </h3>
               </div>
               <div
-                class="text-sm text-gray-600 leading-relaxed overflow-y-auto max-h-[60vh] p-5"
+                class="text-sm text-gray-600 leading-relaxed overflow-y-auto flex-1 p-5"
               >
                 <slot name="content"></slot>
               </div>
@@ -91,7 +90,7 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   title: "对话框",
   loading: false,
-  sizeClass: "max-w-2xl",
+  sizeClass: "",
   variant: "default",
 });
 

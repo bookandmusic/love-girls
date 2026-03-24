@@ -4,11 +4,10 @@
     :title="place?.id ? '编辑地点' : '添加地点'"
     @cancel="closeDialog"
     :loading="loading"
-    size-class="max-w-lg"
   >
     <template #content>
-      <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-        <div>
+      <div class="space-y-4 h-full">
+        <div class="relative" ref="searchResultRef">
           <label class="block text-sm font-medium text-gray-700 mb-1.5">
             地点名称 <span class="text-red-500">*</span>
           </label>
@@ -52,31 +51,35 @@
               </svg>
             </button>
           </div>
-        </div>
 
-        <div v-if="geocodingResults.length > 0">
-          <label class="block text-sm font-medium text-gray-700 mb-1.5">
-            搜索结果
-          </label>
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <Transition name="expand">
             <div
-              v-for="(result, index) in geocodingResults"
-              :key="index"
-              @click="selectGeocodingResult(result)"
-              class="p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0 transition-colors"
-              :class="{
-                'bg-[var(--fe-primary)]/10': selectedResult === result,
-              }"
+              v-if="geocodingResults.length > 0"
+              class="absolute top-full left-0 right-0 mt-2 z-20 glass-regular rounded-xl border border-white/40 shadow-xl h-48 overflow-y-auto"
             >
-              <div class="text-sm text-gray-800 line-clamp-2">
-                {{ result.displayName }}
-              </div>
-              <div class="text-xs text-gray-500 mt-1">
-                纬度: {{ parseFloat(result.lat).toFixed(6) }} | 经度:
-                {{ parseFloat(result.lon).toFixed(6) }}
+              <div class="p-2 space-y-1">
+                <div
+                  v-for="(result, index) in geocodingResults"
+                  :key="index"
+                  @click="selectGeocodingResult(result)"
+                  class="rounded-xl p-3 border transition-all cursor-pointer active:scale-[0.98]"
+                  :class="
+                    selectedResult === result
+                      ? 'border-[var(--fe-primary)] bg-[var(--fe-primary)]/5'
+                      : 'border-transparent hover:bg-white/30'
+                  "
+                >
+                  <div class="text-sm text-gray-800 line-clamp-2">
+                    {{ result.displayName }}
+                  </div>
+                  <div class="text-xs text-gray-500 mt-1">
+                    纬度: {{ parseFloat(result.lat).toFixed(6) }} | 经度:
+                    {{ parseFloat(result.lon).toFixed(6) }}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </Transition>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -189,12 +192,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { onMounted, onUnmounted, ref, watch } from "vue";
 
 import GenericDialog from "@/components/ui/GenericDialog.vue";
 import type { GeocodingResult } from "@/services/geocodingApi";
 import { geocodingApi } from "@/services/geocodingApi";
 import type { Place } from "@/services/placeApi";
+import { uploadApi } from "@/services/upload";
+import { calculateFileHash } from "@/utils/fileUtils";
 import { useToast } from "@/utils/toastUtils";
 
 const showToast = useToast();
@@ -213,7 +218,6 @@ const props = withDefaults(defineProps<Props>(), {
 interface Emits {
   (e: "update:open", open: boolean): void;
   (e: "confirm", place: Place): void;
-  (e: "upload", event: Event): void;
   (e: "cancel"): void;
 }
 
@@ -238,9 +242,27 @@ const DEFAULT_PLACE: Place = {
 
 const form = ref<Place>({ ...DEFAULT_PLACE });
 const imageInputRef = ref<HTMLInputElement>();
+const searchResultRef = ref<HTMLElement | null>(null);
 const geocodingResults = ref<GeocodingResult[]>([]);
 const selectedResult = ref<GeocodingResult | null>(null);
 const geocodingLoading = ref(false);
+
+const handleClickOutside = (event: MouseEvent) => {
+  if (
+    searchResultRef.value &&
+    !searchResultRef.value.contains(event.target as Node)
+  ) {
+    geocodingResults.value = [];
+  }
+};
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("click", handleClickOutside);
+});
 
 watch(
   () => props.open,
@@ -285,6 +307,7 @@ function selectGeocodingResult(result: GeocodingResult) {
   selectedResult.value = result;
   form.value.latitude = parseFloat(result.lat);
   form.value.longitude = parseFloat(result.lon);
+  geocodingResults.value = [];
 }
 
 const triggerImageUpload = () => {
@@ -294,7 +317,39 @@ const triggerImageUpload = () => {
 };
 
 const handleSelectedImageUpload = async (event: Event) => {
-  emit("upload", event);
+  const target = event.target as HTMLInputElement;
+  if (!target.files || target.files.length === 0) return;
+
+  const file = target.files[0];
+  if (!file) return;
+
+  try {
+    const hash = await calculateFileHash(file);
+
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const path = `places/${year}/${month}`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("hash", hash);
+    formData.append("path", path);
+
+    const response = await uploadApi.uploadImage(formData);
+    if (response.data.code === 0) {
+      form.value.image = {
+        id: response.data.data.file.id,
+        placeId: form.value.id || 0,
+        file: response.data.data.file,
+      };
+      showToast("图片上传成功", "success");
+    }
+  } catch {
+    showToast("图片上传失败", "error");
+  }
+
+  target.value = "";
 };
 
 const removeImage = () => {
@@ -317,3 +372,16 @@ const handleSave = async () => {
   emit("confirm", form.value);
 };
 </script>
+
+<style scoped>
+.expand-enter-active,
+.expand-leave-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.95);
+}
+</style>

@@ -6,7 +6,7 @@
     :loading="loading"
   >
     <template #content>
-      <div class="space-y-4">
+      <div class="space-y-4 h-full">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1.5">
             标题 <span class="text-red-500">*</span>
@@ -20,67 +20,65 @@
           />
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="relative">
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">
-              日期 <span class="text-red-500">*</span>
-            </label>
-            <input
-              ref="inputRef"
-              v-model="form.date"
-              type="text"
-              class="w-full win11-input cursor-pointer"
-              placeholder="请选择日期"
-              readonly
-              @focus="openCalendar"
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            日历类型 <span class="text-red-500">*</span>
+          </label>
+          <div class="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              type="button"
+              @click="form.calendar = 'solar'"
+              class="flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200"
+              :class="
+                form.calendar === 'solar'
+                  ? 'bg-white text-[var(--fe-primary)] shadow-sm'
+                  : 'text-gray-500'
+              "
               :disabled="loading"
-            />
-            <div
-              v-if="isCalendarVisible"
-              ref="calendarRef"
-              class="absolute mt-1 z-10 w-80"
-              @mousedown.prevent
             >
-              <LunarCalendar
-                :default-date="calendarDate"
-                :show-lunar="true"
-                @onSelect="handleDateChange"
-              />
-            </div>
+              公历
+            </button>
+            <button
+              type="button"
+              @click="form.calendar = 'lunar'"
+              class="flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200"
+              :class="
+                form.calendar === 'lunar'
+                  ? 'bg-white text-[var(--fe-primary)] shadow-sm'
+                  : 'text-gray-500'
+              "
+              :disabled="loading"
+            >
+              农历
+            </button>
           </div>
+        </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">
-              日历类型 <span class="text-red-500">*</span>
-            </label>
-            <div class="flex items-center bg-gray-100 rounded-lg p-1">
-              <button
-                type="button"
-                @click="form.calendar = 'solar'"
-                class="flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200"
-                :class="
-                  form.calendar === 'solar'
-                    ? 'bg-white text-[var(--fe-primary)] shadow-sm'
-                    : 'text-gray-500'
-                "
-                :disabled="loading"
-              >
-                公历
-              </button>
-              <button
-                type="button"
-                @click="form.calendar = 'lunar'"
-                class="flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200"
-                :class="
-                  form.calendar === 'lunar'
-                    ? 'bg-white text-[var(--fe-primary)] shadow-sm'
-                    : 'text-gray-500'
-                "
-                :disabled="loading"
-              >
-                农历
-              </button>
-            </div>
+        <div class="relative">
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            日期 <span class="text-red-500">*</span>
+          </label>
+          <input
+            ref="inputRef"
+            v-model="form.date"
+            type="text"
+            class="w-full win11-input cursor-pointer"
+            placeholder="请选择日期"
+            readonly
+            @focus="openCalendar"
+            :disabled="loading"
+          />
+          <div
+            v-if="isCalendarVisible"
+            ref="calendarRef"
+            class="absolute mt-1 z-10 w-80"
+            @mousedown.prevent
+          >
+            <LunarCalendar
+              :default-date="calendarDate"
+              :show-lunar="true"
+              @onSelect="handleDateChange"
+            />
           </div>
         </div>
 

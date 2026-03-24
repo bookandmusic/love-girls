@@ -6,7 +6,7 @@
     :loading="loading"
   >
     <template #content>
-      <form class="space-y-4">
+      <form class="space-y-4 h-full">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1.5">
             相册名称 <span class="text-red-500">*</span>

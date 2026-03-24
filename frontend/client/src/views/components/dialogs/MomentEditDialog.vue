@@ -4,10 +4,9 @@
     :title="moment?.id ? '编辑动态' : '发布动态'"
     @cancel="closeDialog"
     :loading="loading"
-    size-class="max-w-lg"
   >
     <template #content>
-      <div class="space-y-4">
+      <div class="space-y-4 h-full">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1.5">
             状态
@@ -119,7 +118,9 @@
 import { reactive, ref, watch } from "vue";
 
 import GenericDialog from "@/components/ui/GenericDialog.vue";
-import { type Moment } from "@/services/momentApi";
+import { type Moment, type Photo } from "@/services/momentApi";
+import { uploadApi } from "@/services/upload";
+import { calculateFileHash } from "@/utils/fileUtils";
 import { useToast } from "@/utils/toastUtils";
 
 const showToast = useToast();
@@ -142,7 +143,6 @@ const props = defineProps({
 interface Emits {
   (e: "update:open", open: boolean): void;
   (e: "confirm", moment: Moment): void;
-  (e: "upload", event: Event): void;
   (e: "cancel"): void;
 }
 
@@ -192,16 +192,6 @@ watch(
   },
 );
 
-watch(
-  () => props.moment?.images,
-  (newImages) => {
-    if (newImages && props.open) {
-      localMoment.images = [...newImages];
-    }
-  },
-  { deep: true },
-);
-
 const imageInputRef = ref<HTMLInputElement>();
 
 const triggerImageUpload = () => {
@@ -210,8 +200,47 @@ const triggerImageUpload = () => {
   }
 };
 
-const uploadImage = (event: Event) => {
-  emit("upload", event);
+const uploadImage = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (!target.files || target.files.length === 0) return;
+
+  const files = Array.from(target.files);
+
+  try {
+    for (const file of files) {
+      const hash = await calculateFileHash(file);
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const path = `moments/${year}/${month}`;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("hash", hash);
+      formData.append("path", path);
+
+      const response = await uploadApi.uploadImage(formData);
+      if (response.data.code === 0) {
+        const newImage: Photo = {
+          id: response.data.data.file.id,
+          momentId: localMoment.id || 0,
+          file: response.data.data.file,
+        };
+        if (!localMoment.images) {
+          localMoment.images = [];
+        }
+        if (!localMoment.images.some((img) => img.id === newImage.id)) {
+          localMoment.images.push(newImage);
+        }
+      }
+    }
+    showToast("图片上传成功", "success");
+  } catch {
+    showToast("图片上传失败", "error");
+  }
+
+  target.value = "";
 };
 
 const removeImage = (imageId: number) => {

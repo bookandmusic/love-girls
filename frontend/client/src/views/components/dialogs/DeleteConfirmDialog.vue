@@ -4,7 +4,6 @@
     :title="title"
     @cancel="closeDialog"
     :loading="loading"
-    size-class="max-w-sm"
   >
     <template #content>
       <p class="text-center text-gray-600">
