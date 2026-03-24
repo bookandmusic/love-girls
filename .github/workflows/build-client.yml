@@ -87,7 +87,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            frontend/src-tauri/target
+            frontend/client/src-tauri/target
           key: ${{ matrix.platform }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ matrix.platform }}-cargo-
 
@@ -131,7 +131,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: desktop-${{ matrix.platform }}-bundles
-          path: frontend/src-tauri/target/${{ matrix.target }}/release/bundle
+          path: frontend/client/src-tauri/target/${{ matrix.target }}/release/bundle
 
   build-android:
     needs: get-version
@@ -170,7 +170,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            frontend/src-tauri/target
+            frontend/client/src-tauri/target
           key: android-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install frontend dependencies
@@ -187,8 +187,8 @@ jobs:
         run: |
           VERSION=${{ needs.get-version.outputs.version }}
           echo "Setting version to $VERSION"
-          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/src-tauri/tauri.conf.json
-          cat frontend/src-tauri/tauri.conf.json | grep version
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" frontend/client/src-tauri/tauri.conf.json
+          cat frontend/client/src-tauri/tauri.conf.json | grep version
 
       - name: Initialize Android
         working-directory: frontend
@@ -196,8 +196,8 @@ jobs:
 
       - name: Copy Android icons
         run: |
-          SRC_DIR="frontend/src-tauri/icons/android"
-          DEST_DIR="frontend/src-tauri/gen/android/app/src/main/res"
+          SRC_DIR="frontend/client/src-tauri/icons/android"
+          DEST_DIR="frontend/client/src-tauri/gen/android/app/src/main/res"
           
           if [ -d "$SRC_DIR" ]; then
             for dir in "$SRC_DIR"/mipmap-*; do
@@ -217,7 +217,7 @@ jobs:
 
       - name: Configure Android network security
         run: |
-          ANDROID_DIR="frontend/src-tauri/gen/android/app/src/main"
+          ANDROID_DIR="frontend/client/src-tauri/gen/android/app/src/main"
           mkdir -p "$ANDROID_DIR/res/xml"
           
           cat > "$ANDROID_DIR/res/xml/network_security_config.xml" << 'EOF'
@@ -237,7 +237,7 @@ jobs:
           import xml.etree.ElementTree as ET
 
           ET.register_namespace('android', 'http://schemas.android.com/apk/res/android')
-          tree = ET.parse('frontend/src-tauri/gen/android/app/src/main/AndroidManifest.xml')
+          tree = ET.parse('frontend/client/src-tauri/gen/android/app/src/main/AndroidManifest.xml')
           root = tree.getroot()
           
           manifest_ns = {'android': 'http://schemas.android.com/apk/res/android'}
@@ -253,7 +253,7 @@ jobs:
               if '{http://schemas.android.com/apk/res/android}networkSecurityConfig' not in app.attrib:
                   app.set('{http://schemas.android.com/apk/res/android}networkSecurityConfig', '@xml/network_security_config')
           
-          tree.write('frontend/src-tauri/gen/android/app/src/main/AndroidManifest.xml', encoding='utf-8', xml_declaration=True)
+          tree.write('frontend/client/src-tauri/gen/android/app/src/main/AndroidManifest.xml', encoding='utf-8', xml_declaration=True)
           PYTHON
             echo "AndroidManifest.xml updated:"
             cat "$MANIFEST"
@@ -268,7 +268,7 @@ jobs:
           VERSION=${{ needs.get-version.outputs.version }}
           BUILD_TOOLS=$(ls -d $ANDROID_SDK_ROOT/build-tools/* | sort -V | tail -n 1)
           mkdir -p signed-apk
-          for apk in $(find frontend/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -type f); do
+          for apk in $(find frontend/client/src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -type f); do
             filename=$(basename "$apk")
             if [[ "$filename" == *"universal"* ]]; then
               final_name="LoveGirl_${VERSION}_android-universal.apk"
