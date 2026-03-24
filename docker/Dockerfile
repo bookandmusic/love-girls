@@ -2,7 +2,10 @@ FROM node:24-alpine AS frontend-builder
 
 WORKDIR /build/frontend
 
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
+COPY frontend/web-frontend/package.json ./web-frontend/
+COPY frontend/web-admin/package.json ./web-admin/
+COPY frontend/client/package.json ./client/
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 COPY frontend/ ./
