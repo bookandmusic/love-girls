@@ -13,7 +13,6 @@ import { useLongPress } from "@/composables/useLongPress";
 import MainLayout from "@/layouts/MainLayout.vue";
 import type { Place } from "@/services/placeApi";
 import { placeApi } from "@/services/placeApi";
-import { uploadApi } from "@/services/upload";
 import { usePlacesStore } from "@/stores/places";
 import { useSystemStore } from "@/stores/system";
 import { useUIStore } from "@/stores/ui";
@@ -54,6 +53,7 @@ const markerMap = new Map<number, L.Marker>();
 const fetchPlaces = async () => {
   try {
     await placesStore.fetchPlaces();
+    updateMarkers();
   } catch {
     showToast("获取地点数据失败", "error");
   }
@@ -126,17 +126,11 @@ function addResetButtonTogether() {
   });
 }
 
-function initMap() {
-  if (!mapRef.value || map) return;
+function updateMarkers() {
+  if (!map) return;
 
-  map = L.map(mapRef.value, {
-    zoomControl: true,
-    attributionControl: false,
-  }).setView([35, 105], 4);
-
-  L.tileLayer("https://map.lw1314.site/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-  }).addTo(map);
+  markerMap.forEach((marker) => marker.remove());
+  markerMap.clear();
 
   places.value.forEach((place: Place) => {
     const imgHtml = place.image?.file
@@ -159,6 +153,21 @@ function initMap() {
 
     markerMap.set(place.id, marker);
   });
+}
+
+function initMap() {
+  if (!mapRef.value || map) return;
+
+  map = L.map(mapRef.value, {
+    zoomControl: true,
+    attributionControl: false,
+  }).setView([35, 105], 4);
+
+  L.tileLayer("https://map.lw1314.site/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+  }).addTo(map);
+
+  updateMarkers();
 
   requestAnimationFrame(() => {
     map?.invalidateSize();
@@ -218,8 +227,18 @@ const showEditDialog = ref(false);
 const editingPlace = ref<Place | null>(null);
 const savingPlace = ref(false);
 
+const DEFAULT_PLACE: Place = {
+  id: 0,
+  name: "",
+  latitude: 0,
+  longitude: 0,
+  date: new Date().toISOString().substring(0, 10),
+  image: undefined,
+  description: "",
+};
+
 const openAddDialog = () => {
-  editingPlace.value = null;
+  editingPlace.value = { ...DEFAULT_PLACE };
   showEditDialog.value = true;
 };
 
@@ -245,32 +264,6 @@ const handleSavePlace = async (place: Place) => {
   } finally {
     savingPlace.value = false;
   }
-};
-
-const handleImageUpload = async (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (!target.files || target.files.length === 0) return;
-
-  const file = target.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const response = await uploadApi.uploadImage(formData);
-    if (response.data.code === 0 && editingPlace.value) {
-      editingPlace.value.image = {
-        id: response.data.data.file.id,
-        placeId: editingPlace.value.id || 0,
-        file: response.data.data.file,
-      };
-    }
-  } catch {
-    showToast("图片上传失败", "error");
-  }
-
-  target.value = "";
 };
 
 const showDeleteDialog = ref(false);
@@ -306,9 +299,17 @@ const handleDeletePlace = async () => {
     :show-empty-state="places.length === 0"
   >
     <template #empty-state>
-      <BaseIcon name="place" size="w-24" />
-      <p class="text-xl font-medium mt-4">暂无地点数据</p>
-      <p class="text-md mt-2">还没有添加任何地点</p>
+      <BaseIcon
+        name="place"
+        size="w-24"
+        style="color: var(--fe-text-secondary)"
+      />
+      <p class="font-bold text-xl mt-4 text-[var(--fe-text-primary)]">
+        暂无地点数据
+      </p>
+      <p class="text-md mt-2 text-[var(--fe-text-secondary)]">
+        期待标记第一个足迹
+      </p>
     </template>
 
     <template #main-content>
@@ -371,10 +372,10 @@ const handleDeletePlace = async () => {
           <div class="h-20 md:hidden"></div>
         </div>
       </div>
-
-      <FloatingAddButton :loading="savingPlace" @click="openAddDialog" />
     </template>
   </MainLayout>
+
+  <FloatingAddButton :loading="savingPlace" @click="openAddDialog" />
 
   <ActionSheet
     v-model="showActionSheet"
@@ -387,7 +388,6 @@ const handleDeletePlace = async () => {
     :place="editingPlace"
     :loading="savingPlace"
     @confirm="handleSavePlace"
-    @upload="handleImageUpload"
   />
 
   <DeleteConfirmDialog

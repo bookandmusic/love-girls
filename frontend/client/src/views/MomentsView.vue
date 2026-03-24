@@ -10,7 +10,7 @@ import FloatingAddButton from "@/components/ui/FloatingAddButton.vue";
 import { useLongPress } from "@/composables/useLongPress";
 import MainLayout from "@/layouts/MainLayout.vue";
 import { type Moment, momentApi } from "@/services/momentApi";
-import { uploadApi } from "@/services/upload";
+import { useAuthStore } from "@/stores/auth";
 import { useSystemStore } from "@/stores/system";
 import { useUIStore } from "@/stores/ui";
 import { useToast } from "@/utils/toastUtils";
@@ -19,6 +19,7 @@ import { useAutoFillPage } from "@/utils/useAutoFillPage";
 import MomentEditDialog from "./components/dialogs/MomentEditDialog.vue";
 import DeleteConfirmDialog from "./components/dialogs/DeleteConfirmDialog.vue";
 
+const authStore = useAuthStore();
 const uiStore = useUIStore();
 const systemStore = useSystemStore();
 
@@ -148,8 +149,29 @@ const showEditDialog = ref(false);
 const editingMoment = ref<Moment | null>(null);
 const savingMoment = ref(false);
 
+const formatLocalDateTime = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+const DEFAULT_MOMENT: Moment = {
+  id: 0,
+  content: "",
+  isPublic: true,
+  images: [],
+  likes: 0,
+  author: { name: "系统用户" },
+  createdAt: "",
+};
+
 const openAddDialog = () => {
-  editingMoment.value = null;
+  editingMoment.value = { ...DEFAULT_MOMENT, createdAt: formatLocalDateTime() };
   showEditDialog.value = true;
 };
 
@@ -161,50 +183,35 @@ const openEditDialog = (moment: Moment | null) => {
 const handleSaveMoment = async (moment: Moment) => {
   savingMoment.value = true;
   try {
+    const imageIds = moment.images?.map((img) => img.id) || [];
+
     if (moment.id) {
-      await momentApi.updateMoment(moment.id, moment);
+      await momentApi.updateMoment(moment.id, {
+        content: moment.content,
+        isPublic: moment.isPublic,
+        imageIds: imageIds,
+        createdAt: moment.createdAt,
+      });
       showToast("动态更新成功", "success");
     } else {
-      await momentApi.createMoment(moment);
+      await momentApi.createMoment({
+        content: moment.content,
+        isPublic: moment.isPublic,
+        imageIds: imageIds,
+        likes: 0,
+        author: { name: "系统用户" },
+        createdAt: moment.createdAt,
+        userId: authStore.userInfo?.userId || 1,
+      });
       showToast("动态发布成功", "success");
     }
-    showEditDialog.value = true;
+    showEditDialog.value = false;
     await fetchMoments(1);
   } catch {
     showToast("操作失败", "error");
   } finally {
     savingMoment.value = false;
   }
-};
-
-const handleImageUpload = async (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (!target.files || target.files.length === 0) return;
-
-  const file = target.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append("file", file);
-
-  try {
-    const response = await uploadApi.uploadImage(formData);
-    if (response.data.code === 0 && editingMoment.value) {
-      const newImage = {
-        id: response.data.data.file.id,
-        momentId: editingMoment.value.id || 0,
-        file: response.data.data.file,
-      };
-      if (!editingMoment.value.images) {
-        editingMoment.value.images = [];
-      }
-      editingMoment.value.images.push(newImage);
-    }
-  } catch {
-    showToast("图片上传失败", "error");
-  }
-
-  target.value = "";
 };
 
 const handleTogglePublic = async (moment: Moment | null) => {
@@ -260,14 +267,17 @@ onMounted(async () => {
       :show-empty-state="moments.length === 0 && !loadingMore"
     >
       <template #empty-state>
-        <div
-          class="flex flex-col items-center justify-center py-20 text-[var(--fe-text-secondary)]"
-        >
-          <BaseIcon name="moment" size="w-24" />
-          <p class="text-xl font-bold mt-4 text-[var(--fe-text-primary)]">
-            暂无动态
-          </p>
-        </div>
+        <BaseIcon
+          name="moment"
+          size="w-24"
+          style="color: var(--fe-text-secondary)"
+        />
+        <p class="font-bold text-xl mt-4 text-[var(--fe-text-primary)]">
+          暂无动态
+        </p>
+        <p class="text-md mt-2 text-[var(--fe-text-secondary)]">
+          期待分享第一条动态
+        </p>
       </template>
 
       <template #main-content>
@@ -276,6 +286,7 @@ onMounted(async () => {
           :imgs="imgsRef"
           :index="indexRef"
           @hide="onHide"
+          teleport="body"
         ></vue-easy-lightbox>
 
         <div class="flex flex-col h-full glass-regular">
@@ -414,10 +425,10 @@ onMounted(async () => {
             <div class="h-20 md:hidden"></div>
           </div>
         </div>
-
-        <FloatingAddButton :loading="savingMoment" @click="openAddDialog" />
       </template>
     </MainLayout>
+
+    <FloatingAddButton :loading="savingMoment" @click="openAddDialog" />
 
     <ActionSheet
       v-model="showActionSheet"
@@ -430,7 +441,6 @@ onMounted(async () => {
       :moment="editingMoment ?? undefined"
       :loading="savingMoment"
       @confirm="handleSaveMoment"
-      @upload="handleImageUpload"
     />
 
     <DeleteConfirmDialog
