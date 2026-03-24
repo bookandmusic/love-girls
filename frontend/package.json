@@ -12,7 +12,8 @@
     "build:client": "pnpm --filter client build:client",
     "build:all": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "type-check": "pnpm -r type-check"
+    "type-check": "pnpm -r type-check",
+    "format": "pnpm -r format"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
