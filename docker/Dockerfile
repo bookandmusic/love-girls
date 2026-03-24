@@ -6,7 +6,10 @@ COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
 COPY frontend/ ./
-RUN pnpm build
+
+RUN pnpm build:frontend
+
+RUN VITE_BASE_URL=/admin/ pnpm build:admin
 
 FROM golang:1.25-alpine AS backend-builder
 
@@ -20,7 +23,8 @@ COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
 COPY backend/ ./
-COPY --from=frontend-builder /build/frontend/dist ./internal/handler/assets/dist
+COPY --from=frontend-builder /build/frontend/web-frontend/dist ./internal/handler/assets/dist-frontend
+COPY --from=frontend-builder /build/frontend/web-admin/dist ./internal/handler/assets/dist-admin
 RUN apk add --no-cache gcc musl-dev sqlite-dev && \
     CGO_ENABLED=1 GOOS=linux \
     go build -a -trimpath \

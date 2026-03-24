@@ -45,7 +45,11 @@ bin/*
 # 忽略 uploads 下所有文件
 data/*
 
-# 忽略静态资源占位文件
+# 忽略静态资源
 internal/handler/assets/dist/*
+internal/handler/assets/dist-frontend/*
+internal/handler/assets/dist-admin/*
 # 但保留目录结构
 !internal/handler/assets/dist/.gitkeep
+!internal/handler/assets/dist-frontend/placeholder.json
+!internal/handler/assets/dist-admin/placeholder.json
