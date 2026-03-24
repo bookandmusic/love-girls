@@ -8,7 +8,9 @@ import ActionSheet, {
 import FloatingAddButton from "@/components/ui/FloatingAddButton.vue";
 import MainLayout from "@/layouts/MainLayout.vue";
 import { type Album, albumApi, type Photo } from "@/services/albumApi";
+import { uploadApi } from "@/services/upload";
 import { useSystemStore } from "@/stores/system";
+import { calculateFileHash } from "@/utils/fileUtils";
 import { useUIStore } from "@/stores/ui";
 import { useToast } from "@/utils/toastUtils";
 
@@ -41,6 +43,9 @@ const loadingMorePhotos = ref(false);
 const hasMorePhotos = computed(
   () => currentPhotoPage.value < totalPhotoPages.value,
 );
+
+const photoInputRef = ref<HTMLInputElement | null>(null);
+const uploadingPhotos = ref(false);
 
 const pageTitle = computed(() => {
   if (currentAlbum.value) {
@@ -158,6 +163,61 @@ const handleLongPressAlbum = (album: Album) => {
   showActionSheet.value = true;
 };
 
+const showPhotoActionSheet = ref(false);
+const selectedPhoto = ref<Photo | null>(null);
+const photoActionSheetActions = computed<ActionSheetAction[]>(() => [
+  {
+    label: "设为封面",
+    handler: () => handleSetCover(),
+  },
+  {
+    label: "删除",
+    destructive: true,
+    handler: () => openDeletePhotoDialog(selectedPhoto.value),
+  },
+]);
+
+const handleLongPressPhoto = (photo: Photo) => {
+  selectedPhoto.value = photo;
+  showPhotoActionSheet.value = true;
+};
+
+const handleSetCover = async () => {
+  if (!currentAlbumId.value || !selectedPhoto.value) return;
+
+  try {
+    await albumApi.setCover(currentAlbumId.value, selectedPhoto.value.id);
+    showToast("封面设置成功", "success");
+    await fetchAlbums(1);
+  } catch {
+    showToast("设置封面失败", "error");
+  }
+};
+
+const showDeletePhotoDialog = ref(false);
+const deletingPhoto = ref(false);
+
+const openDeletePhotoDialog = (photo: Photo | null) => {
+  selectedPhoto.value = photo;
+  showDeletePhotoDialog.value = true;
+};
+
+const handleDeletePhoto = async () => {
+  if (!currentAlbumId.value || !selectedPhoto.value) return;
+
+  deletingPhoto.value = true;
+  try {
+    await albumApi.deletePhoto(currentAlbumId.value, selectedPhoto.value.id);
+    showToast("照片删除成功", "success");
+    showDeletePhotoDialog.value = false;
+    await fetchPhotos(currentAlbumId.value, 1);
+  } catch {
+    showToast("删除失败", "error");
+  } finally {
+    deletingPhoto.value = false;
+  }
+};
+
 const showEditDialog = ref(false);
 const editingAlbum = ref<Album | null>(null);
 const savingAlbum = ref(false);
@@ -215,6 +275,55 @@ const handleDeleteAlbum = async () => {
   }
 };
 
+const triggerPhotoUpload = () => {
+  if (photoInputRef.value) {
+    photoInputRef.value.click();
+  }
+};
+
+const handlePhotoUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (!target.files || target.files.length === 0) return;
+
+  const files = Array.from(target.files);
+  if (!currentAlbumId.value || files.length === 0) return;
+
+  uploadingPhotos.value = true;
+  const uploadedFileIds: number[] = [];
+
+  try {
+    for (const file of files) {
+      const hash = await calculateFileHash(file);
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const path = `albums/${year}/${month}`;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("hash", hash);
+      formData.append("path", path);
+
+      const response = await uploadApi.uploadImage(formData);
+      if (response.data.code === 0) {
+        uploadedFileIds.push(response.data.data.file.id);
+      }
+    }
+
+    if (uploadedFileIds.length > 0) {
+      await albumApi.addPhotos(currentAlbumId.value, uploadedFileIds);
+      showToast(`成功上传 ${uploadedFileIds.length} 张照片`, "success");
+      await fetchPhotos(currentAlbumId.value, 1);
+    }
+  } catch {
+    showToast("照片上传失败", "error");
+  } finally {
+    uploadingPhotos.value = false;
+    target.value = "";
+  }
+};
+
 onMounted(async () => {
   uiStore.setLoading(true);
   await systemStore.fetchSystemInfo();
@@ -232,14 +341,17 @@ onMounted(async () => {
     "
   >
     <template #empty-state>
-      <div
-        class="flex flex-col items-center justify-center py-20 text-[var(--fe-text-secondary)]"
-      >
-        <BaseIcon name="camera" size="w-24" />
-        <p class="text-xl font-bold mt-4 text-[var(--fe-text-primary)]">
-          暂无相册
-        </p>
-      </div>
+      <BaseIcon
+        name="camera"
+        size="w-24"
+        style="color: var(--fe-text-secondary)"
+      />
+      <p class="font-bold text-xl mt-4 text-[var(--fe-text-primary)]">
+        暂无相册
+      </p>
+      <p class="text-md mt-2 text-[var(--fe-text-secondary)]">
+        期待创建第一个相册
+      </p>
     </template>
 
     <template #main-content>
@@ -261,21 +373,43 @@ onMounted(async () => {
           :has-more="hasMorePhotos"
           @back="handleBack"
           @load-more="handleLoadMorePhotos"
+          @long-press="handleLongPressPhoto"
         />
       </div>
-
-      <FloatingAddButton
-        v-if="!currentAlbumId"
-        :loading="savingAlbum"
-        @click="openAddDialog"
-      />
     </template>
   </MainLayout>
+
+  <input
+    ref="photoInputRef"
+    type="file"
+    accept="image/*"
+    multiple
+    class="hidden"
+    @change="handlePhotoUpload"
+  />
+
+  <FloatingAddButton
+    v-if="!currentAlbumId"
+    :loading="savingAlbum"
+    @click="openAddDialog"
+  />
+
+  <FloatingAddButton
+    v-else
+    :loading="uploadingPhotos"
+    @click="triggerPhotoUpload"
+  />
 
   <ActionSheet
     v-model="showActionSheet"
     title="相册操作"
     :actions="actionSheetActions"
+  />
+
+  <ActionSheet
+    v-model="showPhotoActionSheet"
+    title="照片操作"
+    :actions="photoActionSheetActions"
   />
 
   <AlbumEditDialog
@@ -291,5 +425,13 @@ onMounted(async () => {
     title="删除相册"
     :message="`确定要删除「${deletingAlbum?.name || ''}」吗？删除后无法恢复。`"
     @confirm="handleDeleteAlbum"
+  />
+
+  <DeleteConfirmDialog
+    v-model:open="showDeletePhotoDialog"
+    :loading="deletingPhoto"
+    title="删除照片"
+    message="确定要删除这张照片吗？删除后无法恢复。"
+    @confirm="handleDeletePhoto"
   />
 </template>

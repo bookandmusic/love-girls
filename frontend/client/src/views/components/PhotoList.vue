@@ -24,6 +24,7 @@
         :imgs="imgsRef"
         :index="indexRef"
         @hide="onHide"
+        teleport="body"
       ></vue-easy-lightbox>
 
       <div
@@ -34,6 +35,10 @@
           v-for="photo in photos"
           :key="photo.id"
           @click="preview(photo.file?.url || '')"
+          @pointerdown="handlePointerDown(photo, $event)"
+          @pointerup="onPointerUp"
+          @pointerleave="onPointerLeave"
+          @pointercancel="onPointerCancel"
           class="aspect-square overflow-hidden rounded-xl border border-white/40 bg-white/50 tap-feedback ios-transition shadow-sm group"
         >
           <img
@@ -53,7 +58,7 @@
         <BaseIcon
           name="photo-heart"
           size="w-24"
-          color="var(--fe-text-secondary)"
+          style="color: var(--fe-text-secondary)"
         />
         <p class="text-xl font-bold mt-4 text-[var(--fe-text-primary)]">
           暂无照片
@@ -95,6 +100,7 @@ import { nextTick, ref, watch } from "vue";
 import VueEasyLightbox from "vue-easy-lightbox";
 
 import BaseIcon from "@/components/ui/BaseIcon.vue";
+import { useLongPress } from "@/composables/useLongPress";
 import type { Photo } from "@/services/albumApi";
 
 interface Props {
@@ -108,13 +114,13 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   (e: "back"): void;
   (e: "load-more"): void;
+  (e: "long-press", photo: Photo): void;
 }>();
 
 const onBack = () => {
   emit("back");
 };
 
-// 滚动容器引用
 const scrollContainer = ref<HTMLElement | null>(null);
 
 const handleScroll = (e: Event) => {
@@ -128,7 +134,6 @@ const handleScroll = (e: Event) => {
   }
 };
 
-// 自动填充页面逻辑
 const checkAndAutoLoadMore = async () => {
   await nextTick();
 
@@ -143,7 +148,6 @@ const checkAndAutoLoadMore = async () => {
   }
 };
 
-// 监听数据变化，检查是否需要自动加载
 watch(
   () => props.photos,
   () => {
@@ -151,8 +155,25 @@ watch(
   },
 );
 
+const selectedPhoto = ref<Photo | null>(null);
+
+const { onPointerDown, onPointerUp, onPointerLeave, onPointerCancel } =
+  useLongPress({
+    duration: 500,
+    onFinish: () => {
+      if (selectedPhoto.value) {
+        emit("long-press", selectedPhoto.value);
+      }
+    },
+  });
+
+const handlePointerDown = (photo: Photo, event: PointerEvent) => {
+  selectedPhoto.value = photo;
+  onPointerDown(event);
+};
+
 const visibleRef = ref(false);
-const indexRef = ref(0); // default 0
+const indexRef = ref(0);
 const imgsRef = ref("");
 const onShow = () => {
   visibleRef.value = true;
