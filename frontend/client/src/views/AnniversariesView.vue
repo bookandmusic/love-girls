@@ -323,9 +323,17 @@ onMounted(async () => {
     :show-empty-state="anniversaries.length === 0"
   >
     <template #empty-state>
-      <BaseIcon name="anniversary" size="w-24" />
-      <p class="text-xl font-medium mt-4">暂无纪念日数据</p>
-      <p class="text-md mt-2">还没有添加任何纪念日</p>
+      <BaseIcon
+        name="anniversary"
+        size="w-24"
+        style="color: var(--fe-text-secondary)"
+      />
+      <p class="font-bold text-xl mt-4 text-[var(--fe-text-primary)]">
+        暂无纪念日数据
+      </p>
+      <p class="text-md mt-2 text-[var(--fe-text-secondary)]">
+        期待添加第一个纪念日
+      </p>
     </template>
 
     <template #main-content>
@@ -443,10 +451,10 @@ onMounted(async () => {
           <div class="h-20 md:hidden"></div>
         </div>
       </div>
-
-      <FloatingAddButton :loading="savingAnniversary" @click="openAddDialog" />
     </template>
   </MainLayout>
+
+  <FloatingAddButton :loading="savingAnniversary" @click="openAddDialog" />
 
   <ActionSheet
     v-model="showActionSheet"

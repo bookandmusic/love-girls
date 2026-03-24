@@ -46,14 +46,21 @@
             v-if="showEmptyState"
             class="h-full w-full p-4 flex items-center justify-center"
           >
-            <div
-              class="text-[#FF7500] flex flex-col justify-center items-center text-center"
-            >
+            <div class="flex flex-col justify-center items-center text-center">
               <slot name="empty-state">
-                <!-- 默认的空状态内容 -->
-                <BaseIcon name="box" size="w-16" style="color: #ff7500" />
-                <h3 class="font-bold text-lg mt-4">暂无数据</h3>
-                <p class="mt-2 text-center">还没有任何内容</p>
+                <BaseIcon
+                  name="box"
+                  size="w-24"
+                  style="color: var(--fe-text-secondary)"
+                />
+                <h3
+                  class="font-bold text-xl mt-4 text-[var(--fe-text-primary)]"
+                >
+                  暂无数据
+                </h3>
+                <p class="text-md mt-2 text-[var(--fe-text-secondary)]">
+                  期待记录美好时光
+                </p>
               </slot>
             </div>
           </div>
@@ -84,7 +91,7 @@
 
   <!-- 服务切换按钮 - Teleport 到 body 避免 overflow-hidden 影响 -->
   <Teleport to="body">
-    <div class="fixed top-8 right-6 z-[9999]">
+    <div class="fixed top-8 right-6 z-[100]">
       <DesktopMenu />
     </div>
   </Teleport>

@@ -1,6 +1,6 @@
 /* iOS Glass UI Theme for Frontend */
 
-.frontend-root {
+:root {
   /* Materials - Using backdrop-filter for the glass effect */
   --fe-glass-ultra-thin: rgba(255, 255, 255, 0.4);
   --fe-glass-regular: rgba(255, 255, 255, 0.7);
@@ -22,7 +22,7 @@
   /* Colors */
   --fe-primary: #f0ada0;
   --fe-primary-dark: #d89388;
-  --fe-bg-gray: #f2f2f7; /* iOS System Gray 6 */
+  --fe-bg-gray: #f2f2f7;
   --fe-text-primary: #1c1c1e;
   --fe-text-secondary: #8e8e93;
 
