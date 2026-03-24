@@ -3,7 +3,7 @@
     <Transition name="action-sheet">
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-[200] flex items-end justify-center"
+        class="fixed inset-0 z-[300] flex items-end justify-center"
         @click="handleCancel"
       >
         <div class="absolute inset-0 bg-black/40"></div>

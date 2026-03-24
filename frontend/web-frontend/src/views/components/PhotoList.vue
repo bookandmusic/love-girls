@@ -24,6 +24,7 @@
         :imgs="imgsRef"
         :index="indexRef"
         @hide="onHide"
+        teleport="body"
       ></vue-easy-lightbox>
 
       <div

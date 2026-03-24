@@ -140,6 +140,7 @@ onMounted(async () => {
           :imgs="imgsRef"
           :index="indexRef"
           @hide="onHide"
+          teleport="body"
         ></vue-easy-lightbox>
 
         <div class="flex flex-col h-full glass-regular">
