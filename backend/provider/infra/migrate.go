@@ -17,6 +17,7 @@ func ProvideMigrate(db *gorm.DB, logger *log.Logger) error {
 		&model.EntityFile{},
 		&model.Anniversary{},
 		&model.Setting{},
+		&model.Comment{},
 	); err != nil {
 		logger.Error("Database migration failed:", "error", err)
 		return err

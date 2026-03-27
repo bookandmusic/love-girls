@@ -241,6 +241,8 @@ definitions:
     properties:
       avatar:
         $ref: '#/definitions/service.FileResponse'
+      id:
+        type: integer
       name:
         type: string
     type: object

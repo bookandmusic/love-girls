@@ -14,6 +14,7 @@ export interface Moment {
   likes: number;
   createdAt: string;
   author: {
+    id: number;
     name: string;
     avatar?: FileInfo;
   };

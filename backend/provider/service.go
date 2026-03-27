@@ -49,6 +49,10 @@ func ProvideAlbumService(log *log.Logger, albumRepo *repo.AlbumRepo, fileService
 	return service.NewAlbumService(log, albumRepo, fileService)
 }
 
+func ProvideCommentService(log *log.Logger, commentRepo *repo.CommentRepo, fileService *service.FileService) *service.CommentService {
+	return service.NewCommentService(log, commentRepo, fileService)
+}
+
 var ServiceSet = wire.NewSet(
 	ProvideUserService,
 	ProvideFileService,
@@ -57,4 +61,5 @@ var ServiceSet = wire.NewSet(
 	ProvideMomentService,
 	ProvidePlaceService,
 	ProvideAlbumService,
+	ProvideCommentService,
 )

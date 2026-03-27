@@ -423,7 +423,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 import { refreshApiBaseURL } from "@/services/api";
 import { userApi } from "@/services/userApi";
@@ -441,8 +441,11 @@ import {
 } from "@/utils/platform";
 
 const router = useRouter();
+const route = useRoute();
 const systemStore = useSystemStore();
 const authStore = useAuthStore();
+
+const redirectPath = ref<string>("/");
 
 const step = ref<"server" | "login">("server");
 const savedServers = ref<ServerConfig[]>([]);
@@ -480,12 +483,21 @@ onMounted(async () => {
   activeServerUrl.value = getActiveServerUrl();
   document.addEventListener("click", handleClickOutside);
 
+  if (route.query.redirect) {
+    redirectPath.value = route.query.redirect as string;
+  }
+
+  if (route.query.step === "login") {
+    step.value = "login";
+    return;
+  }
+
   const activeToken = getActiveServerToken();
   if (activeServerUrl.value && activeToken) {
     refreshApiBaseURL();
     const isValid = await authStore.checkAuthStatus();
     if (isValid) {
-      router.push("/");
+      router.push(redirectPath.value);
       return;
     }
   }
@@ -587,7 +599,7 @@ const handleConnectServer = async () => {
   authStore.loadTokenFromServer();
   const isValid = await authStore.checkAuthStatus();
   if (isValid) {
-    router.push("/");
+    router.push(redirectPath.value);
   } else {
     step.value = "login";
   }
@@ -609,14 +621,14 @@ const selectServer = async (server: ServerConfig) => {
 
     const isValid = await authStore.checkAuthStatus();
     if (isValid) {
-      router.push("/");
+      router.push(redirectPath.value);
     } else {
       step.value = "login";
     }
   } else {
     const isValid = await authStore.checkAuthStatus();
     if (isValid) {
-      router.push("/");
+      router.push(redirectPath.value);
     } else {
       step.value = "login";
     }
@@ -661,7 +673,7 @@ const handleLogin = async () => {
         authStore.login(token, userInfoResponse.data);
         showToast("登录成功！", "success");
         setTimeout(() => {
-          router.push("/");
+          router.push(redirectPath.value);
         }, 300);
       } else {
         errorMsg.value = "获取用户信息失败";

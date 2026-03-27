@@ -7,6 +7,7 @@ import ActionSheet, {
   type ActionSheetAction,
 } from "@/components/ui/ActionSheet.vue";
 import FloatingAddButton from "@/components/ui/FloatingAddButton.vue";
+import CommentList from "@/components/comment/CommentList.vue";
 import { useLongPress } from "@/composables/useLongPress";
 import MainLayout from "@/layouts/MainLayout.vue";
 import { type Moment, momentApi } from "@/services/momentApi";
@@ -166,7 +167,7 @@ const DEFAULT_MOMENT: Moment = {
   isPublic: true,
   images: [],
   likes: 0,
-  author: { name: "系统用户" },
+  author: { id: 0, name: "系统用户" },
   createdAt: "",
 };
 
@@ -199,7 +200,7 @@ const handleSaveMoment = async (moment: Moment) => {
         isPublic: moment.isPublic,
         imageIds: imageIds,
         likes: 0,
-        author: { name: "系统用户" },
+        author: { id: 0, name: "系统用户" },
         createdAt: moment.createdAt,
         userId: authStore.userInfo?.userId || 1,
       });
@@ -231,9 +232,23 @@ const showDeleteDialog = ref(false);
 const deletingMoment = ref<Moment | null>(null);
 const deleting = ref(false);
 
+const showCommentPanel = ref(false);
+const commentMomentId = ref<number | null>(null);
+const commentListRef = ref<InstanceType<typeof CommentList> | null>(null);
+
 const openDeleteDialog = (moment: Moment | null) => {
   deletingMoment.value = moment;
   showDeleteDialog.value = true;
+};
+
+const openCommentPanel = (momentId: number) => {
+  commentMomentId.value = momentId;
+  showCommentPanel.value = true;
+};
+
+const closeCommentPanel = () => {
+  showCommentPanel.value = false;
+  commentMomentId.value = null;
 };
 
 const handleDeleteMoment = async () => {
@@ -379,21 +394,33 @@ onMounted(async () => {
                     >
                       {{ moment.createdAt }}
                     </span>
-                    <button
-                      @click.stop="likeMoment(moment.id)"
-                      class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
-                    >
-                      <BaseIcon
-                        name="like"
-                        size="w-3.5 h-3.5"
-                        color="var(--fe-primary)"
-                      />
-                      <span
-                        class="text-xs font-bold text-[var(--fe-text-primary)]"
+                    <div class="flex items-center space-x-2">
+                      <button
+                        @click.stop="openCommentPanel(moment.id)"
+                        class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
                       >
-                        {{ moment.likes }}
-                      </span>
-                    </button>
+                        <BaseIcon
+                          name="comment"
+                          size="w-3.5 h-3.5"
+                          color="var(--fe-primary)"
+                        />
+                      </button>
+                      <button
+                        @click.stop="likeMoment(moment.id)"
+                        class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
+                      >
+                        <BaseIcon
+                          name="like"
+                          size="w-3.5 h-3.5"
+                          color="var(--fe-primary)"
+                        />
+                        <span
+                          class="text-xs font-bold text-[var(--fe-text-primary)]"
+                        >
+                          {{ moment.likes }}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -450,5 +477,53 @@ onMounted(async () => {
       message="确定要删除这条动态吗？删除后无法恢复。"
       @confirm="handleDeleteMoment"
     />
+
+    <Teleport to="body">
+      <Transition name="slide-up">
+        <div
+          v-if="showCommentPanel && commentMomentId"
+          class="fixed inset-0 z-[300] bg-white flex flex-col"
+        >
+          <div
+            class="flex items-center justify-between p-4 border-b border-gray-100"
+          >
+            <h3 class="text-lg font-semibold text-gray-900">评论</h3>
+            <button
+              @click="closeCommentPanel"
+              class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <svg
+                class="w-5 h-5 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="flex-1 min-h-0 p-4">
+            <CommentList ref="commentListRef" :moment-id="commentMomentId" />
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+}
+</style>

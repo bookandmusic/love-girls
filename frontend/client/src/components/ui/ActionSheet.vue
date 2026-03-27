@@ -9,55 +9,44 @@
         <div class="absolute inset-0 bg-black/40"></div>
 
         <Transition name="action-sheet-content">
-          <div
-            v-if="modelValue"
-            class="relative w-full max-w-lg mx-4 mb-8 rounded-2xl overflow-hidden bg-white/95 backdrop-blur-xl shadow-2xl"
-            @click.stop
-          >
+          <div v-if="modelValue" class="w-full max-w-lg mx-4 mb-8 space-y-2">
             <div
-              v-if="title"
-              class="px-4 py-3 text-center border-b border-gray-100"
+              class="rounded-2xl overflow-hidden bg-white/95 backdrop-blur-xl shadow-2xl"
+              @click.stop
             >
-              <p class="text-sm font-medium text-gray-500">
-                {{ title }}
-              </p>
-            </div>
+              <div
+                v-if="title"
+                class="px-4 py-3 text-center border-b border-gray-100"
+              >
+                <p class="text-sm font-medium text-gray-500">
+                  {{ title }}
+                </p>
+              </div>
 
-            <div class="p-2">
               <button
                 v-for="(action, index) in visibleActions"
                 :key="index"
                 @click="handleAction(action)"
-                class="w-full py-3.5 px-4 text-center rounded-xl transition-all active:bg-gray-100"
+                class="w-full py-3.5 px-4 text-center transition-all active:bg-gray-100"
                 :class="[
-                  action.destructive
-                    ? 'text-red-500 font-medium'
-                    : 'text-[var(--fe-primary)] font-medium',
+                  action.destructive ? 'text-red-500' : 'text-[#007AFF]',
+                  index > 0 ? 'border-t border-gray-100' : '',
                   action.disabled
                     ? 'opacity-50 cursor-not-allowed'
                     : 'hover:bg-gray-50',
                 ]"
                 :disabled="action.disabled"
               >
-                <div class="flex items-center justify-center gap-2">
-                  <component
-                    v-if="action.icon"
-                    :is="action.icon"
-                    class="w-5 h-5"
-                  />
-                  <span>{{ action.label }}</span>
-                </div>
+                <span class="text-base font-normal">{{ action.label }}</span>
               </button>
             </div>
 
-            <div class="p-2 pt-0">
-              <button
-                @click="handleCancel"
-                class="w-full py-3.5 px-4 text-center rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all active:bg-gray-300"
-              >
-                取消
-              </button>
-            </div>
+            <button
+              @click="handleCancel"
+              class="w-full py-3.5 px-4 text-center rounded-2xl font-normal text-[#007AFF] bg-white/95 backdrop-blur-xl shadow-2xl transition-all active:bg-gray-100 hover:bg-gray-50"
+            >
+              取消
+            </button>
           </div>
         </Transition>
       </div>
@@ -67,11 +56,9 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { Component } from "vue";
 
 export interface ActionSheetAction {
   label: string;
-  icon?: Component;
   destructive?: boolean;
   disabled?: boolean;
   handler?: () => void;

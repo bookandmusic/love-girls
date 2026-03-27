@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
+import { useAuthStore } from "@/stores/auth";
 import { useSystemStore } from "@/stores/system";
 import { refreshApiBaseURL } from "@/services/api";
 
@@ -94,6 +95,16 @@ router.beforeEach(async (to, from, next) => {
 
   if (!isInitialized && to.path !== "/init") {
     return next("/init");
+  }
+
+  const authStore = useAuthStore();
+  const isLoggedIn = await authStore.checkAuthStatus();
+
+  if (!isLoggedIn) {
+    return next({
+      path: "/server-config",
+      query: { step: "login", redirect: to.fullPath },
+    });
   }
 
   return next();

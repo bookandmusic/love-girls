@@ -99,13 +99,13 @@
     </template>
     <template #actions>
       <button
-        class="flex-1 py-3.5 text-center text-gray-500 font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors"
+        class="flex-1 py-3.5 text-center text-gray-700 font-medium hover:bg-gray-100 active:bg-gray-200 transition-colors"
         @click="closeDialog"
       >
         取消
       </button>
       <button
-        class="flex-1 py-3.5 text-center text-[var(--fe-primary)] font-semibold border-l border-gray-100 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+        class="flex-1 py-3.5 text-center text-[var(--fe-primary-dark)] font-semibold border-l border-gray-100 hover:bg-gray-100 active:bg-gray-200 transition-colors"
         @click="handleSave"
       >
         确认

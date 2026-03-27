@@ -42,6 +42,7 @@ type FrontendPhoto struct {
 
 // FrontendAuthor 前端期望的Author数据结构
 type FrontendAuthor struct {
+	ID     uint64        `json:"id"`
 	Name   string        `json:"name"`
 	Avatar *FileResponse `json:"avatar"`
 }
@@ -68,6 +69,7 @@ func (s *MomentService) convertToFrontendFormat(c *gin.Context, moment *model.Mo
 	// 转换作者数据
 	author := FrontendAuthor{}
 	if moment.User != nil {
+		author.ID = moment.User.ID
 		author.Name = moment.User.Name
 		author.Avatar = s.FileService.BuildFileResponse(c, moment.User.Avatar)
 	}

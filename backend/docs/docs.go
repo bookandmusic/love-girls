@@ -2496,6 +2496,9 @@ const docTemplate = `{
                 "avatar": {
                     "$ref": "#/definitions/service.FileResponse"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "name": {
                     "type": "string"
                 }
