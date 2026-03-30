@@ -14,7 +14,11 @@
     </div>
 
     <!-- 照片网格 -->
-    <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
+    <van-pull-refresh
+      v-model="isRefreshing"
+      :disabled="!isAtTop"
+      @refresh="handleRefresh"
+    >
       <div
         ref="scrollContainer"
         class="overflow-y-auto p-4 md:p-6 custom-scrollbar"
@@ -127,6 +131,7 @@ const onBack = () => {
 };
 
 const isRefreshing = ref(false);
+const isAtTop = ref(true);
 
 const handleRefresh = async () => {
   emit("refresh");
@@ -137,7 +142,11 @@ const scrollContainer = ref<HTMLElement | null>(null);
 
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement;
-  if (!target || props.loading || !props.hasMore) return;
+  if (!target) return;
+
+  isAtTop.value = target.scrollTop === 0;
+
+  if (props.loading || !props.hasMore) return;
 
   const bottomDistance =
     target.scrollHeight - target.scrollTop - target.clientHeight;

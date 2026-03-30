@@ -1,5 +1,9 @@
 <template>
-  <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
+  <van-pull-refresh
+    v-model="isRefreshing"
+    :disabled="!isAtTop"
+    @refresh="handleRefresh"
+  >
     <div
       ref="scrollContainer"
       class="overflow-y-auto custom-scrollbar"
@@ -111,6 +115,7 @@ const emit = defineEmits<{
 }>();
 
 const isRefreshing = ref(false);
+const isAtTop = ref(true);
 
 const handleRefresh = async () => {
   emit("refresh");
@@ -190,7 +195,11 @@ const getPlaceholderStyle = (id: number) => {
 
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement;
-  if (!target || props.loading || !props.hasMore) return;
+  if (!target) return;
+
+  isAtTop.value = target.scrollTop === 0;
+
+  if (props.loading || !props.hasMore) return;
 
   const bottomDistance =
     target.scrollHeight - target.scrollTop - target.clientHeight;

@@ -37,6 +37,7 @@ const totalPages = ref(0);
 const pageSize = ref(8);
 const loadingMore = ref(false);
 const isRefreshing = ref(false);
+const isAtTop = ref(true);
 const hasMore = computed(() => currentPage.value < totalPages.value);
 
 const scrollContainer = ref<HTMLElement | null>(null);
@@ -84,7 +85,11 @@ const handleRefresh = async () => {
 
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement;
-  if (!target || loadingMore.value || !hasMore.value) return;
+  if (!target) return;
+
+  isAtTop.value = target.scrollTop === 0;
+
+  if (loadingMore.value || !hasMore.value) return;
 
   const bottomDistance =
     target.scrollHeight - target.scrollTop - target.clientHeight;
@@ -362,7 +367,11 @@ onMounted(async () => {
         ></vue-easy-lightbox>
 
         <div class="flex flex-col h-full glass-regular">
-          <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
+          <van-pull-refresh
+            v-model="isRefreshing"
+            :disabled="!isAtTop"
+            @refresh="handleRefresh"
+          >
             <div
               ref="scrollContainer"
               class="overflow-y-auto p-4 md:p-8 custom-scrollbar"

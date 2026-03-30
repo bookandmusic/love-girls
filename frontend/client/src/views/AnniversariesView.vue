@@ -30,6 +30,8 @@ const anniversaries = ref<Anniversary[]>([]);
 const systemInfo = computed(() => systemStore.getSystemInfo);
 const showToast = useToast();
 const isRefreshing = ref(false);
+const isAtTop = ref(true);
+const scrollContainer = ref<HTMLElement | null>(null);
 
 const fetchAnniversaries = async () => {
   try {
@@ -325,6 +327,12 @@ const handleRefresh = async () => {
   await fetchAnniversaries();
   isRefreshing.value = false;
 };
+
+const handleScroll = (e: Event) => {
+  const target = e.target as HTMLElement;
+  if (!target) return;
+  isAtTop.value = target.scrollTop === 0;
+};
 </script>
 
 <template>
@@ -383,10 +391,15 @@ const handleRefresh = async () => {
 
         <van-pull-refresh
           v-model="isRefreshing"
+          :disabled="!isAtTop"
           @refresh="handleRefresh"
           class="flex-grow"
         >
-          <div class="overflow-y-auto custom-scrollbar px-4 md:px-8 pb-8">
+          <div
+            ref="scrollContainer"
+            class="overflow-y-auto custom-scrollbar px-4 md:px-8 pb-8"
+            @scroll="handleScroll"
+          >
             <div class="relative max-w-2xl mx-auto py-4">
               <div
                 class="absolute left-6 top-0 bottom-0 w-px bg-black/10"

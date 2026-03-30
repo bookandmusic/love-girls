@@ -9,6 +9,8 @@ import { useNotificationStore } from "@/stores/notification";
 const router = useRouter();
 const notificationStore = useNotificationStore();
 const isRefreshing = ref(false);
+const isAtTop = ref(true);
+const scrollContainer = ref<HTMLElement | null>(null);
 
 const handleBack = () => {
   router.back();
@@ -29,6 +31,12 @@ const handleMarkAllRead = async () => {
 const handleRefresh = async () => {
   await notificationStore.fetchNotifications(true);
   isRefreshing.value = false;
+};
+
+const handleScroll = (e: Event) => {
+  const target = e.target as HTMLElement;
+  if (!target) return;
+  isAtTop.value = target.scrollTop === 0;
 };
 
 onMounted(() => {
@@ -84,9 +92,12 @@ onUnmounted(() => {
 
       <div class="flex-1">
         <van-pull-refresh
+          ref="scrollContainer"
           v-model="isRefreshing"
+          :disabled="!isAtTop"
           @refresh="handleRefresh"
           class="h-full overflow-y-auto"
+          @scroll="handleScroll"
         >
           <div
             v-if="
