@@ -7,6 +7,7 @@ import router from "./router";
 import "./assets/tailwind.css";
 import "./assets/main.css";
 import "./assets/frontend-theme.css";
+import "./styles/vant-pull-refresh.css";
 
 const app = createApp(App);
 

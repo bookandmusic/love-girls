@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, nextTick } from "vue";
 import VueEasyLightbox from "vue-easy-lightbox";
+import { PullRefresh as VanPullRefresh } from "vant";
 
 import BaseIcon from "@/components/ui/BaseIcon.vue";
 import ActionSheet, {
@@ -35,6 +36,7 @@ const currentPage = ref(1);
 const totalPages = ref(0);
 const pageSize = ref(8);
 const loadingMore = ref(false);
+const isRefreshing = ref(false);
 const hasMore = computed(() => currentPage.value < totalPages.value);
 
 const scrollContainer = ref<HTMLElement | null>(null);
@@ -73,6 +75,12 @@ const { checkAndAutoLoadMore } = useAutoFillPage(
   loadingMore,
   loadNextPage,
 );
+
+const handleRefresh = async () => {
+  currentPage.value = 1;
+  await fetchMoments(1);
+  isRefreshing.value = false;
+};
 
 const handleScroll = (e: Event) => {
   const target = e.target as HTMLElement;
@@ -117,15 +125,20 @@ const viewImage = (imageUrl: string) => {
 const showActionSheet = ref(false);
 const selectedMoment = ref<Moment | null>(null);
 
-const { onPointerDown, onPointerUp, onPointerLeave, onPointerCancel } =
-  useLongPress({
-    duration: 500,
-    onFinish: () => {
-      if (selectedMoment.value) {
-        showActionSheet.value = true;
-      }
-    },
-  });
+const {
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+  onPointerCancel,
+  onPointerMove,
+} = useLongPress({
+  duration: 500,
+  onFinish: () => {
+    if (selectedMoment.value) {
+      showActionSheet.value = true;
+    }
+  },
+});
 
 const handlePointerDown = (moment: Moment, event: PointerEvent) => {
   selectedMoment.value = moment;
@@ -349,167 +362,170 @@ onMounted(async () => {
         ></vue-easy-lightbox>
 
         <div class="flex flex-col h-full glass-regular">
-          <div
-            ref="scrollContainer"
-            class="flex-grow overflow-y-auto p-4 md:p-8 space-y-0 custom-scrollbar"
-            @scroll="handleScroll"
-          >
+          <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
             <div
-              v-for="moment in moments"
-              :key="moment.id"
-              class="py-6 border-b border-black/5 last:border-0 ios-transition"
-              @pointerdown="handlePointerDown(moment, $event)"
-              @pointerup="onPointerUp"
-              @pointerleave="onPointerLeave"
-              @pointercancel="onPointerCancel"
+              ref="scrollContainer"
+              class="flex-grow overflow-y-auto p-4 md:p-8 space-y-0 custom-scrollbar"
+              @scroll="handleScroll"
             >
-              <div class="flex items-start">
-                <div
-                  class="w-12 h-12 rounded-lg overflow-hidden bg-white/50 border border-white/60 flex items-center justify-center text-[var(--fe-primary)] font-bold mr-4 flex-shrink-0"
-                >
-                  <img
-                    v-if="
-                      moment.author.avatar?.thumbnail ||
-                      moment.author.avatar?.url
-                    "
-                    :src="
-                      moment.author.avatar?.thumbnail ||
-                      moment.author.avatar?.url
-                    "
-                    :alt="moment.author.name"
-                    class="w-full h-full object-cover"
-                  />
-                  <span v-else>{{ moment.author.name.substring(0, 1) }}</span>
-                </div>
-
-                <div class="flex-grow min-w-0">
-                  <div class="mb-1">
-                    <h3 class="font-bold text-[#576b95] text-base truncate">
-                      {{ moment.author.name }}
-                    </h3>
+              <div
+                v-for="moment in moments"
+                :key="moment.id"
+                class="py-6 border-b border-black/5 last:border-0 ios-transition"
+                @pointerdown="handlePointerDown(moment, $event)"
+                @pointermove="onPointerMove"
+                @pointerup="onPointerUp"
+                @pointerleave="onPointerLeave"
+                @pointercancel="onPointerCancel"
+              >
+                <div class="flex items-start">
+                  <div
+                    class="w-12 h-12 rounded-lg overflow-hidden bg-white/50 border border-white/60 flex items-center justify-center text-[var(--fe-primary)] font-bold mr-4 flex-shrink-0"
+                  >
+                    <img
+                      v-if="
+                        moment.author.avatar?.thumbnail ||
+                        moment.author.avatar?.url
+                      "
+                      :src="
+                        moment.author.avatar?.thumbnail ||
+                        moment.author.avatar?.url
+                      "
+                      :alt="moment.author.name"
+                      class="w-full h-full object-cover"
+                    />
+                    <span v-else>{{ moment.author.name.substring(0, 1) }}</span>
                   </div>
 
-                  <p
-                    class="text-[var(--fe-text-primary)] leading-relaxed mb-3 text-sm md:text-base"
-                  >
-                    {{ moment.content }}
-                  </p>
+                  <div class="flex-grow min-w-0">
+                    <div class="mb-1">
+                      <h3 class="font-bold text-[#576b95] text-base truncate">
+                        {{ moment.author.name }}
+                      </h3>
+                    </div>
 
-                  <div
-                    v-if="moment.images && moment.images.length > 0"
-                    class="mb-3"
-                  >
+                    <p
+                      class="text-[var(--fe-text-primary)] leading-relaxed mb-3 text-sm md:text-base"
+                    >
+                      {{ moment.content }}
+                    </p>
+
                     <div
-                      class="grid gap-1.5"
-                      :class="{
-                        'grid-cols-1 w-max': moment.images.length === 1,
-                        'grid-cols-2 w-full md:max-w-[280px]':
-                          moment.images.length === 2 ||
-                          moment.images.length === 4,
-                        'grid-cols-3 w-full max-w-[320px] md:max-w-[420px]':
-                          moment.images.length === 3 ||
-                          moment.images.length >= 5,
-                      }"
+                      v-if="moment.images && moment.images.length > 0"
+                      class="mb-3"
                     >
                       <div
-                        v-for="(image, index) in moment.images"
-                        :key="index"
-                        class="overflow-hidden cursor-pointer tap-feedback ios-transition"
-                        :class="[
-                          moment.images.length === 1
-                            ? 'rounded-lg max-w-[240px] max-h-[320px]'
-                            : 'w-full aspect-square rounded-md',
-                        ]"
-                        @click.stop="viewImage(image.file?.url || '')"
+                        class="grid gap-1.5"
+                        :class="{
+                          'grid-cols-1 w-max': moment.images.length === 1,
+                          'grid-cols-2 w-full md:max-w-[280px]':
+                            moment.images.length === 2 ||
+                            moment.images.length === 4,
+                          'grid-cols-3 w-full max-w-[320px] md:max-w-[420px]':
+                            moment.images.length === 3 ||
+                            moment.images.length >= 5,
+                        }"
                       >
-                        <img
-                          :src="image.file?.thumbnail || image.file?.url"
-                          alt="动态图片"
-                          class="w-full h-full object-cover"
-                          loading="lazy"
-                        />
+                        <div
+                          v-for="(image, index) in moment.images"
+                          :key="index"
+                          class="overflow-hidden cursor-pointer tap-feedback ios-transition"
+                          :class="[
+                            moment.images.length === 1
+                              ? 'rounded-lg max-w-[240px] max-h-[320px]'
+                              : 'w-full aspect-square rounded-md',
+                          ]"
+                          @click.stop="viewImage(image.file?.url || '')"
+                        >
+                          <img
+                            :src="image.file?.thumbnail || image.file?.url"
+                            alt="动态图片"
+                            class="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div class="flex justify-between items-center mt-3">
-                    <span
-                      class="text-xs font-medium text-[var(--fe-text-secondary)] opacity-60"
-                    >
-                      {{ moment.createdAt }}
-                    </span>
-                    <div class="flex items-center space-x-2">
-                      <button
-                        @click.stop="openCommentInput(moment.id)"
-                        class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
+                    <div class="flex justify-between items-center mt-3">
+                      <span
+                        class="text-xs font-medium text-[var(--fe-text-secondary)] opacity-60"
                       >
-                        <BaseIcon
-                          name="comment"
-                          size="w-3.5 h-3.5"
-                          color="var(--fe-primary)"
-                        />
-                        <span
-                          class="text-xs font-bold text-[var(--fe-text-primary)]"
+                        {{ moment.createdAt }}
+                      </span>
+                      <div class="flex items-center space-x-2">
+                        <button
+                          @click.stop="openCommentInput(moment.id)"
+                          class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
                         >
-                          {{ moment.commentCount || 0 }}
-                        </span>
-                      </button>
-                      <button
-                        @click.stop="likeMoment(moment.id)"
-                        class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
-                      >
-                        <BaseIcon
-                          name="like"
-                          size="w-3.5 h-3.5"
-                          color="var(--fe-primary)"
-                        />
-                        <span
-                          class="text-xs font-bold text-[var(--fe-text-primary)]"
+                          <BaseIcon
+                            name="comment"
+                            size="w-3.5 h-3.5"
+                            color="var(--fe-primary)"
+                          />
+                          <span
+                            class="text-xs font-bold text-[var(--fe-text-primary)]"
+                          >
+                            {{ moment.commentCount || 0 }}
+                          </span>
+                        </button>
+                        <button
+                          @click.stop="likeMoment(moment.id)"
+                          class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
                         >
-                          {{ moment.likes }}
-                        </span>
-                      </button>
+                          <BaseIcon
+                            name="like"
+                            size="w-3.5 h-3.5"
+                            color="var(--fe-primary)"
+                          />
+                          <span
+                            class="text-xs font-bold text-[var(--fe-text-primary)]"
+                          >
+                            {{ moment.likes }}
+                          </span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  <div class="mt-3 pt-2 border-t border-black/5">
-                    <CommentList
-                      :ref="(el: unknown) => setCommentListRef(moment.id, el)"
-                      :moment-id="moment.id"
-                      :embedded="true"
-                      :max-display="3"
-                      @reply="(c) => handleReplyComment(moment.id, c)"
-                    />
+                    <div class="mt-3 pt-2 border-t border-black/5">
+                      <CommentList
+                        :ref="(el: unknown) => setCommentListRef(moment.id, el)"
+                        :moment-id="moment.id"
+                        :embedded="true"
+                        :max-display="3"
+                        @reply="(c) => handleReplyComment(moment.id, c)"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div
-              v-if="loadingMore || hasMore"
-              class="py-10 flex justify-center"
-            >
               <div
-                v-if="loadingMore"
-                class="flex items-center space-x-2 text-[var(--fe-text-secondary)]"
+                v-if="loadingMore || hasMore"
+                class="py-10 flex justify-center"
               >
                 <div
-                  class="w-5 h-5 border-2 border-[var(--fe-primary)] border-t-transparent rounded-full animate-spin"
-                ></div>
-                <span class="text-xs font-bold uppercase tracking-widest"
-                  >正在加载更多...</span
+                  v-if="loadingMore"
+                  class="flex items-center space-x-2 text-[var(--fe-text-secondary)]"
                 >
+                  <div
+                    class="w-5 h-5 border-2 border-[var(--fe-primary)] border-t-transparent rounded-full animate-spin"
+                  ></div>
+                  <span class="text-xs font-bold uppercase tracking-widest"
+                    >正在加载更多...</span
+                  >
+                </div>
+                <div
+                  v-else-if="!hasMore && moments.length > 0"
+                  class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest opacity-30"
+                >
+                  没有更多动态了
+                </div>
               </div>
-              <div
-                v-else-if="!hasMore && moments.length > 0"
-                class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest opacity-30"
-              >
-                没有更多动态了
-              </div>
-            </div>
 
-            <div class="h-20 md:hidden"></div>
-          </div>
+              <div class="h-20 md:hidden"></div>
+            </div>
+          </van-pull-refresh>
         </div>
       </template>
     </MainLayout>

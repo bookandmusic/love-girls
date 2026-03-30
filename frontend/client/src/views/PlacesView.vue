@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { PullRefresh as VanPullRefresh } from "vant";
 
 import BaseIcon from "@/components/ui/BaseIcon.vue";
 import ActionSheet, {
@@ -46,6 +47,7 @@ const places = computed(() => {
 
 const mapRef = ref<HTMLDivElement | null>(null);
 const showToast = useToast();
+const isRefreshing = ref(false);
 
 let map: L.Map | null = null;
 const markerMap = new Map<number, L.Marker>();
@@ -192,15 +194,20 @@ function flyToPlace(place: Place) {
 const showActionSheet = ref(false);
 const selectedPlace = ref<Place | null>(null);
 
-const { onPointerDown, onPointerUp, onPointerLeave, onPointerCancel } =
-  useLongPress({
-    duration: 500,
-    onFinish: () => {
-      if (selectedPlace.value) {
-        showActionSheet.value = true;
-      }
-    },
-  });
+const {
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+  onPointerCancel,
+  onPointerMove,
+} = useLongPress({
+  duration: 500,
+  onFinish: () => {
+    if (selectedPlace.value) {
+      showActionSheet.value = true;
+    }
+  },
+});
 
 const handlePointerDown = (place: Place, event: PointerEvent) => {
   selectedPlace.value = place;
@@ -289,6 +296,11 @@ const handleDeletePlace = async () => {
     deleting.value = false;
   }
 };
+
+const handleRefresh = async () => {
+  await fetchPlaces();
+  isRefreshing.value = false;
+};
 </script>
 
 <template>
@@ -324,53 +336,60 @@ const handleDeletePlace = async () => {
           </div>
         </div>
 
-        <div
-          class="px-4 md:px-8 pb-8 flex-grow overflow-y-auto custom-scrollbar"
+        <van-pull-refresh
+          v-model="isRefreshing"
+          @refresh="handleRefresh"
+          class="flex-grow"
         >
-          <h2
-            class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-3 ml-1"
+          <div
+            class="px-4 md:px-8 pb-8 flex-grow overflow-y-auto custom-scrollbar"
           >
-            我们去过的地方
-          </h2>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div
-              v-for="place in places"
-              :key="place.id"
-              class="flex items-center p-4 glass-thick rounded-2xl border border-white/40 shadow-sm tap-feedback ios-transition active:scale-[0.98] cursor-pointer"
-              @click="handlePlaceClick(place)"
-              @pointerdown="handlePointerDown(place, $event)"
-              @pointerup="onPointerUp"
-              @pointerleave="onPointerLeave"
-              @pointercancel="onPointerCancel"
+            <h2
+              class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-3 ml-1"
             >
+              我们去过的地方
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div
-                class="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--fe-primary)] to-[#f8c9c0] flex items-center justify-center text-white font-bold mr-4 shadow-sm flex-shrink-0"
+                v-for="place in places"
+                :key="place.id"
+                class="flex items-center p-4 glass-thick rounded-2xl border border-white/40 shadow-sm tap-feedback ios-transition active:scale-[0.98] cursor-pointer"
+                @click="handlePlaceClick(place)"
+                @pointerdown="handlePointerDown(place, $event)"
+                @pointermove="onPointerMove"
+                @pointerup="onPointerUp"
+                @pointerleave="onPointerLeave"
+                @pointercancel="onPointerCancel"
               >
-                {{ place.name.substring(0, 1) }}
-              </div>
-              <div class="min-w-0">
-                <h3 class="font-bold text-[var(--fe-text-primary)] truncate">
-                  {{ place.name }}
-                </h3>
-                <p
-                  class="text-xs font-medium text-[var(--fe-text-secondary)] mt-0.5"
+                <div
+                  class="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--fe-primary)] to-[#f8c9c0] flex items-center justify-center text-white font-bold mr-4 shadow-sm flex-shrink-0"
                 >
-                  {{ place.date }}
-                </p>
-              </div>
-              <div class="ml-auto">
-                <BaseIcon
-                  name="right"
-                  size="w-4 h-4"
-                  color="var(--fe-text-secondary)"
-                />
+                  {{ place.name.substring(0, 1) }}
+                </div>
+                <div class="min-w-0">
+                  <h3 class="font-bold text-[var(--fe-text-primary)] truncate">
+                    {{ place.name }}
+                  </h3>
+                  <p
+                    class="text-xs font-medium text-[var(--fe-text-secondary)] mt-0.5"
+                  >
+                    {{ place.date }}
+                  </p>
+                </div>
+                <div class="ml-auto">
+                  <BaseIcon
+                    name="right"
+                    size="w-4 h-4"
+                    color="var(--fe-text-secondary)"
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="h-20 md:hidden"></div>
-        </div>
+            <div class="h-20 md:hidden"></div>
+          </div>
+        </van-pull-refresh>
       </div>
     </template>
   </MainLayout>

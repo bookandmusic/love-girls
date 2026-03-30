@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getSolarDateFromLunar } from "chinese-days";
 import { computed, onMounted, ref } from "vue";
+import { PullRefresh as VanPullRefresh } from "vant";
 
 import BaseIcon from "@/components/ui/BaseIcon.vue";
 import ActionSheet, {
@@ -28,6 +29,7 @@ const systemStore = useSystemStore();
 const anniversaries = ref<Anniversary[]>([]);
 const systemInfo = computed(() => systemStore.getSystemInfo);
 const showToast = useToast();
+const isRefreshing = ref(false);
 
 const fetchAnniversaries = async () => {
   try {
@@ -223,15 +225,20 @@ const isPastAnniversary = (anniversary: Anniversary) => {
 const showActionSheet = ref(false);
 const selectedAnniversary = ref<Anniversary | null>(null);
 
-const { onPointerDown, onPointerUp, onPointerLeave, onPointerCancel } =
-  useLongPress({
-    duration: 500,
-    onFinish: () => {
-      if (selectedAnniversary.value) {
-        showActionSheet.value = true;
-      }
-    },
-  });
+const {
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+  onPointerCancel,
+  onPointerMove,
+} = useLongPress({
+  duration: 500,
+  onFinish: () => {
+    if (selectedAnniversary.value) {
+      showActionSheet.value = true;
+    }
+  },
+});
 
 const handlePointerDown = (anniversary: Anniversary, event: PointerEvent) => {
   selectedAnniversary.value = anniversary;
@@ -313,6 +320,11 @@ onMounted(async () => {
   await fetchAnniversaries();
   uiStore.setLoading(false);
 });
+
+const handleRefresh = async () => {
+  await fetchAnniversaries();
+  isRefreshing.value = false;
+};
 </script>
 
 <template>
@@ -369,87 +381,96 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div
-          class="px-4 md:px-8 pb-8 flex-grow overflow-y-auto custom-scrollbar"
+        <van-pull-refresh
+          v-model="isRefreshing"
+          @refresh="handleRefresh"
+          class="flex-grow"
         >
-          <div class="relative max-w-2xl mx-auto py-4">
-            <div class="absolute left-6 top-0 bottom-0 w-px bg-black/10"></div>
-
-            <div class="space-y-6">
+          <div
+            class="px-4 md:px-8 pb-8 flex-grow overflow-y-auto custom-scrollbar"
+          >
+            <div class="relative max-w-2xl mx-auto py-4">
               <div
-                v-for="anniversary in sortedAnniversaries"
-                :key="anniversary.id"
-                class="relative flex items-center group"
-              >
-                <div
-                  class="absolute left-6 w-3 h-3 rounded-full border-2 border-white transform translate-x-[-50%] z-10 ios-transition"
-                  :class="[
-                    upcomingAnniversaryInfo &&
-                    anniversary.id === upcomingAnniversaryInfo.anniversary.id
-                      ? 'bg-[var(--fe-primary)] scale-125 shadow-[0_0_8px_rgba(240,173,160,0.6)]'
-                      : 'bg-[var(--fe-text-secondary)] opacity-30',
-                  ]"
-                ></div>
+                class="absolute left-6 top-0 bottom-0 w-px bg-black/10"
+              ></div>
 
-                <div class="ml-12 flex-grow">
+              <div class="space-y-6">
+                <div
+                  v-for="anniversary in sortedAnniversaries"
+                  :key="anniversary.id"
+                  class="relative flex items-center group"
+                >
                   <div
-                    class="glass-thick p-4 rounded-2xl border border-white/40 shadow-sm ios-transition tap-feedback active:scale-[0.98] cursor-pointer"
-                    :class="{
-                      'opacity-50 grayscale-[0.2]':
-                        isPastAnniversary(anniversary),
-                    }"
-                    @pointerdown="handlePointerDown(anniversary, $event)"
-                    @pointerup="onPointerUp"
-                    @pointerleave="onPointerLeave"
-                    @pointercancel="onPointerCancel"
-                  >
-                    <div class="flex justify-between items-start">
-                      <div class="min-w-0">
-                        <h3
-                          class="font-bold text-[var(--fe-text-primary)] text-lg truncate"
-                        >
-                          {{ anniversary.title }}
-                        </h3>
-                        <p
-                          class="text-xs font-medium text-[var(--fe-text-secondary)] mt-0.5"
-                        >
-                          {{ formatAnniversaryDate(anniversary) }}
-                          <span
-                            v-if="anniversary.calendar === 'lunar'"
-                            class="ml-1 text-[var(--fe-primary-dark)]"
+                    class="absolute left-6 w-3 h-3 rounded-full border-2 border-white transform translate-x-[-50%] z-10 ios-transition"
+                    :class="[
+                      upcomingAnniversaryInfo &&
+                      anniversary.id === upcomingAnniversaryInfo.anniversary.id
+                        ? 'bg-[var(--fe-primary)] scale-125 shadow-[0_0_8px_rgba(240,173,160,0.6)]'
+                        : 'bg-[var(--fe-text-secondary)] opacity-30',
+                    ]"
+                  ></div>
+
+                  <div class="ml-12 flex-grow">
+                    <div
+                      class="glass-thick p-4 rounded-2xl border border-white/40 shadow-sm ios-transition tap-feedback active:scale-[0.98] cursor-pointer"
+                      :class="{
+                        'opacity-50 grayscale-[0.2]':
+                          isPastAnniversary(anniversary),
+                      }"
+                      @pointerdown="handlePointerDown(anniversary, $event)"
+                      @pointermove="onPointerMove"
+                      @pointerup="onPointerUp"
+                      @pointerleave="onPointerLeave"
+                      @pointercancel="onPointerCancel"
+                    >
+                      <div class="flex justify-between items-start">
+                        <div class="min-w-0">
+                          <h3
+                            class="font-bold text-[var(--fe-text-primary)] text-lg truncate"
                           >
-                            (农历)
-                          </span>
-                        </p>
-                      </div>
-                      <div
-                        v-if="
-                          upcomingAnniversaryInfo &&
-                          anniversary.id ===
-                            upcomingAnniversaryInfo.anniversary.id
-                        "
-                        class="flex-shrink-0"
-                      >
+                            {{ anniversary.title }}
+                          </h3>
+                          <p
+                            class="text-xs font-medium text-[var(--fe-text-secondary)] mt-0.5"
+                          >
+                            {{ formatAnniversaryDate(anniversary) }}
+                            <span
+                              v-if="anniversary.calendar === 'lunar'"
+                              class="ml-1 text-[var(--fe-primary-dark)]"
+                            >
+                              (农历)
+                            </span>
+                          </p>
+                        </div>
                         <div
-                          class="px-2 py-0.5 rounded-full bg-[var(--fe-primary)]/20 text-[var(--fe-primary)] text-[10px] font-bold uppercase tracking-wider"
+                          v-if="
+                            upcomingAnniversaryInfo &&
+                            anniversary.id ===
+                              upcomingAnniversaryInfo.anniversary.id
+                          "
+                          class="flex-shrink-0"
                         >
-                          Next
+                          <div
+                            class="px-2 py-0.5 rounded-full bg-[var(--fe-primary)]/20 text-[var(--fe-primary)] text-[10px] font-bold uppercase tracking-wider"
+                          >
+                            Next
+                          </div>
                         </div>
                       </div>
+                      <p
+                        class="mt-2 text-sm text-[var(--fe-text-primary)] leading-relaxed"
+                      >
+                        {{ anniversary.description }}
+                      </p>
                     </div>
-                    <p
-                      class="mt-2 text-sm text-[var(--fe-text-primary)] leading-relaxed"
-                    >
-                      {{ anniversary.description }}
-                    </p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="h-20 md:hidden"></div>
-        </div>
+            <div class="h-20 md:hidden"></div>
+          </div>
+        </van-pull-refresh>
       </div>
     </template>
   </MainLayout>

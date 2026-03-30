@@ -1,0 +1,35 @@
+.van-pull-refresh {
+  height: 100%;
+}
+
+.van-pull-refresh__track {
+  height: 100%;
+}
+
+.van-pull-refresh__head {
+  background: var(--fe-glass-regular);
+  backdrop-filter: var(--fe-blur-regular);
+  -webkit-backdrop-filter: var(--fe-blur-regular);
+  border-radius: var(--fe-radius-card);
+  margin: 8px;
+  color: var(--fe-primary);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.van-pull-refresh__loading .van-loading__spinner {
+  color: var(--fe-primary);
+}
+
+.van-pull-refresh__head::before {
+  color: var(--fe-primary);
+}
+
+.van-pull-refresh__head .van-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

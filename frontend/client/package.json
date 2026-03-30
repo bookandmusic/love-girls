@@ -28,6 +28,7 @@
     "p5": "^2.1.2",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.1.18",
+    "vant": "^4.9.24",
     "vite-svg-loader": "^5.1.0",
     "vue": "^3.5.25",
     "vue-easy-lightbox": "^1.19.0",

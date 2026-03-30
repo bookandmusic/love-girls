@@ -1,91 +1,95 @@
 <template>
-  <div
-    ref="scrollContainer"
-    class="flex-grow overflow-y-auto custom-scrollbar"
-    @scroll="handleScroll"
-  >
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-      <div
-        v-for="album in albums"
-        :key="album.id"
-        class="relative aspect-[4/3] rounded-[var(--fe-radius-card)] overflow-hidden shadow-lg border border-white/40 cursor-pointer tap-feedback ios-transition group"
-        @click="onSelectAlbum(album)"
-        @pointerdown="handlePointerDown(album, $event)"
-        @pointerup="handlePointerUp"
-        @pointerleave="handlePointerLeave"
-        @pointercancel="handlePointerCancel"
-      >
-        <!-- 基础渐变背景（作为底层垫片，解决封面加载瞬间的留白问题） -->
+  <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
+    <div
+      ref="scrollContainer"
+      class="flex-grow overflow-y-auto custom-scrollbar"
+      @scroll="handleScroll"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
         <div
-          class="absolute inset-0 w-full h-full"
-          :style="getPlaceholderStyle(album.id)"
-        ></div>
-
-        <!-- 封面图 (仅在数据存在时渲染) -->
-        <img
-          v-if="album.coverImage?.file"
-          :src="album.coverImage.file.thumbnail || album.coverImage.file.url"
-          :alt="album.name"
-          class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-          @load="
-            $event.target &&
-            (($event.target as HTMLImageElement).style.opacity = '1')
-          "
-          style="opacity: 0"
-        />
-
-        <!-- 底部毛玻璃信息栏 -->
-        <div
-          class="absolute inset-x-0 bottom-0 p-4 glass-thick border-t border-white/20 ios-transition rounded-b-[var(--fe-radius-card)]"
+          v-for="album in albums"
+          :key="album.id"
+          class="relative aspect-[4/3] rounded-[var(--fe-radius-card)] overflow-hidden shadow-lg border border-white/40 cursor-pointer tap-feedback ios-transition group"
+          @click="onSelectAlbum(album)"
+          @pointerdown="handlePointerDown(album, $event)"
+          @pointermove="handlePointerMove"
+          @pointerup="handlePointerUp"
+          @pointerleave="handlePointerLeave"
+          @pointercancel="handlePointerCancel"
         >
-          <div class="flex justify-between items-center mb-1">
-            <h3
-              class="text-lg font-bold text-[var(--fe-text-primary)] truncate"
-            >
-              {{ album.name }}
-            </h3>
-            <div
-              class="flex items-center text-xs font-bold text-[var(--fe-primary)]"
-            >
-              <BaseIcon name="photo-heart" size="w-4 h-4" class="mr-1" />
-              {{ album.photoCount }}
+          <!-- 基础渐变背景（作为底层垫片，解决封面加载瞬间的留白问题） -->
+          <div
+            class="absolute inset-0 w-full h-full"
+            :style="getPlaceholderStyle(album.id)"
+          ></div>
+
+          <!-- 封面图 (仅在数据存在时渲染) -->
+          <img
+            v-if="album.coverImage?.file"
+            :src="album.coverImage.file.thumbnail || album.coverImage.file.url"
+            :alt="album.name"
+            class="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+            @load="
+              $event.target &&
+              (($event.target as HTMLImageElement).style.opacity = '1')
+            "
+            style="opacity: 0"
+          />
+
+          <!-- 底部毛玻璃信息栏 -->
+          <div
+            class="absolute inset-x-0 bottom-0 p-4 glass-thick border-t border-white/20 ios-transition rounded-b-[var(--fe-radius-card)]"
+          >
+            <div class="flex justify-between items-center mb-1">
+              <h3
+                class="text-lg font-bold text-[var(--fe-text-primary)] truncate"
+              >
+                {{ album.name }}
+              </h3>
+              <div
+                class="flex items-center text-xs font-bold text-[var(--fe-primary)]"
+              >
+                <BaseIcon name="photo-heart" size="w-4 h-4" class="mr-1" />
+                {{ album.photoCount }}
+              </div>
             </div>
+            <p class="text-xs text-[var(--fe-text-secondary)] line-clamp-1">
+              {{ album.description || "这一刻，永恒。" }}
+            </p>
           </div>
-          <p class="text-xs text-[var(--fe-text-secondary)] line-clamp-1">
-            {{ album.description || "这一刻，永恒。" }}
-          </p>
         </div>
       </div>
-    </div>
 
-    <!-- 加载状态指示器 -->
-    <div v-if="loading || hasMore" class="py-10 flex justify-center">
-      <div
-        v-if="loading"
-        class="flex items-center space-x-2 text-[var(--fe-text-secondary)]"
-      >
+      <!-- 加载状态指示器 -->
+      <div v-if="loading || hasMore" class="py-10 flex justify-center">
         <div
-          class="w-5 h-5 border-2 border-[var(--fe-primary)] border-t-transparent rounded-full animate-spin"
-        ></div>
-        <span class="text-xs font-bold uppercase tracking-widest"
-          >加载中...</span
+          v-if="loading"
+          class="flex items-center space-x-2 text-[var(--fe-text-secondary)]"
         >
+          <div
+            class="w-5 h-5 border-2 border-[var(--fe-primary)] border-t-transparent rounded-full animate-spin"
+          ></div>
+          <span class="text-xs font-bold uppercase tracking-widest"
+            >加载中...</span
+          >
+        </div>
+        <div
+          v-else-if="!hasMore && albums.length > 0"
+          class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest opacity-30"
+        >
+          已显示全部相册
+        </div>
       </div>
-      <div
-        v-else-if="!hasMore && albums.length > 0"
-        class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest opacity-30"
-      >
-        已显示全部相册
-      </div>
-    </div>
 
-    <!-- 占位 -->
-    <div class="h-20 md:hidden"></div>
-  </div>
+      <!-- 占位 -->
+      <div class="h-20 md:hidden"></div>
+    </div>
+  </van-pull-refresh>
 </template>
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from "vue";
+import { PullRefresh as VanPullRefresh } from "vant";
 
 import BaseIcon from "@/components/ui/BaseIcon.vue";
 import { useLongPress } from "@/composables/useLongPress";
@@ -103,18 +107,31 @@ const emit = defineEmits<{
   (e: "select-album", album: Album): void;
   (e: "load-more"): void;
   (e: "long-press", album: Album): void;
+  (e: "refresh"): void;
 }>();
 
-const { onPointerDown, onPointerUp, onPointerLeave, onPointerCancel } =
-  useLongPress({
-    duration: 500,
-    onFinish: () => {
-      if (longPressAlbum.value) {
-        isLongPressTriggered.value = true;
-        emit("long-press", longPressAlbum.value);
-      }
-    },
-  });
+const isRefreshing = ref(false);
+
+const handleRefresh = async () => {
+  emit("refresh");
+  isRefreshing.value = false;
+};
+
+const {
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+  onPointerCancel,
+  onPointerMove,
+} = useLongPress({
+  duration: 500,
+  onFinish: () => {
+    if (longPressAlbum.value) {
+      isLongPressTriggered.value = true;
+      emit("long-press", longPressAlbum.value);
+    }
+  },
+});
 
 const longPressAlbum = ref<Album | null>(null);
 const isLongPressTriggered = ref(false);
@@ -123,6 +140,10 @@ const handlePointerDown = (album: Album, event: PointerEvent) => {
   longPressAlbum.value = album;
   isLongPressTriggered.value = false;
   onPointerDown(event);
+};
+
+const handlePointerMove = (event: PointerEvent) => {
+  onPointerMove(event);
 };
 
 const handlePointerUp = () => {

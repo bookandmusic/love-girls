@@ -127,6 +127,18 @@ const handleLoadMorePhotos = () => {
   }
 };
 
+const handleRefreshAlbums = async () => {
+  currentPage.value = 1;
+  await fetchAlbums(1);
+};
+
+const handleRefreshPhotos = async () => {
+  if (currentAlbumId.value) {
+    currentPhotoPage.value = 1;
+    await fetchPhotos(currentAlbumId.value, 1);
+  }
+};
+
 const backToAlbums = () => {
   currentAlbumId.value = null;
   currentAlbum.value = null;
@@ -363,6 +375,7 @@ onMounted(async () => {
           @select-album="handleSelectAlbum"
           @load-more="handleLoadMoreAlbums"
           @long-press="handleLongPressAlbum"
+          @refresh="handleRefreshAlbums"
         />
       </div>
 
@@ -374,6 +387,7 @@ onMounted(async () => {
           @back="handleBack"
           @load-more="handleLoadMorePhotos"
           @long-press="handleLongPressPhoto"
+          @refresh="handleRefreshPhotos"
         />
       </div>
     </template>
