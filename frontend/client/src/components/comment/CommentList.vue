@@ -10,6 +10,12 @@ import CommentInput from "./CommentInput.vue";
 
 const props = defineProps<{
   momentId: number;
+  embedded?: boolean;
+  maxDisplay?: number;
+}>();
+
+const emit = defineEmits<{
+  reply: [comment: Comment];
 }>();
 
 const showToast = useToast();
@@ -18,7 +24,20 @@ const comments = ref<Comment[]>([]);
 const loading = ref(false);
 const total = ref(0);
 const page = ref(1);
-const hasMore = computed(() => comments.value.length < total.value);
+
+const countAllComments = (items: Comment[]): number => {
+  let count = 0;
+  for (const item of items) {
+    count++;
+    if (item.children && item.children.length > 0) {
+      count += countAllComments(item.children);
+    }
+  }
+  return count;
+};
+
+const displayedCount = computed(() => countAllComments(comments.value));
+const hasMore = computed(() => displayedCount.value < total.value);
 
 const showInput = ref(false);
 const replyingTo = ref<Comment | null>(null);
@@ -34,15 +53,15 @@ const fetchComments = async (reset = false) => {
       comments.value = [];
     }
 
-    const response = await commentApi.getComments(props.momentId, page.value);
+    let limit = 10;
+    if (props.embedded && props.maxDisplay) {
+      limit = reset ? props.maxDisplay : 100;
+    }
+
+    const response = await commentApi.getComments(props.momentId, 1, limit);
     if (response.code === 0) {
-      if (reset) {
-        comments.value = response.data.comments || [];
-      } else {
-        comments.value = [...comments.value, ...(response.data.comments || [])];
-      }
+      comments.value = response.data.comments || [];
       total.value = response.data.total;
-      page.value = response.data.page + 1;
     } else {
       showToast(response.msg || "获取评论失败", "error");
     }
@@ -55,8 +74,12 @@ const fetchComments = async (reset = false) => {
 };
 
 const handleReply = (comment: Comment) => {
-  replyingTo.value = comment;
-  showInput.value = true;
+  if (props.embedded) {
+    emit("reply", comment);
+  } else {
+    replyingTo.value = comment;
+    showInput.value = true;
+  }
 };
 
 const handleCommentCreated = (newComment: Comment) => {
@@ -127,8 +150,8 @@ defineExpose({
 </script>
 
 <template>
-  <div class="comment-list flex flex-col h-full">
-    <div class="flex-shrink-0">
+  <div class="comment-list" :class="{ 'h-full flex flex-col': !embedded }">
+    <div v-if="!embedded" class="flex-shrink-0">
       <div class="flex items-center justify-between mb-3">
         <span class="text-sm font-medium text-gray-700">
           评论 ({{ total }})
@@ -150,23 +173,26 @@ defineExpose({
       />
     </div>
 
-    <div class="flex-1 overflow-y-auto min-h-0">
-      <div v-if="comments.length === 0 && !loading" class="py-6 text-center">
-        <p class="text-sm text-gray-500">暂无评论，快来发表第一条评论吧</p>
+    <div :class="{ 'flex-1 overflow-y-auto min-h-0': !embedded }">
+      <div v-if="comments.length === 0 && !loading" class="py-1">
+        <p class="text-xs text-gray-400 text-center">
+          {{ embedded ? "暂无评论" : "暂无评论，快来发表第一条评论吧" }}
+        </p>
       </div>
 
-      <div v-else class="space-y-3">
+      <div v-else class="space-y-0.5">
         <CommentItem
           v-for="comment in comments"
           :key="comment.id"
           :comment="comment"
           :moment-id="momentId"
+          :embedded="embedded"
           @reply="handleReply"
           @deleted="handleCommentDeleted"
         />
       </div>
 
-      <div v-if="hasMore" class="py-4 text-center">
+      <div v-if="!embedded && hasMore" class="py-4 text-center">
         <button
           @click="fetchComments()"
           :disabled="loading"
@@ -174,6 +200,20 @@ defineExpose({
         >
           {{ loading ? "加载中..." : "加载更多评论" }}
         </button>
+      </div>
+
+      <div v-if="embedded && hasMore" class="pt-2 text-center">
+        <button
+          @click="fetchComments()"
+          :disabled="loading"
+          class="text-xs text-[var(--fe-primary-dark)] hover:opacity-80 transition-opacity disabled:opacity-50"
+        >
+          {{ loading ? "加载中..." : `展开更多评论` }}
+        </button>
+      </div>
+
+      <div v-if="embedded && total > 0 && !hasMore" class="pt-1 text-center">
+        <span class="text-xs text-gray-400">共 {{ total }} 条</span>
       </div>
     </div>
   </div>

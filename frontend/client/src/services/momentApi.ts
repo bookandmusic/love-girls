@@ -12,6 +12,7 @@ export interface Moment {
   images?: Photo[];
   imageIds?: number[];
   likes: number;
+  commentCount?: number;
   createdAt: string;
   author: {
     id: number;

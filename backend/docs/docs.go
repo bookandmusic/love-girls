@@ -2510,6 +2510,9 @@ const docTemplate = `{
                 "author": {
                     "$ref": "#/definitions/service.FrontendAuthor"
                 },
+                "commentCount": {
+                    "type": "integer"
+                },
                 "content": {
                     "type": "string"
                 },

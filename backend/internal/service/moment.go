@@ -24,13 +24,14 @@ type MomentQueryParams struct {
 
 // FrontendMoment 前端期望的Moment数据结构
 type FrontendMoment struct {
-	ID        uint64          `json:"id"`
-	Content   string          `json:"content"`
-	Images    []FrontendPhoto `json:"images"`
-	Likes     int             `json:"likes"`
-	CreatedAt string          `json:"createdAt"`
-	Author    FrontendAuthor  `json:"author"`
-	IsPublic  bool            `json:"isPublic"`
+	ID           uint64          `json:"id"`
+	Content      string          `json:"content"`
+	Images       []FrontendPhoto `json:"images"`
+	Likes        int             `json:"likes"`
+	CommentCount int64           `json:"commentCount"`
+	CreatedAt    string          `json:"createdAt"`
+	Author       FrontendAuthor  `json:"author"`
+	IsPublic     bool            `json:"isPublic"`
 }
 
 // FrontendPhoto 前端期望的Photo数据结构
@@ -53,6 +54,8 @@ func (s *MomentService) convertToFrontendFormat(c *gin.Context, moment *model.Mo
 		return nil
 	}
 
+	ctx := c.Request.Context()
+
 	// 转换图片数据
 	photos := make([]FrontendPhoto, 0, len(moment.EntityFiles))
 	for _, ef := range moment.EntityFiles {
@@ -74,27 +77,33 @@ func (s *MomentService) convertToFrontendFormat(c *gin.Context, moment *model.Mo
 		author.Avatar = s.FileService.BuildFileResponse(c, moment.User.Avatar)
 	}
 
+	// 获取评论数量
+	commentCount, _ := s.CommentRepo.CountByMomentID(ctx, moment.ID)
+
 	return &FrontendMoment{
-		ID:        moment.ID,
-		Content:   moment.Content,
-		Images:    photos,
-		Likes:     moment.Likes,
-		CreatedAt: moment.CreatedAt.Format("2006-01-02 15:04:05"),
-		Author:    author,
-		IsPublic:  moment.IsPublic,
+		ID:           moment.ID,
+		Content:      moment.Content,
+		Images:       photos,
+		Likes:        moment.Likes,
+		CommentCount: commentCount,
+		CreatedAt:    moment.CreatedAt.Format("2006-01-02 15:04:05"),
+		Author:       author,
+		IsPublic:     moment.IsPublic,
 	}
 }
 
 type MomentService struct {
 	*BaseService
 	MomentRepo  *repo.MomentRepo
+	CommentRepo *repo.CommentRepo
 	FileService *FileService
 }
 
-func NewMomentService(log *log.Logger, momentRepo *repo.MomentRepo, fileService *FileService) *MomentService {
+func NewMomentService(log *log.Logger, momentRepo *repo.MomentRepo, commentRepo *repo.CommentRepo, fileService *FileService) *MomentService {
 	return &MomentService{
 		BaseService: &BaseService{Log: log},
 		MomentRepo:  momentRepo,
+		CommentRepo: commentRepo,
 		FileService: fileService,
 	}
 }
@@ -138,6 +147,9 @@ type MomentListResponse struct {
 // CreateMoment 创建动态
 func (s *MomentService) CreateMoment(c *gin.Context, req *MomentCreateRequest) (*FrontendMoment, error) {
 	ctx := c.Request.Context()
+
+	s.Log.Info("创建动态请求", "userID", req.UserID, "content", req.Content)
+
 	moment := &model.Moment{
 		Content:  req.Content,
 		IsPublic: req.IsPublic,

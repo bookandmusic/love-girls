@@ -43,6 +43,10 @@ func ProvideCommentHandler(svc *service.CommentService) *handler.CommentHandler 
 	return handler.NewCommentHandler(svc)
 }
 
+func ProvideNotificationHandler(svc *service.NotificationService) *handler.NotificationHandler {
+	return handler.NewNotificationHandler(svc)
+}
+
 func ProvideStaticHandler() *handler.StaticHandler {
 	return handler.NewStaticHandler()
 }
@@ -71,6 +75,7 @@ func ProvideHandlers(
 	placeHandler *handler.PlaceHandler,
 	albumHandler *handler.AlbumHandler,
 	commentHandler *handler.CommentHandler,
+	notificationHandler *handler.NotificationHandler,
 ) []handler.ApiHandler {
 	return []handler.ApiHandler{
 		userHandler,
@@ -82,6 +87,7 @@ func ProvideHandlers(
 		placeHandler,
 		albumHandler,
 		commentHandler,
+		notificationHandler,
 	}
 }
 
@@ -95,6 +101,7 @@ var HandlerSet = wire.NewSet(
 	ProvidePlaceHandler,
 	ProvideAlbumHandler,
 	ProvideCommentHandler,
+	ProvideNotificationHandler,
 	ProvideStaticHandler,
 	ProvideSwaggerHandler,
 	ProvideStaticHandlers,

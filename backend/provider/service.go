@@ -37,8 +37,8 @@ func ProvideAnniversaryService(log *log.Logger, anniversaryRepo *repo.Anniversar
 	return service.NewAnniversaryService(log, anniversaryRepo)
 }
 
-func ProvideMomentService(log *log.Logger, momentRepo *repo.MomentRepo, fileService *service.FileService) *service.MomentService {
-	return service.NewMomentService(log, momentRepo, fileService)
+func ProvideMomentService(log *log.Logger, momentRepo *repo.MomentRepo, commentRepo *repo.CommentRepo, fileService *service.FileService) *service.MomentService {
+	return service.NewMomentService(log, momentRepo, commentRepo, fileService)
 }
 
 func ProvidePlaceService(log *log.Logger, placeRepo *repo.PlaceRepo, fileService *service.FileService) *service.PlaceService {
@@ -49,8 +49,12 @@ func ProvideAlbumService(log *log.Logger, albumRepo *repo.AlbumRepo, fileService
 	return service.NewAlbumService(log, albumRepo, fileService)
 }
 
-func ProvideCommentService(log *log.Logger, commentRepo *repo.CommentRepo, fileService *service.FileService) *service.CommentService {
-	return service.NewCommentService(log, commentRepo, fileService)
+func ProvideCommentService(log *log.Logger, commentRepo *repo.CommentRepo, momentRepo *repo.MomentRepo, notificationRepo *repo.NotificationRepo, fileService *service.FileService, notificationService *service.NotificationService) *service.CommentService {
+	return service.NewCommentService(log, commentRepo, momentRepo, notificationRepo, fileService, notificationService)
+}
+
+func ProvideNotificationService(log *log.Logger, notificationRepo *repo.NotificationRepo, fileService *service.FileService) *service.NotificationService {
+	return service.NewNotificationService(log, notificationRepo, fileService)
 }
 
 var ServiceSet = wire.NewSet(
@@ -62,4 +66,5 @@ var ServiceSet = wire.NewSet(
 	ProvidePlaceService,
 	ProvideAlbumService,
 	ProvideCommentService,
+	ProvideNotificationService,
 )

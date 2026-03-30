@@ -8,6 +8,7 @@ import { useToast } from "@/utils/toastUtils";
 const props = defineProps<{
   momentId: number;
   replyTo?: Comment | null;
+  inline?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -71,7 +72,13 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="comment-input bg-gray-50 rounded-xl p-3 mb-3">
+  <div
+    :class="
+      inline
+        ? 'comment-input-inline'
+        : 'comment-input bg-gray-50 rounded-xl p-3 mb-3'
+    "
+  >
     <div v-if="replyTo" class="flex items-center justify-between mb-2">
       <span class="text-xs text-gray-500">
         回复 <span class="text-[#576b95]">{{ replyTo.author.name }}</span>
@@ -80,21 +87,23 @@ const handleCancel = () => {
         @click="handleCancel"
         class="text-xs text-gray-400 hover:text-gray-600 transition-colors"
       >
-        取消
+        取消回复
       </button>
     </div>
 
     <textarea
+      ref="textareaRef"
       v-model="content"
       :placeholder="placeholder"
       :disabled="submitting"
-      rows="3"
+      :rows="inline ? 3 : 3"
       class="w-full bg-transparent border-none resize-none text-sm focus:outline-none placeholder:text-gray-400"
+      :class="{ 'bg-gray-50 rounded-lg p-2': inline }"
     ></textarea>
 
     <div class="flex items-center justify-end gap-2 mt-2">
       <button
-        v-if="replyTo"
+        v-if="!inline && replyTo"
         @click="handleCancel"
         class="px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
       >

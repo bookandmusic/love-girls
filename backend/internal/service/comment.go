@@ -17,15 +17,21 @@ import (
 
 type CommentService struct {
 	*BaseService
-	CommentRepo *repo.CommentRepo
-	FileService *FileService
+	CommentRepo      *repo.CommentRepo
+	MomentRepo       *repo.MomentRepo
+	NotificationRepo *repo.NotificationRepo
+	FileService      *FileService
+	NotificationSvc  *NotificationService
 }
 
-func NewCommentService(log *log.Logger, commentRepo *repo.CommentRepo, fileService *FileService) *CommentService {
+func NewCommentService(log *log.Logger, commentRepo *repo.CommentRepo, momentRepo *repo.MomentRepo, notificationRepo *repo.NotificationRepo, fileService *FileService, notificationService *NotificationService) *CommentService {
 	return &CommentService{
-		BaseService: &BaseService{Log: log},
-		CommentRepo: commentRepo,
-		FileService: fileService,
+		BaseService:      &BaseService{Log: log},
+		CommentRepo:      commentRepo,
+		MomentRepo:       momentRepo,
+		NotificationRepo: notificationRepo,
+		FileService:      fileService,
+		NotificationSvc:  notificationService,
 	}
 }
 
@@ -157,7 +163,81 @@ func (s *CommentService) CreateComment(c *gin.Context, req *CommentCreateRequest
 		}
 	}
 
+	// 创建通知
+	s.createNotification(ctx, req, createdComment)
+
 	return s.convertToFrontendFormat(c, createdComment, replyToUsersMap), nil
+}
+
+func (s *CommentService) createNotification(ctx context.Context, req *CommentCreateRequest, comment *model.Comment) {
+	// 获取动态信息以获取动态作者
+	moment, err := s.MomentRepo.FindByID(ctx, req.MomentID)
+	if err != nil {
+		s.Log.Error("获取动态信息失败", "error", err, "momentID", req.MomentID)
+		return
+	}
+
+	s.Log.Info("创建通知检查",
+		"momentUserID", moment.UserID,
+		"commentUserID", req.UserID,
+		"momentID", req.MomentID,
+		"commentID", comment.ID,
+		"parentID", req.ParentID,
+		"replyToID", req.ReplyToID,
+	)
+
+	// 不给自己发通知
+	if moment.UserID == req.UserID {
+		s.Log.Info("跳过通知：评论自己的动态", "userID", req.UserID)
+		return
+	}
+
+	var notificationType model.NotificationType
+	var receiverID uint64
+
+	if req.ParentID == nil {
+		// 一级评论：通知动态作者
+		notificationType = model.NotificationTypeComment
+		receiverID = moment.UserID
+		s.Log.Info("一级评论：通知动态作者", "receiverID", receiverID)
+	} else {
+		// 回复评论：通知被回复的评论作者
+		notificationType = model.NotificationTypeReply
+		if req.ReplyToID != nil {
+			replyToComment, err := s.CommentRepo.FindByID(ctx, *req.ReplyToID)
+			if err != nil || replyToComment == nil {
+				s.Log.Error("找不到被回复的评论", "replyToID", *req.ReplyToID, "error", err)
+				return
+			}
+			receiverID = replyToComment.UserID
+			s.Log.Info("回复评论：通知被回复者", "receiverID", receiverID)
+		} else {
+			parentComment, err := s.CommentRepo.FindByID(ctx, *req.ParentID)
+			if err != nil || parentComment == nil {
+				s.Log.Error("找不到父评论", "parentID", *req.ParentID, "error", err)
+				return
+			}
+			receiverID = parentComment.UserID
+			s.Log.Info("回复评论：通知父评论作者", "receiverID", receiverID)
+		}
+	}
+
+	// 不给自己发通知
+	if receiverID == req.UserID {
+		s.Log.Info("跳过通知：回复自己的评论", "userID", req.UserID)
+		return
+	}
+
+	// 截取评论内容作为通知内容
+	content := req.Content
+	if len(content) > 100 {
+		content = content[:100] + "..."
+	}
+
+	s.Log.Info("创建通知", "receiverID", receiverID, "senderID", req.UserID, "type", notificationType)
+	if err := s.NotificationSvc.CreateNotification(ctx, receiverID, req.UserID, req.MomentID, comment.ID, notificationType, content); err != nil {
+		s.Log.Error("创建通知失败", "error", err)
+	}
 }
 
 func (s *CommentService) DeleteComment(ctx context.Context, id uint64, userID uint64) (bool, error) {

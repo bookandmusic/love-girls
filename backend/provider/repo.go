@@ -16,4 +16,5 @@ var RepoSet = wire.NewSet(
 	repo.NewEntityFileRepo,
 	repo.NewSettingRepo,
 	repo.NewCommentRepo,
+	repo.NewNotificationRepo,
 )

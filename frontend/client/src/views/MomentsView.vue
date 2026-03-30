@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, nextTick } from "vue";
 import VueEasyLightbox from "vue-easy-lightbox";
 
 import BaseIcon from "@/components/ui/BaseIcon.vue";
@@ -8,6 +8,8 @@ import ActionSheet, {
 } from "@/components/ui/ActionSheet.vue";
 import FloatingAddButton from "@/components/ui/FloatingAddButton.vue";
 import CommentList from "@/components/comment/CommentList.vue";
+import CommentInput from "@/components/comment/CommentInput.vue";
+import type { Comment } from "@/services/commentApi";
 import { useLongPress } from "@/composables/useLongPress";
 import MainLayout from "@/layouts/MainLayout.vue";
 import { type Moment, momentApi } from "@/services/momentApi";
@@ -232,23 +234,65 @@ const showDeleteDialog = ref(false);
 const deletingMoment = ref<Moment | null>(null);
 const deleting = ref(false);
 
-const showCommentPanel = ref(false);
-const commentMomentId = ref<number | null>(null);
-const commentListRef = ref<InstanceType<typeof CommentList> | null>(null);
+const showCommentInput = ref(false);
+const activeCommentMomentId = ref<number | null>(null);
+const replyingToComment = ref<Comment | null>(null);
+const commentListRefs = new Map<
+  number,
+  { fetchComments: (reset?: boolean) => Promise<void> }
+>();
+
+const setCommentListRef = (momentId: number, el: unknown) => {
+  if (el && typeof el === "object" && "fetchComments" in el) {
+    commentListRefs.set(
+      momentId,
+      el as { fetchComments: (reset?: boolean) => Promise<void> },
+    );
+  } else {
+    commentListRefs.delete(momentId);
+  }
+};
+
+const openCommentInput = (momentId: number) => {
+  activeCommentMomentId.value = momentId;
+  replyingToComment.value = null;
+  showCommentInput.value = true;
+};
+
+const handleReplyComment = (momentId: number, comment: Comment) => {
+  activeCommentMomentId.value = momentId;
+  replyingToComment.value = comment;
+  showCommentInput.value = true;
+};
+
+const handleCommentCreated = async () => {
+  const momentId = activeCommentMomentId.value;
+  const moment = moments.value.find((m) => m.id === momentId);
+  if (moment) {
+    moment.commentCount = (moment.commentCount || 0) + 1;
+  }
+  showCommentInput.value = false;
+  replyingToComment.value = null;
+  activeCommentMomentId.value = null;
+
+  if (momentId) {
+    await nextTick();
+    const commentList = commentListRefs.get(momentId);
+    if (commentList) {
+      commentList.fetchComments(true);
+    }
+  }
+};
+
+const closeCommentInput = () => {
+  showCommentInput.value = false;
+  replyingToComment.value = null;
+  activeCommentMomentId.value = null;
+};
 
 const openDeleteDialog = (moment: Moment | null) => {
   deletingMoment.value = moment;
   showDeleteDialog.value = true;
-};
-
-const openCommentPanel = (momentId: number) => {
-  commentMomentId.value = momentId;
-  showCommentPanel.value = true;
-};
-
-const closeCommentPanel = () => {
-  showCommentPanel.value = false;
-  commentMomentId.value = null;
 };
 
 const handleDeleteMoment = async () => {
@@ -396,7 +440,7 @@ onMounted(async () => {
                     </span>
                     <div class="flex items-center space-x-2">
                       <button
-                        @click.stop="openCommentPanel(moment.id)"
+                        @click.stop="openCommentInput(moment.id)"
                         class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-black/5 tap-feedback ios-transition"
                       >
                         <BaseIcon
@@ -404,6 +448,11 @@ onMounted(async () => {
                           size="w-3.5 h-3.5"
                           color="var(--fe-primary)"
                         />
+                        <span
+                          class="text-xs font-bold text-[var(--fe-text-primary)]"
+                        >
+                          {{ moment.commentCount || 0 }}
+                        </span>
                       </button>
                       <button
                         @click.stop="likeMoment(moment.id)"
@@ -421,6 +470,16 @@ onMounted(async () => {
                         </span>
                       </button>
                     </div>
+                  </div>
+
+                  <div class="mt-3 pt-2 border-t border-black/5">
+                    <CommentList
+                      :ref="(el: unknown) => setCommentListRef(moment.id, el)"
+                      :moment-id="moment.id"
+                      :embedded="true"
+                      :max-display="3"
+                      @reply="(c) => handleReplyComment(moment.id, c)"
+                    />
                   </div>
                 </div>
               </div>
@@ -481,15 +540,21 @@ onMounted(async () => {
     <Teleport to="body">
       <Transition name="slide-up">
         <div
-          v-if="showCommentPanel && commentMomentId"
-          class="fixed inset-0 z-[300] bg-white flex flex-col"
+          v-if="showCommentInput && activeCommentMomentId"
+          class="fixed inset-x-0 bottom-0 z-[300] bg-white rounded-t-2xl shadow-xl max-h-[50vh] flex flex-col"
         >
           <div
             class="flex items-center justify-between p-4 border-b border-gray-100"
           >
-            <h3 class="text-lg font-semibold text-gray-900">评论</h3>
+            <h3 class="text-lg font-semibold text-gray-900">
+              {{
+                replyingToComment
+                  ? `回复 ${replyingToComment.author.name}`
+                  : "发表评论"
+              }}
+            </h3>
             <button
-              @click="closeCommentPanel"
+              @click="closeCommentInput"
               class="p-2 rounded-full hover:bg-gray-100 transition-colors"
             >
               <svg
@@ -507,8 +572,14 @@ onMounted(async () => {
               </svg>
             </button>
           </div>
-          <div class="flex-1 min-h-0 p-4">
-            <CommentList ref="commentListRef" :moment-id="commentMomentId" />
+          <div class="p-4">
+            <CommentInput
+              :moment-id="activeCommentMomentId"
+              :reply-to="replyingToComment"
+              :inline="true"
+              @created="handleCommentCreated"
+              @cancel="closeCommentInput"
+            />
           </div>
         </div>
       </Transition>

@@ -12,6 +12,7 @@ import PlacesView from "@/views/PlacesView.vue";
 import AlbumsView from "@/views/AlbumsView.vue";
 import MomentsView from "@/views/MomentsView.vue";
 import AnniversariesView from "@/views/AnniversariesView.vue";
+import NotificationsView from "@/views/NotificationsView.vue";
 import InitSystemView from "@/views/InitSystemView.vue";
 import ServerConfigView from "@/views/ServerConfigView.vue";
 import NotFoundView from "@/views/NotFoundView.vue";
@@ -53,6 +54,11 @@ const router = createRouter({
           path: "anniversaries",
           name: "anniversaries",
           component: AnniversariesView,
+        },
+        {
+          path: "notifications",
+          name: "notifications",
+          component: NotificationsView,
         },
         {
           path: "init",

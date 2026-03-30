@@ -1,5 +1,22 @@
 <template>
-  <div class="relative inline-block" ref="menuRef">
+  <div class="flex items-center gap-2" ref="menuRef">
+    <router-link
+      to="/notifications"
+      class="notification-button p-3 md:p-2.5 rounded-lg glass-regular border border-white/30 ios-transition active:scale-95 relative"
+    >
+      <BaseIcon
+        name="bell"
+        size="w-5 h-5 md:w-5 md:h-5"
+        color="var(--fe-text-primary)"
+      />
+      <span
+        v-if="unreadCount > 0"
+        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold"
+      >
+        {{ unreadCount > 99 ? "99+" : unreadCount }}
+      </span>
+    </router-link>
+
     <button
       @click="toggleMenu"
       class="menu-button p-3 md:p-2.5 rounded-lg glass-regular border border-white/30 ios-transition active:scale-95"
@@ -58,17 +75,20 @@ import { useRouter } from "vue-router";
 
 import BaseIcon from "@/components/ui/BaseIcon.vue";
 import { useAuthStore } from "@/stores/auth";
+import { useNotificationStore } from "@/stores/notification";
 import { useSystemStore } from "@/stores/system";
 import { getActiveServerUrl } from "@/utils/platform";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const notificationStore = useNotificationStore();
 const systemStore = useSystemStore();
 const showMenu = ref(false);
 const menuRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 
 const currentServerUrl = computed(() => getActiveServerUrl() || "未配置");
+const unreadCount = computed(() => notificationStore.unreadCount);
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value;
@@ -99,10 +119,12 @@ const handleClickOutside = (event: MouseEvent) => {
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
+  notificationStore.startPolling();
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
+  notificationStore.stopPolling();
 });
 </script>
 
