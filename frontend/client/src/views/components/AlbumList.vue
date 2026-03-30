@@ -2,7 +2,7 @@
   <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
     <div
       ref="scrollContainer"
-      class="flex-grow overflow-y-auto custom-scrollbar"
+      class="overflow-y-auto custom-scrollbar"
       @scroll="handleScroll"
     >
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">

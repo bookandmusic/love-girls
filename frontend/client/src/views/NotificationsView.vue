@@ -82,8 +82,12 @@ onUnmounted(() => {
         <div v-else class="w-14"></div>
       </div>
 
-      <div class="flex-1 overflow-y-auto">
-        <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
+      <div class="flex-1">
+        <van-pull-refresh
+          v-model="isRefreshing"
+          @refresh="handleRefresh"
+          class="h-full overflow-y-auto"
+        >
           <div
             v-if="
               notificationStore.notifications.length === 0 &&

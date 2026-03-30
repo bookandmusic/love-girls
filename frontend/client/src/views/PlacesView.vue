@@ -341,9 +341,7 @@ const handleRefresh = async () => {
           @refresh="handleRefresh"
           class="flex-grow"
         >
-          <div
-            class="px-4 md:px-8 pb-8 flex-grow overflow-y-auto custom-scrollbar"
-          >
+          <div class="overflow-y-auto custom-scrollbar px-4 md:px-8 pb-8">
             <h2
               class="text-xs font-bold text-[var(--fe-text-secondary)] uppercase tracking-widest mb-3 ml-1"
             >

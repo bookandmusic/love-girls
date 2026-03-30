@@ -365,7 +365,7 @@ onMounted(async () => {
           <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
             <div
               ref="scrollContainer"
-              class="flex-grow overflow-y-auto p-4 md:p-8 space-y-0 custom-scrollbar"
+              class="overflow-y-auto p-4 md:p-8 custom-scrollbar"
               @scroll="handleScroll"
             >
               <div

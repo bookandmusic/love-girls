@@ -1,15 +1,27 @@
 .van-pull-refresh {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .van-pull-refresh__track {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  height: 100%;
+}
+
+.van-pull-refresh__track > div:last-child {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .van-pull-refresh__head {
+  flex: none;
+  height: auto;
+  overflow: visible;
   background: var(--fe-glass-regular);
   backdrop-filter: var(--fe-blur-regular);
   -webkit-backdrop-filter: var(--fe-blur-regular);

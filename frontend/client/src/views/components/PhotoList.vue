@@ -17,7 +17,7 @@
     <van-pull-refresh v-model="isRefreshing" @refresh="handleRefresh">
       <div
         ref="scrollContainer"
-        class="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar"
+        class="overflow-y-auto p-4 md:p-6 custom-scrollbar"
         @scroll="handleScroll"
       >
         <vue-easy-lightbox

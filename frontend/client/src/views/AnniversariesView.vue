@@ -386,9 +386,7 @@ const handleRefresh = async () => {
           @refresh="handleRefresh"
           class="flex-grow"
         >
-          <div
-            class="px-4 md:px-8 pb-8 flex-grow overflow-y-auto custom-scrollbar"
-          >
+          <div class="overflow-y-auto custom-scrollbar px-4 md:px-8 pb-8">
             <div class="relative max-w-2xl mx-auto py-4">
               <div
                 class="absolute left-6 top-0 bottom-0 w-px bg-black/10"
