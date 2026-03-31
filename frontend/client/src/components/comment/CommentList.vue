@@ -109,6 +109,21 @@ const handleCommentCreated = (newComment: Comment) => {
 };
 
 const handleCommentDeleted = (commentId: number) => {
+  const countDeleted = (items: Comment[], targetId: number): number => {
+    for (const item of items) {
+      if (item.id === targetId) {
+        return countAllComments([item]);
+      }
+      if (item.children) {
+        const count = countDeleted(item.children, targetId);
+        if (count > 0) return count;
+      }
+    }
+    return 0;
+  };
+
+  const deletedCount = countDeleted(comments.value, commentId);
+
   const removeFromList = (items: Comment[]): Comment[] => {
     return items
       .filter((item) => item.id !== commentId)
@@ -118,7 +133,7 @@ const handleCommentDeleted = (commentId: number) => {
       }));
   };
   comments.value = removeFromList(comments.value);
-  total.value--;
+  total.value -= deletedCount;
 };
 
 const openNewComment = () => {

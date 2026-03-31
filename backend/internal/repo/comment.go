@@ -34,7 +34,13 @@ func (r *CommentRepo) Create(ctx context.Context, comment *model.Comment) error 
 }
 
 func (r *CommentRepo) Delete(ctx context.Context, id uint64) error {
-	return r.db.WithContext(ctx).Delete(&model.Comment{}, id).Error
+	comment, err := r.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	return r.db.WithContext(ctx).
+		Where("id = ? OR path LIKE ?", id, comment.Path+"/%").
+		Delete(&model.Comment{}).Error
 }
 
 func (r *CommentRepo) FindByMomentID(ctx context.Context, momentID uint64, page, size int) ([]model.Comment, int64, error) {
