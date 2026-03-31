@@ -4,22 +4,18 @@ import { computed, onMounted, ref } from "vue";
 
 import MainLayout from "@/layouts/MainLayout.vue";
 import { useSystemStore } from "@/stores/system";
-import { useUIStore } from "@/stores/ui";
 import { useToast } from "@/utils/toastUtils";
 
 import CoupleAvatar from "./components/CoupleAvatar.vue";
+import HomeSkeleton from "./components/HomeSkeleton.vue";
 
-const uiStore = useUIStore();
 const systemStore = useSystemStore();
-// 使用store中的系统信息
 const systemInfo = computed(() => systemStore.getSystemInfo);
 const date = ref<string>("2025-12-23");
 const showToast = useToast();
+const isLoading = ref(true);
 
-// 在组件挂载时设置date值，而不是在计算属性中修改
 onMounted(() => {
-  uiStore.setLoading(true);
-  // 从store获取系统信息
   systemStore
     .fetchSystemInfo()
     .then(() => {
@@ -31,7 +27,7 @@ onMounted(() => {
       showToast("获取系统信息失败", "error");
     })
     .finally(() => {
-      uiStore.setLoading(false);
+      isLoading.value = false;
     });
 });
 
@@ -49,14 +45,12 @@ const lunarDate = computed(() => {
     :start-date="systemInfo?.site?.startDate"
   >
     <template #main-content>
+      <HomeSkeleton v-if="isLoading" />
       <div
+        v-else-if="systemInfo"
         class="flex flex-col items-center justify-start min-h-full p-4 space-y-2 md:space-y-6 pt-2 md:pt-10"
       >
-        <div
-          v-if="systemInfo"
-          class="w-full max-w-4xl flex flex-col items-center"
-        >
-          <!-- 情侣信息 -->
+        <div class="w-full max-w-4xl flex flex-col items-center">
           <div class="relative w-full py-2 md:py-4">
             <CoupleAvatar
               :boy="systemInfo.couple.boy"
@@ -64,7 +58,6 @@ const lunarDate = computed(() => {
             ></CoupleAvatar>
           </div>
 
-          <!-- 故事开始于 - 极致压缩内边距 -->
           <div
             class="glass-regular rounded-[var(--fe-radius-card)] p-4 md:p-6 mt-2 md:mt-4 border border-white/40 shadow-lg text-center ios-transition"
           >

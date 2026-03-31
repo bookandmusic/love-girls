@@ -12,36 +12,33 @@ import { useLongPress } from "@/composables/useLongPress";
 import MainLayout from "@/layouts/MainLayout.vue";
 import { type Anniversary, anniversaryApi } from "@/services/anniversaryApi";
 import { useSystemStore } from "@/stores/system";
-import { useUIStore } from "@/stores/ui";
 import { useToast } from "@/utils/toastUtils";
 
 import AnniversaryEditDialog from "./components/dialogs/AnniversaryEditDialog.vue";
 import DeleteConfirmDialog from "./components/dialogs/DeleteConfirmDialog.vue";
+import AnniversariesSkeleton from "./components/AnniversariesSkeleton.vue";
 
 interface NormalizedAnniversary {
   anniversary: Anniversary;
   nextDate: Date;
 }
 
-const uiStore = useUIStore();
 const systemStore = useSystemStore();
 
 const anniversaries = ref<Anniversary[]>([]);
 const systemInfo = computed(() => systemStore.getSystemInfo);
 const showToast = useToast();
+const isLoading = ref(true);
 const isRefreshing = ref(false);
 const isAtTop = ref(true);
 const scrollContainer = ref<HTMLElement | null>(null);
 
 const fetchAnniversaries = async () => {
   try {
-    uiStore.setLoading(true);
     const res = await anniversaryApi.getAnniversaries(1, 100);
     anniversaries.value = res.data.anniversaries;
   } catch {
     showToast("获取纪念日失败", "error");
-  } finally {
-    uiStore.setLoading(false);
   }
 };
 
@@ -317,10 +314,9 @@ const handleDeleteAnniversary = async () => {
 };
 
 onMounted(async () => {
-  uiStore.setLoading(true);
   await systemStore.fetchSystemInfo();
   await fetchAnniversaries();
-  uiStore.setLoading(false);
+  isLoading.value = false;
 });
 
 const handleRefresh = async () => {
@@ -340,7 +336,7 @@ const handleScroll = (e: Event) => {
     title="专属纪念"
     subtitle="珍藏我们的浪漫约定"
     :start-date="systemInfo?.site.startDate"
-    :show-empty-state="anniversaries.length === 0"
+    :show-empty-state="!isLoading && anniversaries.length === 0"
   >
     <template #empty-state>
       <BaseIcon
@@ -357,7 +353,8 @@ const handleScroll = (e: Event) => {
     </template>
 
     <template #main-content>
-      <div class="flex flex-col h-full bg-[var(--fe-bg-gray)]/30">
+      <AnniversariesSkeleton v-if="isLoading" />
+      <div v-else class="flex flex-col h-full bg-[var(--fe-bg-gray)]/30">
         <div
           v-if="upcomingAnniversaryInfo"
           class="p-6 flex justify-center items-center text-center flex-shrink-0"

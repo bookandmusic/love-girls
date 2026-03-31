@@ -2,36 +2,28 @@
 import { RouterView } from "vue-router";
 import SplashScreen from "@/components/SplashScreen.vue";
 import { useUIStore } from "@/stores/ui";
-import { useNotificationStore } from "@/stores/notification";
-import { onMounted, onUnmounted, ref, watch } from "vue";
-import { useAuthStore } from "@/stores/auth";
+import { onMounted, ref } from "vue";
+import { useGlobalRefresh } from "@/composables/useGlobalRefresh";
 
 const uiStore = useUIStore();
-const notificationStore = useNotificationStore();
-const authStore = useAuthStore();
+const { initGlobalState, startPeriodicRefresh } = useGlobalRefresh();
 const showSplash = ref(true);
 
-onMounted(() => {
-  setTimeout(() => {
-    showSplash.value = false;
-    uiStore.setAppReady(true);
-  }, 1500);
-});
+onMounted(async () => {
+  uiStore.setAppReady(false);
 
-watch(
-  () => authStore.isAuthenticated,
-  (isAuth) => {
-    if (isAuth) {
-      notificationStore.startPolling();
-    } else {
-      notificationStore.stopPolling();
-    }
-  },
-  { immediate: true },
-);
-
-onUnmounted(() => {
-  notificationStore.stopPolling();
+  const success = await initGlobalState();
+  if (success) {
+    startPeriodicRefresh(60000);
+    setTimeout(() => {
+      showSplash.value = false;
+      uiStore.setAppReady(true);
+    }, 1500);
+  } else {
+    setTimeout(() => {
+      showSplash.value = false;
+    }, 1500);
+  }
 });
 </script>
 

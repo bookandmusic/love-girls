@@ -14,14 +14,12 @@
         <RouterView />
       </WaveBackground>
     </div>
-    <LoadingSpinner v-show="uiStore.loading" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { provide, ref } from "vue";
 
-import LoadingSpinner from "@/components/ui/LoadingSpinner.vue";
 import ToastNotification from "@/components/ui/ToastNotification.vue";
 import WaveBackground from "@/components/ui/WaveBackground.vue";
 import { useUIStore } from "@/stores/ui";

@@ -16,11 +16,11 @@ import type { Place } from "@/services/placeApi";
 import { placeApi } from "@/services/placeApi";
 import { usePlacesStore } from "@/stores/places";
 import { useSystemStore } from "@/stores/system";
-import { useUIStore } from "@/stores/ui";
 import { useToast } from "@/utils/toastUtils";
 
 import PlaceEditDialog from "./components/dialogs/PlaceEditDialog.vue";
 import DeleteConfirmDialog from "./components/dialogs/DeleteConfirmDialog.vue";
+import PlacesSkeleton from "./components/PlacesSkeleton.vue";
 
 delete (L.Icon.Default.prototype as unknown as { [key: string]: unknown })
   ._getIconUrl;
@@ -33,7 +33,6 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-const uiStore = useUIStore();
 const systemStore = useSystemStore();
 const placesStore = usePlacesStore();
 
@@ -44,6 +43,8 @@ const places = computed(() => {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
 });
+
+const isLoading = ref(true);
 
 const mapRef = ref<HTMLDivElement | null>(null);
 const showToast = useToast();
@@ -64,19 +65,17 @@ const fetchPlaces = async () => {
 };
 
 onMounted(async () => {
-  uiStore.setLoading(true);
-
   try {
     await Promise.all([systemStore.fetchSystemInfo(), fetchPlaces()]);
-
-    if (places.value && places.value.length > 0) {
-      await nextTick();
-      initMap();
-    }
   } catch {
     showToast("获取地点数据失败，稍后重试", "error");
   } finally {
-    uiStore.setLoading(false);
+    isLoading.value = false;
+  }
+
+  if (places.value && places.value.length > 0) {
+    await nextTick();
+    initMap();
   }
 });
 
@@ -316,7 +315,7 @@ const handleScroll = (e: Event) => {
     title="足迹地图"
     subtitle="印刻我们的同行足迹"
     :start-date="systemInfo?.site.startDate"
-    :show-empty-state="places.length === 0"
+    :show-empty-state="!isLoading && places.length === 0"
   >
     <template #empty-state>
       <BaseIcon
@@ -333,7 +332,9 @@ const handleScroll = (e: Event) => {
     </template>
 
     <template #main-content>
+      <PlacesSkeleton v-if="isLoading" />
       <div
+        v-else
         class="flex-grow flex flex-col overflow-hidden bg-[var(--fe-bg-gray)]/30"
       >
         <div class="p-4 md:p-6 flex-shrink-0">

@@ -2,7 +2,6 @@ import { createRouter, createWebHashHistory } from "vue-router";
 
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
 import { useAuthStore } from "@/stores/auth";
-import { useSystemStore } from "@/stores/system";
 import { refreshApiBaseURL } from "@/services/api";
 
 import { getActiveServerUrl } from "@/utils/platform";
@@ -13,7 +12,6 @@ import AlbumsView from "@/views/AlbumsView.vue";
 import MomentsView from "@/views/MomentsView.vue";
 import AnniversariesView from "@/views/AnniversariesView.vue";
 import NotificationsView from "@/views/NotificationsView.vue";
-import InitSystemView from "@/views/InitSystemView.vue";
 import ServerConfigView from "@/views/ServerConfigView.vue";
 import NotFoundView from "@/views/NotFoundView.vue";
 
@@ -60,11 +58,6 @@ const router = createRouter({
           name: "notifications",
           component: NotificationsView,
         },
-        {
-          path: "init",
-          name: "init",
-          component: InitSystemView,
-        },
       ],
     },
     {
@@ -75,7 +68,7 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to, from, next) => {
   if (to.path !== "/server-config" && !getActiveServerUrl()) {
     return next("/server-config");
   }
@@ -84,29 +77,9 @@ router.beforeEach(async (to, from, next) => {
   }
   refreshApiBaseURL();
 
-  const systemStore = useSystemStore();
-
-  const isInitialized = await systemStore.checkInitialization();
-
-  if (to.path === "/init") {
-    if (isInitialized) {
-      return next("/");
-    }
-    return next();
-  }
-
-  if (!isInitialized && systemStore.networkError) {
-    return next("/server-config");
-  }
-
-  if (!isInitialized && to.path !== "/init") {
-    return next("/init");
-  }
-
   const authStore = useAuthStore();
-  const isLoggedIn = await authStore.checkAuthStatus();
 
-  if (!isLoggedIn) {
+  if (!authStore.isAuthenticated) {
     return next({
       path: "/server-config",
       query: { step: "login", redirect: to.fullPath },

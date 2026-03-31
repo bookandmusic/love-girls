@@ -13,6 +13,7 @@ export const useAuthStore = defineStore("auth", () => {
   const token = ref<string | null>(null);
   const userInfo = ref<UserInfo | null>(null);
   const isAuthenticated = ref(false);
+  const authChecked = ref(false);
 
   const login = (newToken: string, userData: UserInfo) => {
     const serverUrl = getActiveServerUrl();
@@ -21,6 +22,7 @@ export const useAuthStore = defineStore("auth", () => {
     token.value = newToken;
     userInfo.value = userData;
     isAuthenticated.value = true;
+    authChecked.value = true;
     setServerToken(serverUrl, newToken);
   };
 
@@ -32,14 +34,20 @@ export const useAuthStore = defineStore("auth", () => {
     token.value = null;
     userInfo.value = null;
     isAuthenticated.value = false;
+    authChecked.value = false;
   };
 
   const checkAuthStatus = async () => {
+    if (authChecked.value) {
+      return isAuthenticated.value;
+    }
+
     const storedToken = getActiveServerToken();
     if (!storedToken) {
       isAuthenticated.value = false;
       token.value = null;
       userInfo.value = null;
+      authChecked.value = true;
       return false;
     }
 
@@ -50,6 +58,7 @@ export const useAuthStore = defineStore("auth", () => {
         token.value = storedToken;
         userInfo.value = response.data;
         isAuthenticated.value = true;
+        authChecked.value = true;
         return true;
       } else {
         logout();
@@ -71,13 +80,19 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
+  const resetAuthCheck = () => {
+    authChecked.value = false;
+  };
+
   return {
     token,
     userInfo,
     isAuthenticated,
+    authChecked,
     login,
     logout,
     checkAuthStatus,
     loadTokenFromServer,
+    resetAuthCheck,
   };
 });

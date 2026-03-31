@@ -11,15 +11,14 @@ import { type Album, albumApi, type Photo } from "@/services/albumApi";
 import { uploadApi } from "@/services/upload";
 import { useSystemStore } from "@/stores/system";
 import { calculateFileHash } from "@/utils/fileUtils";
-import { useUIStore } from "@/stores/ui";
 import { useToast } from "@/utils/toastUtils";
 
 import AlbumEditDialog from "./components/dialogs/AlbumEditDialog.vue";
 import DeleteConfirmDialog from "./components/dialogs/DeleteConfirmDialog.vue";
 import AlbumList from "./components/AlbumList.vue";
 import PhotoList from "./components/PhotoList.vue";
+import AlbumsSkeleton from "./components/AlbumsSkeleton.vue";
 
-const uiStore = useUIStore();
 const systemStore = useSystemStore();
 
 const systemInfo = computed(() => systemStore.getSystemInfo);
@@ -27,6 +26,7 @@ const systemInfo = computed(() => systemStore.getSystemInfo);
 const showToast = useToast();
 
 const albums = ref<Album[]>([]);
+const isLoading = ref(true);
 const currentAlbum = ref<Album | null>(null);
 const currentPage = ref(1);
 const totalPages = ref(0);
@@ -78,7 +78,6 @@ const fetchAlbums = async (page: number, append = false) => {
     showToast("获取相册列表失败", "error");
   } finally {
     loadingMoreAlbums.value = false;
-    uiStore.setLoading(false);
   }
 };
 
@@ -111,7 +110,6 @@ const fetchPhotos = async (albumId: number, page: number, append = false) => {
     showToast("获取照片列表失败", "error");
   } finally {
     loadingMorePhotos.value = false;
-    uiStore.setLoading(false);
   }
 };
 
@@ -148,7 +146,6 @@ const backToAlbums = () => {
 };
 
 const handleSelectAlbum = (album: Album) => {
-  uiStore.setLoading(true);
   fetchPhotos(album.id, 1);
 };
 
@@ -337,9 +334,9 @@ const handlePhotoUpload = async (event: Event) => {
 };
 
 onMounted(async () => {
-  uiStore.setLoading(true);
   await systemStore.fetchSystemInfo();
   await fetchAlbums(1);
+  isLoading.value = false;
 });
 </script>
 
@@ -349,7 +346,7 @@ onMounted(async () => {
     :subtitle="pageSubtitle"
     :start-date="systemInfo?.site.startDate"
     :show-empty-state="
-      !currentAlbumId && albums.length === 0 && !loadingMoreAlbums
+      !isLoading && !currentAlbumId && albums.length === 0 && !loadingMoreAlbums
     "
   >
     <template #empty-state>
@@ -367,7 +364,8 @@ onMounted(async () => {
     </template>
 
     <template #main-content>
-      <div v-if="!currentAlbumId" class="flex flex-col h-full">
+      <AlbumsSkeleton v-if="isLoading" />
+      <div v-else-if="!currentAlbumId" class="flex flex-col h-full">
         <AlbumList
           :albums="albums"
           :loading="loadingMoreAlbums"
