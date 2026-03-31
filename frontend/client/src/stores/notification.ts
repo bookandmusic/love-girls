@@ -8,6 +8,7 @@ export const useNotificationStore = defineStore("notification", () => {
   const notifications = ref<Notification[]>([]);
   const unreadCount = ref(0);
   const loading = ref(false);
+  const isPolling = ref(false);
 
   const hasUnread = computed(() => unreadCount.value > 0);
 
@@ -78,8 +79,9 @@ export const useNotificationStore = defineStore("notification", () => {
     }
   };
 
-  const startPolling = (intervalMs = 30000) => {
-    if (pollInterval) return;
+  const startPolling = (intervalMs = 5000) => {
+    if (isPolling.value) return;
+    isPolling.value = true;
     fetchUnreadCount();
     pollInterval = setInterval(fetchUnreadCount, intervalMs);
   };
@@ -89,12 +91,14 @@ export const useNotificationStore = defineStore("notification", () => {
       clearInterval(pollInterval);
       pollInterval = null;
     }
+    isPolling.value = false;
   };
 
   return {
     notifications,
     unreadCount,
     loading,
+    isPolling,
     hasUnread,
     fetchUnreadCount,
     fetchNotifications,

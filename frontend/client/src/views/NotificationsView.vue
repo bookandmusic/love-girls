@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { PullRefresh as VanPullRefresh } from "vant";
 
@@ -41,11 +41,6 @@ const handleScroll = (e: Event) => {
 
 onMounted(() => {
   notificationStore.fetchNotifications(true);
-  notificationStore.startPolling();
-});
-
-onUnmounted(() => {
-  notificationStore.stopPolling();
 });
 </script>
 

@@ -119,12 +119,10 @@ const handleClickOutside = (event: MouseEvent) => {
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
-  notificationStore.startPolling();
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
-  notificationStore.stopPolling();
 });
 </script>
 
