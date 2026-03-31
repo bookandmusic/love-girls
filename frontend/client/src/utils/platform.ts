@@ -155,6 +155,14 @@ export const validateServerUrl = (
     if (!["http:", "https:"].includes(parsed.protocol)) {
       return { valid: false, error: "请输入有效的 HTTP/HTTPS 地址" };
     }
+
+    if (parsed.port) {
+      const port = parseInt(parsed.port, 10);
+      if (isNaN(port) || port < 1 || port > 65535) {
+        return { valid: false, error: "端口号必须在 1-65535 之间" };
+      }
+    }
+
     return { valid: true };
   } catch {
     return { valid: false, error: "地址格式不正确" };

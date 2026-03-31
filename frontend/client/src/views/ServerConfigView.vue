@@ -287,33 +287,41 @@
                   <button
                     type="button"
                     @click="
-                      serverScheme = serverScheme === 'http' ? 'https' : 'http'
+                      serverScheme = serverScheme === 'http' ? 'https' : 'http';
+                      testPassed = false;
                     "
-                    class="h-full w-[3rem] text-xs font-medium flex items-center justify-center transition-all hover:bg-white/30 active:bg-white/50 border-r border-white/20 text-[var(--fe-text-primary)]"
-                    :class="serverScheme === 'https' ? 'bg-green-50/60' : ''"
+                    class="h-full w-14 shrink-0 px-2 text-xs font-medium flex items-center justify-center transition-all hover:bg-purple-100/70 active:bg-purple-200/50 border-r border-purple-300/40 text-[var(--fe-text-primary)] bg-purple-100/50"
                   >
-                    {{ serverScheme }}
+                    {{ serverScheme }}://
                   </button>
-                  <span
-                    class="text-[var(--fe-text-primary)] text-xs font-medium flex items-center justify-center"
-                    >://</span
-                  >
                   <input
                     v-model="serverHost"
                     type="text"
-                    class="flex-1 h-full bg-transparent px-2 text-sm text-[var(--fe-text-primary)] placeholder-[var(--fe-text-secondary)]/60 focus:outline-none"
+                    class="flex-1 min-w-0 h-full bg-transparent px-1 text-sm text-[var(--fe-text-primary)] placeholder-[var(--fe-text-secondary)]/60 focus:outline-none"
                     placeholder="192.168.1.100"
+                    @input="testPassed = false"
                     @keyup.enter="handleConnectServer"
                   />
                   <span
-                    class="text-[var(--fe-text-primary)] text-xs font-medium flex items-center justify-center"
+                    class="w-2 shrink-0 text-[var(--fe-text-primary)] text-xs font-medium flex items-center justify-center"
                     >:</span
                   >
                   <input
                     v-model="serverPort"
                     type="text"
-                    class="w-12 h-full bg-transparent text-sm text-[var(--fe-text-primary)] placeholder-[var(--fe-text-secondary)]/60 focus:outline-none text-center"
+                    inputmode="numeric"
+                    class="w-12 shrink-0 h-full bg-transparent text-sm text-[var(--fe-text-primary)] placeholder-[var(--fe-text-secondary)]/60 focus:outline-none text-center"
                     :placeholder="defaultPortHint"
+                    @input="
+                      serverPort = (() => {
+                        const digits = serverPort
+                          .replace(/\D/g, '')
+                          .slice(0, 5);
+                        const num = parseInt(digits, 10);
+                        return num > 65535 ? '65535' : digits;
+                      })();
+                      testPassed = false;
+                    "
                     @keyup.enter="handleConnectServer"
                   />
                 </div>
@@ -333,7 +341,7 @@
                 </button>
                 <button
                   @click="handleConnectServer"
-                  :disabled="connecting || !serverHost.trim()"
+                  :disabled="connecting || !testPassed"
                   class="flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all bg-gradient-to-r from-[var(--fe-primary)] to-[var(--fe-primary-dark)] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {{ connecting ? "连接中..." : "连接" }}
@@ -491,6 +499,7 @@ const errorMsg = ref("");
 const testing = ref(false);
 const connecting = ref(false);
 const testingUrl = ref<string | null>(null);
+const testPassed = ref(false);
 const toastMsg = ref("");
 const toastType = ref<"success" | "error">("success");
 
@@ -587,6 +596,7 @@ const testNewServer = async () => {
 
   const success = await testServerUrl(fullServerUrl.value);
   if (success) {
+    testPassed.value = true;
     showToast("连接成功", "success");
   }
 
@@ -606,21 +616,11 @@ const testSavedServer = async (url: string) => {
 };
 
 const handleConnectServer = async () => {
-  const url = fullServerUrl.value;
-  const validation = validateServerUrl(url);
-  if (!validation.valid) {
-    errorMsg.value = validation.error || "";
-    return;
-  }
+  if (!testPassed.value) return;
 
+  const url = fullServerUrl.value;
   errorMsg.value = "";
   connecting.value = true;
-
-  const success = await testServerUrl(url);
-  if (!success) {
-    connecting.value = false;
-    return;
-  }
 
   const name =
     newServerName.value.trim() ||
@@ -650,7 +650,7 @@ const handleConnectServer = async () => {
   connecting.value = false;
 };
 
-const selectServer = async (server: ServerConfig) => {
+const selectServer = (server: ServerConfig) => {
   showServerList.value = false;
   newServerName.value = server.name;
 
@@ -658,28 +658,7 @@ const selectServer = async (server: ServerConfig) => {
   serverScheme.value = parsed.scheme;
   serverHost.value = parsed.host;
   serverPort.value = parsed.port;
-
-  if (activeServerUrl.value !== server.url) {
-    setActiveServerUrl(server.url);
-    activeServerUrl.value = server.url;
-    refreshApiBaseURL();
-    systemStore.clearCache();
-    authStore.loadTokenFromServer();
-
-    const isValid = await authStore.checkAuthStatus();
-    if (isValid) {
-      router.push(redirectPath.value);
-    } else {
-      step.value = "login";
-    }
-  } else {
-    const isValid = await authStore.checkAuthStatus();
-    if (isValid) {
-      router.push(redirectPath.value);
-    } else {
-      step.value = "login";
-    }
-  }
+  testPassed.value = false;
 };
 
 const deleteServer = (url: string) => {
