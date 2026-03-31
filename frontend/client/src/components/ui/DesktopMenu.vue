@@ -2,7 +2,7 @@
   <div class="flex items-center gap-2" ref="menuRef">
     <router-link
       to="/notifications"
-      class="notification-button p-3 md:p-2.5 rounded-lg glass-regular border border-white/30 ios-transition active:scale-95 relative"
+      class="notification-button p-2 md:p-2.5 rounded-lg glass-regular border border-white/30 ios-transition active:scale-95 relative"
     >
       <BaseIcon
         name="bell"
@@ -19,7 +19,7 @@
 
     <button
       @click="toggleMenu"
-      class="menu-button p-3 md:p-2.5 rounded-lg glass-regular border border-white/30 ios-transition active:scale-95"
+      class="menu-button p-2 md:p-2.5 rounded-lg glass-regular border border-white/30 ios-transition active:scale-95"
       :class="{ 'border-[var(--fe-primary)]/50': showMenu }"
     >
       <BaseIcon

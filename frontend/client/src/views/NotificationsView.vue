@@ -46,11 +46,11 @@ onMounted(() => {
 
 <template>
   <div
-    class="notifications-view fixed inset-0 z-[200] bg-[var(--fe-bg-primary)]"
+    class="notifications-view fixed inset-0 z-[200] bg-white/60 backdrop-blur-xl"
   >
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full pt-8 md:pt-10">
       <div
-        class="flex-shrink-0 h-14 flex items-center px-4 border-b border-black/5 bg-white/80 backdrop-blur-sm"
+        class="flex-shrink-0 h-14 flex items-center px-4 border-b border-white/30 bg-white/40 backdrop-blur-lg"
       >
         <button
           @click="handleBack"
