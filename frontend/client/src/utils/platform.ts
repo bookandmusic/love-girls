@@ -89,6 +89,60 @@ export const clearActiveServerUrl = (): void => {
   localStorage.removeItem(ACTIVE_SERVER_KEY);
 };
 
+export interface ParsedServerUrl {
+  scheme: "http" | "https";
+  host: string;
+  port: string;
+}
+
+export const parseServerUrl = (url: string): ParsedServerUrl => {
+  const defaultResult: ParsedServerUrl = {
+    scheme: "http",
+    host: "",
+    port: "",
+  };
+
+  try {
+    const parsed = new URL(url);
+    const scheme = parsed.protocol.replace(":", "") as "http" | "https";
+    const host = parsed.hostname;
+    const port = parsed.port;
+
+    return { scheme, host, port };
+  } catch {
+    const cleanUrl = url.trim();
+    const httpMatch = cleanUrl.match(/^https?:\/\/([^:\/]+)(?::(\d+))?/i);
+    if (httpMatch) {
+      const scheme = (cleanUrl.startsWith("https://") ? "https" : "http") as
+        | "http"
+        | "https";
+      return {
+        scheme,
+        host: httpMatch[1] || "",
+        port: httpMatch[2] || "",
+      };
+    }
+
+    return { ...defaultResult, host: cleanUrl };
+  }
+};
+
+export const buildServerUrl = (
+  scheme: "http" | "https",
+  host: string,
+  port?: string,
+): string => {
+  const trimmedHost = host.trim();
+  if (!trimmedHost) return "";
+
+  const trimmedPort = port?.trim();
+  if (trimmedPort) {
+    return `${scheme}://${trimmedHost}:${trimmedPort}`;
+  }
+
+  return `${scheme}://${trimmedHost}`;
+};
+
 export const validateServerUrl = (
   url: string,
 ): { valid: boolean; error?: string } => {

@@ -281,13 +281,42 @@
                 >
                   服务器地址
                 </label>
-                <input
-                  v-model="newServerUrl"
-                  type="url"
-                  class="w-full win11-input"
-                  placeholder="http://192.168.1.100:8182"
-                  @keyup.enter="handleConnectServer"
-                />
+                <div
+                  class="flex items-center h-11 rounded-xl glass-regular border border-white/30 overflow-hidden focus-within:border-[var(--fe-primary)]/50 focus-within:ring-2 focus-within:ring-[var(--fe-primary)]/20 transition-all"
+                >
+                  <button
+                    type="button"
+                    @click="
+                      serverScheme = serverScheme === 'http' ? 'https' : 'http'
+                    "
+                    class="h-full w-[3rem] text-xs font-medium flex items-center justify-center transition-all hover:bg-white/30 active:bg-white/50 border-r border-white/20 text-[var(--fe-text-primary)]"
+                    :class="serverScheme === 'https' ? 'bg-green-50/60' : ''"
+                  >
+                    {{ serverScheme }}
+                  </button>
+                  <span
+                    class="text-[var(--fe-text-primary)] text-xs font-medium flex items-center justify-center"
+                    >://</span
+                  >
+                  <input
+                    v-model="serverHost"
+                    type="text"
+                    class="flex-1 h-full bg-transparent px-2 text-sm text-[var(--fe-text-primary)] placeholder-[var(--fe-text-secondary)]/60 focus:outline-none"
+                    placeholder="192.168.1.100"
+                    @keyup.enter="handleConnectServer"
+                  />
+                  <span
+                    class="text-[var(--fe-text-primary)] text-xs font-medium flex items-center justify-center"
+                    >:</span
+                  >
+                  <input
+                    v-model="serverPort"
+                    type="text"
+                    class="w-12 h-full bg-transparent text-sm text-[var(--fe-text-primary)] placeholder-[var(--fe-text-secondary)]/60 focus:outline-none text-center"
+                    :placeholder="defaultPortHint"
+                    @keyup.enter="handleConnectServer"
+                  />
+                </div>
               </div>
 
               <p v-if="errorMsg" class="text-sm text-red-500 px-1">
@@ -297,14 +326,14 @@
               <div class="flex gap-3 pt-2">
                 <button
                   @click="testNewServer"
-                  :disabled="testing || !newServerUrl.trim()"
+                  :disabled="testing || !serverHost.trim()"
                   class="flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all glass-ultra-thin border border-white/30 text-[var(--fe-text-primary)] hover:bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {{ testing ? "测试中..." : "测试连接" }}
                 </button>
                 <button
                   @click="handleConnectServer"
-                  :disabled="connecting || !newServerUrl.trim()"
+                  :disabled="connecting || !serverHost.trim()"
                   class="flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all bg-gradient-to-r from-[var(--fe-primary)] to-[var(--fe-primary-dark)] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {{ connecting ? "连接中..." : "连接" }}
@@ -314,7 +343,7 @@
           </div>
 
           <p class="text-center text-xs text-[var(--fe-text-secondary)] mt-6">
-            请输入后端服务地址，如 http://192.168.1.100:8182
+            端口不填默认使用 80(HTTP) 或 443(HTTPS)
           </p>
         </template>
 
@@ -431,9 +460,11 @@ import { useAuthStore } from "@/stores/auth";
 import { useSystemStore } from "@/stores/system";
 import {
   addServerUrl,
+  buildServerUrl,
   getActiveServerUrl,
   getActiveServerToken,
   getServerUrls,
+  parseServerUrl,
   removeServerUrl,
   type ServerConfig,
   setActiveServerUrl,
@@ -453,7 +484,9 @@ const activeServerUrl = ref<string | null>(null);
 const showServerList = ref(false);
 const serverListRef = ref<HTMLElement | null>(null);
 const newServerName = ref("");
-const newServerUrl = ref("");
+const serverScheme = ref<"http" | "https">("http");
+const serverHost = ref("");
+const serverPort = ref("");
 const errorMsg = ref("");
 const testing = ref(false);
 const connecting = ref(false);
@@ -468,6 +501,14 @@ const loggingIn = ref(false);
 const currentServer = computed(() =>
   savedServers.value.find((s) => s.url === activeServerUrl.value),
 );
+
+const fullServerUrl = computed(() => {
+  return buildServerUrl(serverScheme.value, serverHost.value, serverPort.value);
+});
+
+const defaultPortHint = computed(() => {
+  return serverScheme.value === "https" ? "443" : "80";
+});
 
 const handleClickOutside = (event: MouseEvent) => {
   if (
@@ -544,7 +585,7 @@ const testNewServer = async () => {
   errorMsg.value = "";
   testing.value = true;
 
-  const success = await testServerUrl(newServerUrl.value);
+  const success = await testServerUrl(fullServerUrl.value);
   if (success) {
     showToast("连接成功", "success");
   }
@@ -565,7 +606,8 @@ const testSavedServer = async (url: string) => {
 };
 
 const handleConnectServer = async () => {
-  const validation = validateServerUrl(newServerUrl.value);
+  const url = fullServerUrl.value;
+  const validation = validateServerUrl(url);
   if (!validation.valid) {
     errorMsg.value = validation.error || "";
     return;
@@ -574,7 +616,7 @@ const handleConnectServer = async () => {
   errorMsg.value = "";
   connecting.value = true;
 
-  const success = await testServerUrl(newServerUrl.value);
+  const success = await testServerUrl(url);
   if (!success) {
     connecting.value = false;
     return;
@@ -585,14 +627,15 @@ const handleConnectServer = async () => {
     (savedServers.value.length === 0
       ? "默认"
       : `服务器${savedServers.value.length + 1}`);
-  savedServers.value = addServerUrl(name, newServerUrl.value);
-  activeServerUrl.value = newServerUrl.value;
-  setActiveServerUrl(newServerUrl.value);
+  savedServers.value = addServerUrl(name, url);
+  activeServerUrl.value = url;
+  setActiveServerUrl(url);
   refreshApiBaseURL();
   systemStore.clearCache();
 
   newServerName.value = "";
-  newServerUrl.value = "";
+  serverHost.value = "";
+  serverPort.value = "";
 
   showToast("连接成功", "success");
 
@@ -610,7 +653,11 @@ const handleConnectServer = async () => {
 const selectServer = async (server: ServerConfig) => {
   showServerList.value = false;
   newServerName.value = server.name;
-  newServerUrl.value = server.url;
+
+  const parsed = parseServerUrl(server.url);
+  serverScheme.value = parsed.scheme;
+  serverHost.value = parsed.host;
+  serverPort.value = parsed.port;
 
   if (activeServerUrl.value !== server.url) {
     setActiveServerUrl(server.url);
