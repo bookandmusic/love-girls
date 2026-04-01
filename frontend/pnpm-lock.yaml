@@ -52,6 +52,9 @@ importers:
       vue-router:
         specifier: ^4.6.3
         version: 4.6.4(vue@3.5.30(typescript@5.9.3))
+      vue-waterfall-plugin-next:
+        specifier: ^3.0.1
+        version: 3.0.1
       vue3-lottie:
         specifier: ^3.3.1
         version: 3.3.1(vue@3.5.30(typescript@5.9.3))
@@ -3361,6 +3364,9 @@ packages:
     hasBin: true
     peerDependencies:
       typescript: '>=5.0.0'
+
+  vue-waterfall-plugin-next@3.0.1:
+    resolution: {integrity: sha512-ggtP0LkDRKABsTflya9l0YE/D2S6MYG+VBgvkVmCwqLanJy6STYCPFumYCujV9/ansxd81GBgwPe6DUegRDT+w==}
 
   vue3-lottie@3.3.1:
     resolution: {integrity: sha512-60uQmx4eefi3FdPjAxWnblrgJJjnVTXUA6e4BAI3jGzgOSR76pyzL1rrWDiyPmMFo4mTw4wGTW6Gbkg3HR1mYw==}
@@ -6701,6 +6707,8 @@ snapshots:
       '@volar/typescript': 2.4.28
       '@vue/language-core': 3.2.6
       typescript: 5.9.3
+
+  vue-waterfall-plugin-next@3.0.1: {}
 
   vue3-lottie@3.3.1(vue@3.5.30(typescript@5.9.3)):
     dependencies:

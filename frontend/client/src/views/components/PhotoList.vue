@@ -1,6 +1,5 @@
 <template>
-  <div class="h-full flex flex-col overflow-hidden bg-[var(--fe-bg-gray)]/30">
-    <!-- 顶部玻璃导航 -->
+  <div class="h-full flex flex-col overflow-hidden">
     <div
       class="sticky top-0 z-20 glass-thick p-4 border-b border-white/20 flex items-center"
     >
@@ -13,7 +12,6 @@
       </button>
     </div>
 
-    <!-- 照片网格 -->
     <van-pull-refresh
       v-model="isRefreshing"
       :disabled="!isAtTop"
@@ -32,31 +30,36 @@
           teleport="body"
         ></vue-easy-lightbox>
 
-        <div
+        <Waterfall
           v-if="photos.length > 0"
-          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"
+          :list="photos"
+          row-key="id"
+          img-selector="file.thumbnail"
+          :breakpoints="breakpoints"
+          :gutter="8"
+          :has-around-gutter="true"
+          :animation-cancel="true"
+          :lazyload="true"
+          :delay="100"
+          background-color="transparent"
         >
-          <div
-            v-for="photo in photos"
-            :key="photo.id"
-            @click="preview(photo.file?.url || '')"
-            @pointerdown="handlePointerDown(photo, $event)"
-            @pointermove="handlePointerMove"
-            @pointerup="onPointerUp"
-            @pointerleave="onPointerLeave"
-            @pointercancel="onPointerCancel"
-            class="aspect-square overflow-hidden rounded-xl border border-white/40 bg-white/50 tap-feedback ios-transition shadow-sm group"
-          >
-            <img
-              :src="photo.file?.thumbnail || photo.file?.url || ''"
-              :alt="photo.alt"
-              class="w-full h-full object-cover transition-transform duration-500"
-              loading="lazy"
-            />
-          </div>
-        </div>
+          <template #default="{ item, url }">
+            <div
+              class="overflow-hidden rounded-xl border border-white/40 tap-feedback ios-transition shadow-sm group"
+              @click="preview(item.file?.url || '')"
+              @pointerdown="handlePointerDown(item, $event)"
+              @pointermove="handlePointerMove"
+              @pointerup="onPointerUp"
+              @pointerleave="onPointerLeave"
+              @pointercancel="onPointerCancel"
+            >
+              <div class="overflow-hidden">
+                <LazyImg :url="url" :alt="item.alt || ''" />
+              </div>
+            </div>
+          </template>
+        </Waterfall>
 
-        <!-- 空状态 -->
         <div
           v-else-if="!loading"
           class="flex-1 flex flex-col items-center justify-center py-20"
@@ -74,7 +77,6 @@
           </p>
         </div>
 
-        <!-- 加载状态指示器 -->
         <div v-if="loading || hasMore" class="py-10 flex justify-center">
           <div
             v-if="loading"
@@ -95,7 +97,6 @@
           </div>
         </div>
 
-        <!-- 占位 -->
         <div class="h-20 md:hidden"></div>
       </div>
     </van-pull-refresh>
@@ -106,6 +107,8 @@
 import { nextTick, ref, watch } from "vue";
 import VueEasyLightbox from "vue-easy-lightbox";
 import { PullRefresh as VanPullRefresh } from "vant";
+import { LazyImg, Waterfall } from "vue-waterfall-plugin-next";
+import "vue-waterfall-plugin-next/dist/style.css";
 
 import BaseIcon from "@/components/ui/BaseIcon.vue";
 import { useLongPress } from "@/composables/useLongPress";
@@ -169,13 +172,6 @@ const checkAndAutoLoadMore = async () => {
   }
 };
 
-watch(
-  () => props.photos,
-  () => {
-    checkAndAutoLoadMore();
-  },
-);
-
 const selectedPhoto = ref<Photo | null>(null);
 
 const {
@@ -213,4 +209,42 @@ const preview = (url: string) => {
   imgsRef.value = url;
   onShow();
 };
+
+const breakpoints = {
+  1200: {
+    rowPerView: 5,
+  },
+  800: {
+    rowPerView: 4,
+  },
+  600: {
+    rowPerView: 3,
+  },
+  400: {
+    rowPerView: 2,
+  },
+};
+
+watch(
+  () => props.photos,
+  () => {
+    checkAndAutoLoadMore();
+  },
+);
 </script>
+
+<style scoped>
+:deep(.lazy__img[lazy="loading"]) {
+  padding: 5em 0;
+  width: 48px;
+}
+
+:deep(.lazy__img[lazy="loaded"]) {
+  width: 100%;
+}
+
+:deep(.lazy__img[lazy="error"]) {
+  padding: 5em 0;
+  width: 48px;
+}
+</style>
