@@ -75,8 +75,10 @@ export const useAuthStore = defineStore("auth", () => {
     const storedToken = getActiveServerToken();
     if (storedToken) {
       token.value = storedToken;
+      isAuthenticated.value = true;
     } else {
       token.value = null;
+      isAuthenticated.value = false;
     }
   };
 

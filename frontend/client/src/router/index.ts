@@ -72,18 +72,16 @@ router.beforeEach((to, from, next) => {
   if (to.path !== "/server-config" && !getActiveServerUrl()) {
     return next("/server-config");
   }
+
   if (to.path === "/server-config") {
     return next();
   }
+
   refreshApiBaseURL();
 
   const authStore = useAuthStore();
-
-  if (!authStore.isAuthenticated) {
-    return next({
-      path: "/server-config",
-      query: { step: "login", redirect: to.fullPath },
-    });
+  if (!authStore.token) {
+    authStore.loadTokenFromServer();
   }
 
   return next();
