@@ -303,17 +303,31 @@ func (s *MomentService) ListMomentsWithQuery(c *gin.Context, params *MomentQuery
 	}, nil
 }
 
-// UpdateMoment 更新动态
-func (s *MomentService) UpdateMoment(c *gin.Context, id uint64, req *MomentUpdateRequest) (*FrontendMoment, error) {
-	ctx := c.Request.Context()
+// checkMomentOwnership 校验用户是否有权限操作指定动态
+func (s *MomentService) checkMomentOwnership(ctx context.Context, id uint64, userID uint64) (*model.Moment, error) {
 	moment, err := s.MomentRepo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			s.Log.Info("动态不存在", "id", id)
 			return nil, nil
 		}
-		s.Log.Error("查询动态失败", "error", err, "id", id)
 		return nil, fmt.Errorf("系统内部错误")
+	}
+	if moment.UserID != userID {
+		return nil, fmt.Errorf("无权操作此动态")
+	}
+	return moment, nil
+}
+
+// UpdateMoment 更新动态
+func (s *MomentService) UpdateMoment(c *gin.Context, id uint64, userID uint64, req *MomentUpdateRequest) (*FrontendMoment, error) {
+	ctx := c.Request.Context()
+	moment, err := s.checkMomentOwnership(ctx, id, userID)
+	if err != nil {
+		return nil, err
+	}
+	if moment == nil {
+		s.Log.Info("动态不存在", "id", id)
+		return nil, nil
 	}
 
 	// 更新动态内容
@@ -351,15 +365,14 @@ func (s *MomentService) UpdateMoment(c *gin.Context, id uint64, req *MomentUpdat
 }
 
 // DeleteMoment 删除动态
-func (s *MomentService) DeleteMoment(ctx context.Context, id uint64) (bool, error) {
-	_, err := s.MomentRepo.FindByID(ctx, id)
+func (s *MomentService) DeleteMoment(ctx context.Context, id uint64, userID uint64) (bool, error) {
+	moment, err := s.checkMomentOwnership(ctx, id, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			s.Log.Info("动态不存在", "id", id)
-			return false, nil
-		}
-		s.Log.Error("查询动态失败", "error", err, "id", id)
-		return false, fmt.Errorf("系统内部错误")
+		return false, err
+	}
+	if moment == nil {
+		s.Log.Info("动态不存在", "id", id)
+		return false, nil
 	}
 
 	if err := s.MomentRepo.DeleteWithFiles(ctx, id); err != nil {
@@ -371,16 +384,15 @@ func (s *MomentService) DeleteMoment(ctx context.Context, id uint64) (bool, erro
 }
 
 // UpdatePublicStatus 更新动态公开状态
-func (s *MomentService) UpdatePublicStatus(c *gin.Context, id uint64, status bool) (*FrontendMoment, error) {
+func (s *MomentService) UpdatePublicStatus(c *gin.Context, id uint64, userID uint64, status bool) (*FrontendMoment, error) {
 	ctx := c.Request.Context()
-	_, err := s.MomentRepo.FindByID(ctx, id)
+	moment, err := s.checkMomentOwnership(ctx, id, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			s.Log.Info("动态不存在", "id", id)
-			return nil, nil
-		}
-		s.Log.Error("查询动态失败", "error", err, "id", id)
-		return nil, fmt.Errorf("系统内部错误")
+		return nil, err
+	}
+	if moment == nil {
+		s.Log.Info("动态不存在", "id", id)
+		return nil, nil
 	}
 
 	if err := s.MomentRepo.UpdatePublicStatus(ctx, id, status); err != nil {

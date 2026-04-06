@@ -164,6 +164,9 @@ func (h *MomentHandler) UpdateMoment(c *gin.Context) {
 		return
 	}
 
+	claims := auth.MustGetAuthClaims(c)
+	userID := claims.UserID
+
 	var req service.MomentUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.MomentService.Log.Error("参数校验失败", "error", err)
@@ -175,8 +178,16 @@ func (h *MomentHandler) UpdateMoment(c *gin.Context) {
 		return
 	}
 
-	moment, err := h.MomentService.UpdateMoment(c, id, &req)
+	moment, err := h.MomentService.UpdateMoment(c, id, userID, &req)
 	if err != nil {
+		if err.Error() == "无权操作此动态" {
+			c.JSON(http.StatusForbidden, Response{
+				Code:    1,
+				Message: "无权操作此动态",
+				Data:    nil,
+			})
+			return
+		}
 		h.MomentService.Log.Error("更新动态失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
 			Code:    1,
@@ -229,8 +240,19 @@ func (h *MomentHandler) DeleteMoment(c *gin.Context) {
 		return
 	}
 
-	deleted, err := h.MomentService.DeleteMoment(ctx, id)
+	claims := auth.MustGetAuthClaims(c)
+	userID := claims.UserID
+
+	deleted, err := h.MomentService.DeleteMoment(ctx, id, userID)
 	if err != nil {
+		if err.Error() == "无权操作此动态" {
+			c.JSON(http.StatusForbidden, Response{
+				Code:    1,
+				Message: "无权操作此动态",
+				Data:    nil,
+			})
+			return
+		}
 		h.MomentService.Log.Error("删除动态失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
 			Code:    1,
@@ -283,6 +305,9 @@ func (h *MomentHandler) UpdatePublic(c *gin.Context) {
 		return
 	}
 
+	claims := auth.MustGetAuthClaims(c)
+	userID := claims.UserID
+
 	var req service.MomentPublicRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.MomentService.Log.Error("参数校验失败", "error", err)
@@ -294,8 +319,16 @@ func (h *MomentHandler) UpdatePublic(c *gin.Context) {
 		return
 	}
 
-	moment, err := h.MomentService.UpdatePublicStatus(c, id, req.IsPublic)
+	moment, err := h.MomentService.UpdatePublicStatus(c, id, userID, req.IsPublic)
 	if err != nil {
+		if err.Error() == "无权操作此动态" {
+			c.JSON(http.StatusForbidden, Response{
+				Code:    1,
+				Message: "无权操作此动态",
+				Data:    nil,
+			})
+			return
+		}
 		h.MomentService.Log.Error("更新动态公开状态失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, Response{
 			Code:    1,
